@@ -1,0 +1,6 @@
+@JuegoOcaBack_HostAddress = http://localhost:5240
+
+GET {{JuegoOcaBack_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
