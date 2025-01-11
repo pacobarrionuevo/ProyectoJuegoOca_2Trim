@@ -1,6 +1,5 @@
 
 
-/* Estilos generales */
 body {
     margin: 0;
     padding: 0;
@@ -20,7 +19,6 @@ h1, h2 {
     padding: 0;
 }
 
-/* Estilo del título principal */
 .juego-de-la-oca {
     font-size: 3rem;
     text-align: center;
@@ -29,7 +27,6 @@ h1, h2 {
     margin-bottom: 30px;
 }
 
-/* Botones */
 .botones {
     display: flex;
     justify-content: center;
@@ -50,7 +47,6 @@ h1, h2 {
     text-transform: uppercase;
 }
 
-/* Contenedor de información */
 .informacion {
     display: flex;
     gap: 20px;
@@ -78,7 +74,6 @@ h1, h2 {
     margin-bottom: 10px;
 }
 
-/* Sección de reglas */
 .reglas {
     background-color: #F4E19C;
     padding: 20px;

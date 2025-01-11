@@ -3,24 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="main.component.css"> <!-- Conectar con el archivo CSS -->
+    <link rel="stylesheet" href="main.component.css"> 
     <title>El Juego de La Oca</title>
     
 </head>
 <body>
     <div class="container">
-        <!-- Título principal -->
         <h1 class="juego-de-la-oca">EL JUEGO DE LA OCA</h1>
 
-        <!-- Botones -->
         <div class="botones">
             <button>INICIAR SESIÓN</button>
             <button>MENÚ</button>
         </div>
 
-        <!-- Información -->
         <div class="informacion">
-            <img src="ruta-a-tu-tablero.jpg" alt="Tablero del Juego de la Oca">
+            <img [src]="tablero" alt="Tablero del Juego de la Oca">
             <div class="texto">
                 <h2>INFORMACIÓN</h2>
                 <p>
@@ -33,7 +30,6 @@
             </div>
         </div>
 
-        <!-- Reglas -->
         <div class="reglas">
             <h2>REGLAS</h2>
             <ul class="reglas-lista">
