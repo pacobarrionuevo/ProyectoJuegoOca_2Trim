@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.component.css"> 
+    <title>El Juego de La Oca</title>
+    
+</head>
+<body>
+    <div class="container">
+        <h1 class="juego-de-la-oca">EL JUEGO DE LA OCA</h1>
+
+        <div class="botones">
+            <button>INICIAR SESIÓN</button>
+            <button>MENÚ</button>
+        </div>
+
+        <div class="informacion">
+            <img [src]="tablero" alt="Tablero del Juego de la Oca">
+            <div class="texto">
+                <h2>INFORMACIÓN</h2>
+                <p>
+                    El Juego de La Oca es uno de los juegos de mesa más míticos que han salido de nuestro país, 
+                    además de ser también de los más fáciles y entretenidos para cualquier tipo de público.
+                </p>
+                <p>
+                    Jugar encima está tirado, solamente necesitas el tablero de tu derecha y unos cubiletes para las fichas y dados.
+                </p>
+            </div>
+        </div>
+
+        <div class="reglas">
+            <h2>REGLAS</h2>
+            <ul class="reglas-lista">
+                <li>Por turnos, cada jugador tira un dado y avanza el número de casillas indicado por el mismo.</li>
+                <li>Si un jugador cae en una casilla y esta contiene el dibujo de una oca, avanza hacia la siguiente oca y vuelve a tirar.</li>
+                <li>Si un jugador cae en una casilla con dibujo de un puente, se mueve hacia el otro puente y tira otra vez.</li>
+                <li>Si un jugador cae en La Taberna o La Cárcel se perderá 1 o 2 turnos, respectivamente.</li>
+                <li>Si un jugador cae en El Pozo, no podrá moverse hasta que el rival lo adelante.</li>
+                <li>Si un jugador cae en La Muerte, volverá a la Casilla Inicial.</li>
+                <li>Para ganar, el jugador debe sacar exactamente el número necesario para llegar al final.</li>
+                <li>Si un jugador cae en El Laberinto, volverá a la casilla 30 y no vuelve a tirar.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+
