@@ -1,6 +1,6 @@
-body {
+.container {
     margin: 0;
-    padding: 0;
+    padding: 20px;
     font-family: "Jaro", sans-serif;
     /*hacer fondo infinito*/
     background-image:  url(https://wallpapers.com/images/hd/high-resolution-wood-background-sk0k1ko8b0lxyyf4.jpg);
@@ -8,11 +8,6 @@ body {
     background-repeat: no-repeat;
     background-attachment: fixed;
     color: #000;
-}
-
-.container {
-    margin: 0;
-    padding: 20px;
 }
 
 h1, h2 {
