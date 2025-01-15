@@ -1,0 +1,27 @@
+#cuadradoFuera {
+    background-color: #E5B462;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 25%;
+    padding: 20px;
+    border-radius: 20px;
+    box-sizing: content-box;
+}
+
+.inputs input {
+    width: 100%;
+    font-size: 20px;
+    border: 2px solid #110e0e;
+    box-sizing: border-box;
+}
+
+.inputs ::placeholder {
+    background-color: brown;
+}
+
+#button {
+    width: 100%;
+    font-size: 20px;
+
+}
