@@ -55,8 +55,8 @@ namespace JuegoOcaBack.Controllers
                 return BadRequest("El nombre del usuario ya está en uso");
             
             }
-            // AÑADIR COMPROBACIÓN CONTRASEÑA
-
+            
+            // Si las contraseñas no coinciden, no deja hacer el registro
             if (usuario.UsuarioContrasena != usuario.UsuarioConfirmarContrasena)
             {
                 return BadRequest("Las contraseñas no coinciden");
