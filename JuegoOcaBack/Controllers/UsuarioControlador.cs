@@ -1,4 +1,6 @@
 ﻿using JuegoOcaBack.Models.Database;
+using JuegoOcaBack.Models.Database.Entidades;
+using JuegoOcaBack.Models.DTO;
 using JuegoOcaBack.Recursos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
@@ -21,5 +23,26 @@ namespace JuegoOcaBack.Controllers
             _context = _dbContext;
             _tokenParameters = jwtOptions.Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters;
         }
+
+        private UsuarioDTO ToDto(Usuario users)
+        {
+            return new UsuarioDTO()
+            {
+                UsuarioId = users.UsuarioId,
+                UsuarioApodo = users.UsuarioApodo,
+                UsuarioEmail = users.UsuarioEmail,
+                UsuarioContrasena = users.UsuarioContrasena,
+                UsuarioConfirmarContrasena = users.UsuarioConfirmarContrasena,
+                UsuarioFotoPerfil = users.UsuarioFotoPerfil
+            };
+        }
+
+        //Endpoint que devuelve una lista de todos los usuarios
+        [HttpGet("userlist")]
+        public IEnumerable<UsuarioDTO> GetUser()
+        {
+            return _context.Usuarios.Select(ToDto);
+        }
+
     }
 }
