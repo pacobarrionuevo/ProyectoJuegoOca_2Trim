@@ -53,7 +53,9 @@ namespace JuegoOcaBack.Controllers
             if (_context.Usuarios.Any(Usuario => Usuario.UsuarioEmail == usuario.UsuarioEmail))
             {
                 return BadRequest("El nombre del usuario ya está en uso");
+            
             }
+            // AÑADIR COMPROBACIÓN CONTRASEÑA
 
             //Crea el usuario, lo almacena y lo mappea con el DTO
             Usuario newUser = new Usuario()
