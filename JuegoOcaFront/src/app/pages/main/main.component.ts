@@ -11,10 +11,13 @@ import { RouterModule } from '@angular/router';
 export class MainComponent {
   cubileteDados: string;
   tablero: string;
+  fondo: string;
   
 
   constructor(private imageService: ImageService) {
     this.cubileteDados = this.imageService.getImageUrl('CubileteDados.png');
     this.tablero = this.imageService.getImageUrl('TableroJuego.png');
+    this.fondo = this.imageService.getImageUrl('FondoPagina.jpg');
   }
 }
+
