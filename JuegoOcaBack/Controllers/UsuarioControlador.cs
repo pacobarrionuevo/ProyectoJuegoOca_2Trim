@@ -39,7 +39,7 @@ namespace JuegoOcaBack.Controllers
         }
 
         //Endpoint que devuelve una lista de todos los usuarios
-        [HttpGet("userlist")]
+        [HttpGet("ListaUsuario")]
         public IEnumerable<UsuarioDTO> GetUser()
         {
             return _context.Usuarios.Select(ToDto);
