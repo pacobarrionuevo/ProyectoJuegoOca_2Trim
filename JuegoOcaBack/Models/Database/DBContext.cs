@@ -6,10 +6,10 @@ using System.Collections.Generic;
 
 namespace JuegoOcaBack.Models.Database
 {
-    public class ProyectoDbContext : DbContext
+    public class DBContext : DbContext
     {
         //Nombre de la base de datos y luego se llama ahi
-        private const string DATABASE_PATH = "areaZero.db";
+        private const string DATABASE_PATH = "JuegoOcaApp.db";
 
         private readonly Settings _settings;
 
@@ -19,7 +19,7 @@ namespace JuegoOcaBack.Models.Database
 
         // Configuramos el EntityFramework para crear un archivo de BBDD Sqlite
 
-        public ProyectoDbContext(IOptions<Settings> options)
+        public DBContext(IOptions<Settings> options)
         {
             _settings = options.Value;
         }

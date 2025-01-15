@@ -7,9 +7,9 @@ namespace JuegoOcaBack.Models.Database.Repositorios
     {
 
         //Calcado de Jose :D
-        private readonly ProyectoDbContext _context;
+        private readonly DBContext _context;
 
-        public Repositorio(ProyectoDbContext context)
+        public Repositorio(DBContext context)
         {
             _context = context;
         }
