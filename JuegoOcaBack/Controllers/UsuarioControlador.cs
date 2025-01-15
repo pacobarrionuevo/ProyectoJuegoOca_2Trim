@@ -57,6 +57,11 @@ namespace JuegoOcaBack.Controllers
             }
             // AÑADIR COMPROBACIÓN CONTRASEÑA
 
+            if (usuario.UsuarioContrasena != usuario.UsuarioConfirmarContrasena)
+            {
+                return BadRequest("Las contraseñas no coinciden");
+            }
+
             //Crea el usuario, lo almacena y lo mappea con el DTO
             Usuario newUser = new Usuario()
             {
