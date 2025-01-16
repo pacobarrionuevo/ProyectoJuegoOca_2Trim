@@ -1,11 +1,13 @@
-<div id="general">
-    <div id="cuadradoFuera">
-        <div id="cajita">
+<!--Añadir un iconito como de una puerta para que te lleve de vuelta al main-->
+<div class="general">
+    <div class="cuadradoFuera">
+        <div class="cajita">
             <h1 id="iniciarSesion">
                 <u>INICIAR SESIÓN</u>
             </h1>
         </div>
         <br>
+        <!-- <form (ngSubmit)="submit()" -->
         <div class="inputs">
             <input type="nombre" placeholder="Introduce email o apodo">
         </div>
@@ -19,7 +21,7 @@
         <button type="submit" id="button">CONFIRMAR</button>
     
         <p id="llevarRegistro">
-            Si no tienes una cuenta, <b><u>Registrate aquí</u></b>
+            Si no tienes una cuenta, <b><u><a [routerLink]="'/register'">Registrate aquí</a></u></b>
         </p>
     </div>
 </div>

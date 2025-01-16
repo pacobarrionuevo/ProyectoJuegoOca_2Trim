@@ -1,12 +1,11 @@
-#general {
+.general {
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
     height: 100vh;
 }
-
-#cuadradoFuera {
+.cuadradoFuera {
     background-color: #E5B462;
     justify-content: center;
     align-items: center;
@@ -19,7 +18,7 @@
     border: 2px solid #110e0e;
 }
 
-#cajita {
+.cajita {
     background-color: rgb(125, 24, 24);
     border-radius: 20px;
     border: 2px solid #110e0e;

@@ -1,1 +1,41 @@
-<p>register works!</p>
+<div class="general">
+    <div class="cuadradoFuera">
+        <div class="cajita">
+            <h1 id="registrarse">
+                <u>REGÍSTRATE</u>
+            </h1>
+        </div>
+        <br>
+        <!-- <form (ngSubmit)="submit()" -->
+        <div class="inputs">
+            <input type="nombre" placeholder="Introduce tu apodo">
+        </div>
+        <br>
+    
+        <div class="inputs">
+            <input type="email" placeholder="Introduce tu email">
+        </div>
+        <br>
+
+        <div class="inputs">
+            <input type="password" placeholder="Introduce tu contraseña">
+        </div>
+        <br>
+
+        <div class="inputs">
+            <input type="password" placeholder="Confirma tu contraseña">
+        </div>
+        <br>
+
+        <div class="inputs">
+            <input type="fotoPerfil" placeholder="¡Elige una foto de perfil!">
+        </div>
+        <br>
+    
+        <button type="submit" id="button">CONFIRMAR</button>
+    
+        <p id="llevarRegistro">
+            Si ya tienes una cuenta, <b><u><a [routerLink]="'/login'">Inicia Sesión aquí</a></u></b>
+        </p>
+    </div>
+</div>

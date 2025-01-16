@@ -1,0 +1,60 @@
+.general {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+}
+.cuadradoFuera {
+    background-color: #E5B462;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 50%;
+    height: 72%;
+    padding: 20px;
+    border-radius: 20px;
+    box-sizing: content-box;
+    border: 2px solid #110e0e;
+}
+
+.cajita {
+    background-color: rgb(125, 24, 24);
+    border-radius: 20px;
+    border: 2px solid #110e0e;
+}
+
+#registrarse {
+    padding: 20px;
+    color: #ffffff;
+    text-shadow: 5px 5px 3px rgb(0, 0, 0);
+}
+
+.inputs input {
+    padding: 10px;
+    width: 100%;
+    font-size: 20px;
+    border: 2px solid #110e0e;
+    box-sizing: border-box;
+    border-radius: 10px;
+}
+
+.inputs ::placeholder {
+    color: black;
+}
+
+#button {
+    width: 100%;
+    font-size: 20px;
+    background-color: rgb(125, 24, 24);
+    border: 2px solid #110e0e;
+    color: #ffffff;
+    text-shadow: 5px 5px 3px rgb(0, 0, 0);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+#button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+}
