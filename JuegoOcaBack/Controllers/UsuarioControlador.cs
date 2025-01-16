@@ -98,6 +98,44 @@ namespace JuegoOcaBack.Controllers
             string accessToken = tokenHandler.WriteToken(token);
             return Ok(new { StringToken = accessToken });
         }
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] UsuarioLoginDTO usuarioLoginDto)
+        {
+
+            //Comprueba que tanto el email como la password sean correctas
+            var user = _context.Usuarios.FirstOrDefault(u => u.UsuarioEmail == usuarioLoginDto.UsuarioEmail);
+            if (user == null)
+            {
+                return Unauthorized("Usuario no existe");
+            }
+
+            if (!PasswordHelper.Hash(usuarioLoginDto.UsuarioContrasena).Equals(user.UsuarioContrasena))
+            {
+                return Unauthorized("Contraseña incorrecta");
+            }
+
+            //Token con todo lo que necesita (igual que Registro)
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Claims = new Dictionary<string, object>
+                {
+                    {"id", user.UsuarioId},
+                    {"Apodo", user.UsuarioApodo},
+                    {"Email", user.UsuarioEmail},
+                    
+                },
+                Expires = DateTime.UtcNow.AddDays(5),
+                SigningCredentials = new SigningCredentials(
+                    _tokenParameters.IssuerSigningKey,
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
+            string accessToken = tokenHandler.WriteToken(token);
+
+            return Ok(new { StringToken = accessToken, user.UsuarioId });
+        }
 
     }
 }
