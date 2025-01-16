@@ -54,7 +54,7 @@ export class AuthService {
   }
 
   login(authData: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}ControladorUsuario/login`, authData).pipe(
+    return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioControlador/login`, authData).pipe(
       tap((response: AuthResponse) => {
         localStorage.setItem('accessToken', response.stringToken);
         this.loggedIn.next(true);

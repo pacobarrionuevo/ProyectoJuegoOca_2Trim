@@ -97,12 +97,13 @@ namespace JuegoOcaBack.Controllers
         {
             // Regex para verificar si el usuario ingresó un email
             string emailPatron = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-            bool esEmail = Regex.IsMatch(usuarioLoginDto.UsuarioEmailOrApodo, emailPatron);
+
+            bool esEmail = Regex.IsMatch(usuarioLoginDto.UsuarioEmailOApodo, emailPatron);
 
             // Buscar usuario por email o apodo
             Usuario user = esEmail
-                ? _context.Usuarios.FirstOrDefault(u => u.UsuarioEmail == usuarioLoginDto.UsuarioEmailOrApodo)
-                : _context.Usuarios.FirstOrDefault(u => u.UsuarioApodo == usuarioLoginDto.UsuarioEmailOrApodo);
+                ? _context.Usuarios.FirstOrDefault(u => u.UsuarioEmail == usuarioLoginDto.UsuarioEmailOApodo)
+                : _context.Usuarios.FirstOrDefault(u => u.UsuarioApodo == usuarioLoginDto.UsuarioEmailOApodo);
 
             if (user == null)
             {
