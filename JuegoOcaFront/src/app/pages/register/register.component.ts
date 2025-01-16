@@ -13,7 +13,7 @@ import { Router, RouterModule } from '@angular/router';
 export class RegisterComponent {
   apodo: string = '';
   email: string = '';
-  contrasena: string = '';
+  UsuarioContrasena: string = '';
   confirmar_contrasena: string = '';
   foto_perfil: string = '';
   jwt: string = '';
@@ -24,7 +24,7 @@ export class RegisterComponent {
     const authData = {
       apodo: this.apodo,
       email: this.email,
-      contrasena: this.contrasena,
+      UsuarioContrasena: this.UsuarioContrasena,
       confirmar_contrasena: this.confirmar_contrasena,
       foto_perfil: this.foto_perfil
     };

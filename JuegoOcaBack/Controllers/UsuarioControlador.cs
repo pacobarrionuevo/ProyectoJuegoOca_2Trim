@@ -107,15 +107,20 @@ namespace JuegoOcaBack.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] UsuarioLoginDTO usuarioLoginDto)
         {
-            // Regex para verificar si el usuario ingresó un email
-            string emailPatron = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+            string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+            Usuario user;
 
-            bool esEmail = Regex.IsMatch(usuarioLoginDto.UsuarioEmailOApodo, emailPatron);
-
-            // Buscar usuario por email o apodo
-            Usuario user = esEmail
-                ? _context.Usuarios.FirstOrDefault(u => u.UsuarioEmail == usuarioLoginDto.UsuarioEmailOApodo)
-                : _context.Usuarios.FirstOrDefault(u => u.UsuarioApodo == usuarioLoginDto.UsuarioEmailOApodo);
+            // Comprueba si el input del usuario es un email o un apodo
+            if (Regex.IsMatch(usuarioLoginDto.UsuarioEmailOApodo, emailPattern))
+            {
+                // Busca por email
+                user = _context.Usuarios.FirstOrDefault(u => u.UsuarioEmail == usuarioLoginDto.UsuarioEmailOApodo);
+            }
+            else
+            {
+                // Busca por apodo
+                user = _context.Usuarios.FirstOrDefault(u => u.UsuarioApodo == usuarioLoginDto.UsuarioEmailOApodo);
+            }
 
             if (user == null)
             {
@@ -130,11 +135,11 @@ namespace JuegoOcaBack.Controllers
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Claims = new Dictionary<string, object>
-                {
-                    {"id", user.UsuarioId},
-                    {"Apodo", user.UsuarioApodo},
-                    {"Email", user.UsuarioEmail},
-                },
+        {
+            {"id", user.UsuarioId},
+            {"Apodo", user.UsuarioApodo},
+            {"Email", user.UsuarioEmail},
+        },
                 Expires = DateTime.UtcNow.AddDays(5),
                 SigningCredentials = new SigningCredentials(
                     _tokenParameters.IssuerSigningKey,
@@ -147,5 +152,6 @@ namespace JuegoOcaBack.Controllers
 
             return Ok(new { StringToken = accessToken, user.UsuarioId });
         }
+
     }
 }
