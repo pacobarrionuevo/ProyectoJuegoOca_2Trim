@@ -1,4 +1,3 @@
-<!--Añadir un iconito como de una puerta para que te lleve de vuelta al main-->
 <div class="general">
     <div class="cuadradoFuera">
         <div class="cajita">
@@ -7,21 +6,22 @@
             </h1>
         </div>
         <br>
-        <!-- <form (ngSubmit)="submit()" -->
-        <div class="inputs">
-            <input type="nombre" id="email" [(ngModel)]="emailoapodo" name="email" required placeholder="Introduce email o apodo">
-        </div>
-        <br>
-    
-        <div class="inputs">
-            <input type="password"id="password" [(ngModel)]="contrasena" name="password" placeholder="Introduce contraseña">
-        </div>
-        <br>
-    
-        <button type="submit" id="button">CONFIRMAR</button>
+        <form (ngSubmit)="submit()">
+            <div class="inputs">
+                <input type="text" id="email" [(ngModel)]="emailoapodo" name="emailoapodo" required placeholder="Introduce email o apodo">
+            </div>
+            <br>
+        
+            <div class="inputs">
+                <input type="password" id="password" [(ngModel)]="contrasena" name="contrasena" required placeholder="Introduce contraseña">
+            </div>
+            <br>
+        
+            <button type="submit" id="button">CONFIRMAR</button>
+        </form>
     
         <p id="llevarRegistro">
-            Si no tienes una cuenta, <b><u><a [routerLink]="'/register'">Registrate aquí</a></u></b>
+            Si no tienes una cuenta, <b><u><a [routerLink]="'/register'">Regístrate aquí</a></u></b>
         </p>
     </div>
 </div>
