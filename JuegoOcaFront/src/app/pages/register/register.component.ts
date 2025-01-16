@@ -11,11 +11,10 @@ import { Router, RouterModule } from '@angular/router';
   styleUrl: './register.component.css'
 })
 export class RegisterComponent {
-  //pasar id
   apodo: string = '';
   email: string = '';
-  password: string = '';
-  confirmar_password: string = '';
+  contrasena: string = '';
+  confirmar_contrasena: string = '';
   foto_perfil: string = '';
   jwt: string = '';
 
@@ -25,10 +24,12 @@ export class RegisterComponent {
     const authData = {
       apodo: this.apodo,
       email: this.email,
-      password: this.password,
-      confirmar_password: this.confirmar_password
+      contrasena: this.contrasena,
+      confirmar_contrasena: this.confirmar_contrasena,
+      foto_perfil: this.foto_perfil
     };
-
+    
+    console.log(authData);
     const result = await this.authService.register(authData).toPromise();
 
     if (result) {
