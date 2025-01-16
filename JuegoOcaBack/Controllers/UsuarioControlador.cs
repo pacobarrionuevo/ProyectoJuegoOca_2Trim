@@ -26,6 +26,18 @@ namespace JuegoOcaBack.Controllers
             _tokenParameters = jwtOptions.Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters;
         }
 
+        private UsuarioRegistrarseDTO ToDtoRegistro(Usuario users)
+        {
+            return new UsuarioRegistrarseDTO()
+            {
+                UsuarioApodo = users.UsuarioApodo,
+                UsuarioEmail = users.UsuarioEmail,
+                UsuarioContrasena = users.UsuarioContrasena,
+                UsuarioConfirmarContrasena = users.UsuarioConfirmarContrasena,
+                UsuarioFotoPerfil = users.UsuarioFotoPerfil
+            };
+        }
+
         private UsuarioDTO ToDto(Usuario users)
         {
             return new UsuarioDTO()
@@ -46,7 +58,7 @@ namespace JuegoOcaBack.Controllers
         }
 
         [HttpPost("Registro")]
-        public async Task<IActionResult> Register([FromBody] UsuarioDTO usuario)
+        public async Task<IActionResult> Register([FromBody] UsuarioRegistrarseDTO usuario)
         {
             if (_context.Usuarios.Any(Usuario => Usuario.UsuarioEmail == usuario.UsuarioEmail))
             {
@@ -69,7 +81,7 @@ namespace JuegoOcaBack.Controllers
 
             await _context.Usuarios.AddAsync(newUser);
             await _context.SaveChangesAsync();
-            UsuarioDTO userCreated = ToDto(newUser);
+            UsuarioRegistrarseDTO userCreated = ToDtoRegistro(newUser);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
