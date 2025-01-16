@@ -11,6 +11,7 @@ import { Router, RouterModule } from '@angular/router';
   styleUrl: './register.component.css'
 })
 export class RegisterComponent {
+  //pasar id
   apodo: string = '';
   email: string = '';
   password: string = '';
