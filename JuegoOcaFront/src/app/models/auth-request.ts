@@ -1,9 +1,8 @@
 export interface AuthRequest {
-    apodo?: string;
-    email?: string;
-    emailoapodo?: string;
-    contrasena: string;
-    confirmar_contrasena?: string;
-    foto_perfil?: string;
-  }
-  
+  UsuarioEmail?: string;
+  UsuarioApodo?: string;
+  UsuarioEmailOApodo?: string;
+  UsuarioContrasena: string;
+  UsuarioConfirmarContrasena?: string;
+  UsuarioFotoPerfil?: string;
+}

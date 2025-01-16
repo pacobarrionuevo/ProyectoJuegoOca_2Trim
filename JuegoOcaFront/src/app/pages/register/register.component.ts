@@ -11,22 +11,22 @@ import { Router, RouterModule } from '@angular/router';
   styleUrl: './register.component.css'
 })
 export class RegisterComponent {
-  apodo: string = '';
-  email: string = '';
-  contrasena: string = '';
-  confirmar_contrasena: string = '';
-  foto_perfil: string = '';
+  UsuarioApodo: string = '';
+  UsuarioEmail: string = '';
+  UsuarioContrasena: string = '';
+  UsuarioConfirmarContrasena: string = '';
+  UsuarioFotoPerfil: string = '';
   jwt: string = '';
 
   constructor (private authService: AuthService, private router: Router) {}
 
   async submit() {
     const authData = {
-      apodo: this.apodo,
-      email: this.email,
-      contrasena: this.contrasena,
-      confirmar_contrasena: this.confirmar_contrasena,
-      foto_perfil: this.foto_perfil
+      UsuarioApodo: this.UsuarioApodo,
+      UsuarioEmail: this.UsuarioEmail,
+      UsuarioContrasena: this.UsuarioContrasena,
+      UsuarioConfirmarContrasena: this.UsuarioConfirmarContrasena,
+      UsuarioFotoPerfil: this.UsuarioFotoPerfil
     };
     
     console.log(authData);

@@ -12,8 +12,8 @@ import { AuthRequest } from '../../models/auth-request';
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
-  emailoapodo: string = '';
-  contrasena: string = '';
+  UsuarioEmailOApodo: string = '';
+  UsuarioContrasena: string = '';
   jwt: string | null = null; 
   usuarioId: number | null = null;
 
@@ -25,7 +25,7 @@ export class LoginComponent {
   }
 
   async submit() {
-    const authData: AuthRequest = { emailoapodo: this.emailoapodo, contrasena: this.contrasena };
+    const authData: AuthRequest = { UsuarioEmailOApodo: this.UsuarioEmailOApodo, UsuarioContrasena: this.UsuarioContrasena };
     try {
       const result = await this.authService.login(authData).toPromise();
 
