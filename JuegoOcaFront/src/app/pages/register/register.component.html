@@ -2,11 +2,10 @@
     <div class="cuadradoFuera">
         <div class="cajita">
             <h1 id="registrarse">
-                <u>REGÍSTRATE</u>
+                <u>REGÍSTRATE.</u>
             </h1>
         </div>
         <br>
-        <!-- <form (ngSubmit)="submit()" -->
         <div class="inputs">
             <input type="nombre" placeholder="Introduce tu apodo">
         </div>
@@ -32,7 +31,7 @@
         </div>
         <br>
     
-        <button type="submit" id="button">CONFIRMAR</button>
+        <button type="submit" id="button" (click)="submit()">CONFIRMAR</button>
     
         <p id="llevarRegistro">
             Si ya tienes una cuenta, <b><u><a [routerLink]="'/login'">Inicia Sesión aquí</a></u></b>
