@@ -50,7 +50,7 @@ export class AuthService {
   }
 
   register(authData: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}ControladorUsuario/Registro`, authData);
+    return this.http.post<AuthResponse>(`${this.URL}UsuarioControlador/Registro`, authData);
   }
 
   login(authData: AuthRequest): Observable<AuthResponse> {
