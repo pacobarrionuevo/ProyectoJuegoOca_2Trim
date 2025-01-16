@@ -14,13 +14,13 @@ namespace JuegoOcaBack.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsuarioControlador : ControllerBase
+    public class UsuarioController : ControllerBase
     {
         private readonly DBContext _context;
         private readonly PasswordHelper passwordHelper;
         private readonly TokenValidationParameters _tokenParameters;
 
-        public UsuarioControlador(DBContext _dbContext, IOptionsMonitor<JwtBearerOptions> jwtOptions)
+        public UsuarioController(DBContext _dbContext, IOptionsMonitor<JwtBearerOptions> jwtOptions)
         {
             _context = _dbContext;
             _tokenParameters = jwtOptions.Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters;
