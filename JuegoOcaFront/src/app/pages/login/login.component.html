@@ -9,12 +9,12 @@
         <br>
         <!-- <form (ngSubmit)="submit()" -->
         <div class="inputs">
-            <input type="nombre" placeholder="Introduce email o apodo">
+            <input type="nombre" id="email" [(ngModel)]="emailoapodo" name="email" required placeholder="Introduce email o apodo">
         </div>
         <br>
     
         <div class="inputs">
-            <input type="password" placeholder="Introduce contraseña">
+            <input type="password"id="password" [(ngModel)]="contrasena" name="password" placeholder="Introduce contraseña">
         </div>
         <br>
     
