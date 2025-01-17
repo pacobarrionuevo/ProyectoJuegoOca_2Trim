@@ -12,32 +12,26 @@ import { AuthRequest } from '../../models/auth-request';
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
-  UsuarioEmailOApodo: string = '';
-  UsuarioContrasena: string = '';
+  emailoapodo: string = '';
+  contrasena: string = '';
   jwt: string | null = null; 
   usuarioId: number | null = null;
 
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
-    // Obtenemos el token desde el almacenamiento local en OnInit
     this.jwt = localStorage.getItem('accessToken'); 
   }
 
   async submit() {
-    const authData: AuthRequest = { UsuarioEmailOApodo: this.UsuarioEmailOApodo, UsuarioContrasena: this.UsuarioContrasena };
+    const authData: AuthRequest = { UsuarioEmailOApodo: this.emailoapodo, UsuarioContrasena: this.contrasena };
     try {
       const result = await this.authService.login(authData).toPromise();
-
       if (result) {
-        // Guarda el token y el ID del usuario en el localStorage
-        localStorage.setItem('accessToken', result.stringToken); 
-        localStorage.setItem('usuarioId', result.usuarioId.toString()); 
-
-        // Asigna el token y el ID a las variables locales
+        localStorage.setItem('accessToken', result.stringToken);
+        localStorage.setItem('usuarioId', result.usuarioId.toString());
         this.jwt = result.stringToken;
         this.usuarioId = result.usuarioId;
-
         console.log("Inicio de sesión exitoso.");
         this.router.navigate(['/']);
       } else {
@@ -45,6 +39,6 @@ export class LoginComponent {
       }
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
-    }
-  }
+    }
+  }
 }
