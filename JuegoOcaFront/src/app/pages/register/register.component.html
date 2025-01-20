@@ -2,32 +2,32 @@
     <div class="cuadradoFuera">
         <div class="cajita">
             <h1 id="registrarse">
-                <u>REGÍSTRATE.</u>
+                <u>REGÍSTRATE</u>
             </h1>
         </div>
         <br>
         <div class="inputs">
-            <input type="nombre" [(ngModel)]="UsuarioApodo" placeholder="Introduce tu apodo">
+            <input type="nombre" [(ngModel)]="apodo" placeholder="Introduce tu apodo">
         </div>
         <br>
     
         <div class="inputs">
-            <input type="email" [(ngModel)]="UsuarioEmail" placeholder="Introduce tu email">
+            <input type="email" [(ngModel)]="email" placeholder="Introduce tu email">
         </div>
         <br>
 
         <div class="inputs">
-            <input type="password" [(ngModel)]="UsuarioContrasena"  placeholder="Introduce tu contraseña">
+            <input type="password" [(ngModel)]="contrasena"  placeholder="Introduce tu contraseña">
         </div>
         <br>
 
         <div class="inputs">
-            <input type="password" [(ngModel)]="UsuarioConfirmarContrasena"  placeholder="Confirma tu contraseña">
+            <input type="password" [(ngModel)]="confirmar_contrasena"  placeholder="Confirma tu contraseña">
         </div>
         <br>
 
         <div class="inputs">
-            <input type="fotoPerfil" [(ngModel)]="UsuarioFotoPerfil" placeholder="¡Elige una foto de perfil!">
+            <input type="fotoPerfil" [(ngModel)]="foto_perfil" placeholder="¡Elige una foto de perfil!">
         </div>
         <br>
     
@@ -36,5 +36,5 @@
         <p id="llevarRegistro">
             Si ya tienes una cuenta, <b><u><a [routerLink]="'/login'">Inicia Sesión aquí</a></u></b>
         </p>
-    </div>
+    </div>
 </div>
