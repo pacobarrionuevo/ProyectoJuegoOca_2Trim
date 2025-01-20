@@ -14,20 +14,37 @@ import { AuthRequest } from '../../models/auth-request';
 export class LoginComponent {
   emailoapodo: string = '';
   contrasena: string = '';
+  recuerdame: boolean = false;
   jwt: string | null = null; 
   usuarioId: number | null = null;
 
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
-    this.jwt = localStorage.getItem('accessToken'); 
+    const authData = JSON.parse(localStorage.getItem('authData') || '{}');
+    this.emailoapodo = authData.emailoapodo || '';
+    this.contrasena = authData.contrasena || '';
+    this.recuerdame = authData.recuerdame || false;
   }
 
   async submit() {
-    const authData: AuthRequest = { UsuarioEmailOApodo: this.emailoapodo, UsuarioContrasena: this.contrasena };
+    const authData: AuthRequest = { 
+      UsuarioEmailOApodo: this.emailoapodo, 
+      UsuarioContrasena: this.contrasena 
+    };
+
     try {
       const result = await this.authService.login(authData).toPromise();
       if (result) {
+        if (this.recuerdame) {
+          localStorage.setItem('authData', JSON.stringify({
+            emailoapodo: this.emailoapodo,
+            contrasena: this.contrasena,
+            recuerdame: this.recuerdame
+          }));
+        } else {
+          localStorage.removeItem('authData');
+        }
         localStorage.setItem('accessToken', result.stringToken);
         localStorage.setItem('usuarioId', result.usuarioId.toString());
         this.jwt = result.stringToken;

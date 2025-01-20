@@ -21,4 +21,10 @@ export class AuthService {
   login(authData: AuthRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioControlador/login`, authData);
   }
+  logout(): void {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('usuarioId');
+    localStorage.removeItem('authData');
+  }
+  
 }
