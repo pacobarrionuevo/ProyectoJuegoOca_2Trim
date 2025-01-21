@@ -1,26 +1,36 @@
-import { Component } from '@angular/core';
-import { ImageService } from '../../services/image.service';
+import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { ImageService } from '../../services/image.service';
 import { AuthService } from '../../services/auth.service';
+import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-main',
   standalone: true,
-  imports: [RouterModule],
+  imports: [RouterModule, CommonModule],
   templateUrl: './main.component.html',
-  styleUrl: './main.component.css'
+  styleUrls: ['./main.component.css']
 })
-export class MainComponent {
+export class MainComponent implements OnInit {
   cubileteDados: string;
   tablero: string;
   fondo: string;
-  
+  isLoggedIn: boolean = false;
 
-  constructor(private imageService: ImageService, private authService : AuthService, private router: Router) {
+  constructor(private imageService: ImageService, private authService: AuthService, private router: Router) {
     this.cubileteDados = this.imageService.getImageUrl('CubileteDados.png');
     this.tablero = this.imageService.getImageUrl('TableroJuego.png');
     this.fondo = this.imageService.getImageUrl('FondoPagina.jpg');
-    
-}
-logout() { this.authService.logout(); this.router.navigate(['/login']); // Redirige al usuario a la página de login tras cerrar sesión
-}
+  }
+
+  ngOnInit(): void {
+    this.authService.isLoggedIn.subscribe(loggedIn => {
+      this.isLoggedIn = loggedIn;
+    });
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/login']); // Redirige al usuario a la página de login tras cerrar sesión
+  }
 }
