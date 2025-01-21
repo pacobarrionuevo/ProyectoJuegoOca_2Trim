@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable} from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 
 import { AuthRequest } from '../models/auth-request';
 import { AuthResponse } from '../models/auth-response';
@@ -14,17 +14,11 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  registerUser(userData: any, file: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('UsuarioApodo', userData.UsuarioApodo);
-    formData.append('UsuarioEmail', userData.UsuarioEmail);
-    formData.append('UsuarioContrasena', userData.UsuarioContrasena);
-    formData.append('UsuarioConfirmarContrasena', userData.UsuarioConfirmarContrasena);
-    formData.append('UsuarioFotoPerfil', file);
-
-    return this.http.post(`${this.URL}/api/UsuarioController/Registro`, formData);
+  // Método para registrar un nuevo usuario
+  register(authData: AuthRequest): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioControlador/Registro`, authData);
   }
   login(authData: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioController/login`, authData);
+    return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioControlador/login`, authData);
   }
 }

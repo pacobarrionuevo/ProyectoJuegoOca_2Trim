@@ -5,17 +5,33 @@
                 <u>REGÍSTRATE</u>
             </h1>
         </div>
-
+        <br>
+        <div class="inputs">
+            <input type="nombre" [(ngModel)]="apodo" placeholder="Introduce tu apodo">
+        </div>
+        <br>
+    
+        <div class="inputs">
+            <input type="email" [(ngModel)]="email" placeholder="Introduce tu email">
+        </div>
         <br>
 
-        <form (ngSubmit)="onRegister()">
-            <input type="text" name="UsuarioApodo" [(ngModel)]="user.UsuarioApodo" placeholder="Apodo" required>
-            <input type="email" name="UsuarioEmail" [(ngModel)]="user.UsuarioEmail" placeholder="Email" required>
-            <input type="password" name="UsuarioContrasena" [(ngModel)]="user.UsuarioContrasena" placeholder="Contraseña" required>
-            <input type="password" name="UsuarioConfirmarContrasena" [(ngModel)]="user.UsuarioConfirmarContrasena" placeholder="Confirmar Contraseña" required>
-            <input type="file" (change)="onFileSelected($event)" required>
-            <button type="submit">Registrar</button>
-          </form>
+        <div class="inputs">
+            <input type="password" [(ngModel)]="contrasena"  placeholder="Introduce tu contraseña">
+        </div>
+        <br>
+
+        <div class="inputs">
+            <input type="password" [(ngModel)]="confirmar_contrasena"  placeholder="Confirma tu contraseña">
+        </div>
+        <br>
+
+        <div class="inputs">
+            <input type="file" [(ngModel)]="foto_perfil" placeholder="¡Elige una foto de perfil!">
+        </div>
+        <br>
+    
+        <button type="submit" id="button" (click)="submit()">CONFIRMAR</button>
     
         <p id="llevarRegistro">
             Si ya tienes una cuenta, <b><u><a [routerLink]="'/login'">Inicia Sesión aquí</a></u></b>

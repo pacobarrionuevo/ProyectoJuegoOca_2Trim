@@ -61,7 +61,7 @@ namespace JuegoOcaBack.Controllers
         }
 
         [HttpPost("Registro")]
-        public async Task<IActionResult> Register([FromForm] UsuarioRegistrarseDTO usuario)
+        public async Task<IActionResult> Register([FromBody] UsuarioRegistrarseDTO usuario)
         {
             if (_context.Usuarios.Any(Usuario => Usuario.UsuarioEmail == usuario.UsuarioEmail))
             {

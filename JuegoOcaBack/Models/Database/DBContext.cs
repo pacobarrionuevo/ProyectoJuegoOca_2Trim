@@ -16,6 +16,7 @@ namespace JuegoOcaBack.Models.Database
         //Tablas de la base de datos
 
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Image> Images { get; set; }
 
         // Configuramos el EntityFramework para crear un archivo de BBDD Sqlite
 
