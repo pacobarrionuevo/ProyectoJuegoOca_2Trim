@@ -5,30 +5,43 @@
                 <u>REGÍSTRATE</u>
             </h1>
         </div>
+
         <br>
+
         <div class="inputs">
             <input type="nombre" [(ngModel)]="apodo" placeholder="Introduce tu apodo">
         </div>
+
         <br>
     
         <div class="inputs">
             <input type="email" [(ngModel)]="email" placeholder="Introduce tu email">
         </div>
+
         <br>
 
         <div class="inputs">
             <input type="password" [(ngModel)]="contrasena"  placeholder="Introduce tu contraseña">
         </div>
+
         <br>
 
         <div class="inputs">
             <input type="password" [(ngModel)]="confirmar_contrasena"  placeholder="Confirma tu contraseña">
         </div>
+
         <br>
 
-        <div class="inputs">
-            <input type="fotoPerfil" [(ngModel)]="foto_perfil" placeholder="¡Elige una foto de perfil!">
-        </div>
+        <dialog #addEditDialog>
+            <form [formGroup]="addOrEditForm" (ngSubmit)="createOrUpdateImage()">
+                <div class="inputs">
+                    <input type="fotoPerfil" accept="image/png, image/jpeg, image/jpg" [(ngModel)]="foto_perfil" 
+                    (change)="onFileSelected($event)"   placeholder="¡Elige una foto de perfil!">
+                </div>
+                <button type="button" (click)="closeDialog(addOrEditDialog)">Cancelar</button>
+            </form>
+        </dialog>
+        
         <br>
     
         <button type="submit" id="button" (click)="submit()">CONFIRMAR</button>

@@ -3,13 +3,20 @@ import { ApiService } from './api.service';
 import { Result } from '../models/result';
 import { Image } from '../models/image';
 import { CreateOrUpdateImageRequest } from '../models/create-update-image-request';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ImageService {
 
+  private baseURL = `${environment.apiUrl}/images`;
+
   constructor(private api: ApiService) { }
+
+  getImageUrl(imageName: string): string {
+    return `${this.baseURL}/${imageName}`;
+  }
 
   getAllImages(): Promise<Result<Image[]>> {
     return this.api.get<Image[]>('images');
