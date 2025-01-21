@@ -1,4 +1,6 @@
-﻿namespace JuegoOcaBack.Models.Database
+﻿using JuegoOcaBack.Models.Database.Repositorios;
+
+namespace JuegoOcaBack.Models.Database
 {
     public class UnitOfWork
     {
@@ -6,14 +8,12 @@
         private readonly DBContext _context;
 
         //Todas los repositorios de los productos que queremos guardar
+        public ImageRepository _imageRepository { get; init; }
 
-
-        // Exponer el DbContext
-        public DBContext Context => _context;
-
-        public UnitOfWork(DBContext context)
+        public UnitOfWork(DBContext context, ImageRepository imageRepository)
         {
             _context = context;
+            _imageRepository = imageRepository;
         }
 
         //Método para guardar

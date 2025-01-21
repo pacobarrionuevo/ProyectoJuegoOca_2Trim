@@ -1,25 +1,24 @@
 ﻿using JuegoOcaBack.Extensions;
 using JuegoOcaBack.Models.Database.Entidades;
+using JuegoOcaBack.Models.DTO;
 
 namespace JuegoOcaBack.Models.Mappers
 {
-    public class ImagenMapper
+    public class ImageMapper
     {
-        public IList<Usuario> AddImagenCorrecta(IList<Usuario> usuarios, HttpRequest httpRequest = null)
+        public ImageDto ToDto(Image image, HttpRequest httpRequest = null)
         {
-            foreach (Usuario user in usuarios)
+            return new ImageDto()
             {
-                user.UsuarioFotoPerfil = httpRequest is null ? user.UsuarioFotoPerfil : httpRequest.GetAbsoluteUrl("images/" + user.UsuarioFotoPerfil);
-            }
-
-            return usuarios;
+                Id = image.Id,
+                Name = image.Name,
+                Url = httpRequest is null ? image.Path : httpRequest.GetAbsoluteUrl(image.Path),
+            };
         }
 
-        public Usuario AddImagenCorrecta(Usuario user, HttpRequest httpRequest = null)
+        public IEnumerable<ImageDto> ToDto(IEnumerable<Image> images, HttpRequest httpRequest = null)
         {
-            string ruta = "images/" + user.UsuarioFotoPerfil;
-            user.UsuarioFotoPerfil = httpRequest.GetAbsoluteUrl(ruta);
-            return user;
+            return images.Select(image => ToDto(image, httpRequest));
         }
     }
 }
