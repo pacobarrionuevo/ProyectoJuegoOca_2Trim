@@ -1,14 +1,15 @@
-﻿using JuegoOcaBack.Models.DTO;
+﻿using JuegoOcaBack.Models.Database.Entidades;
+using JuegoOcaBack.Models.DTO;
 using JuegoOcaBack.Models.Mappers;
+using JuegoOcaBack.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace JuegoOcaBack.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ImageController : ControllerBase
+    public class ImagesController : ControllerBase
     {
         private readonly ImageService _service;
         private readonly ImageMapper _mapper;

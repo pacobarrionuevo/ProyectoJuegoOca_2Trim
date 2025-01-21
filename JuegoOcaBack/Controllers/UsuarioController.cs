@@ -36,7 +36,7 @@ namespace JuegoOcaBack.Controllers
                 UsuarioEmail = users.UsuarioEmail,
                 UsuarioContrasena = users.UsuarioContrasena,
                 UsuarioConfirmarContrasena = users.UsuarioConfirmarContrasena,
-                UsuarioFotoPerfil = users.UsuarioFotoPerfil
+                UsuarioFotoPerfil = null
             };
         }
         
@@ -50,7 +50,7 @@ namespace JuegoOcaBack.Controllers
                 UsuarioEmail = users.UsuarioEmail,
                 UsuarioContrasena = users.UsuarioContrasena,
                 UsuarioConfirmarContrasena = users.UsuarioConfirmarContrasena,
-                UsuarioFotoPerfil = users.UsuarioFotoPerfil
+                UsuarioFotoPerfil = null
             };
         }
 
