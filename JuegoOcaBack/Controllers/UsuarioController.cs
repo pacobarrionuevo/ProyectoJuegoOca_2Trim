@@ -61,7 +61,7 @@ namespace JuegoOcaBack.Controllers
         }
 
         [HttpPost("Registro")]
-        public async Task<IActionResult> Register([FromBody] UsuarioRegistrarseDTO usuario)
+        public async Task<IActionResult> Register([FromForm] UsuarioRegistrarseDTO usuario)
         {
             if (_context.Usuarios.Any(Usuario => Usuario.UsuarioEmail == usuario.UsuarioEmail))
             {
@@ -79,7 +79,7 @@ namespace JuegoOcaBack.Controllers
             }
 
             string rutaFotoPerfil = $"{Guid.NewGuid()}_{usuario.UsuarioFotoPerfil.FileName}"; 
-            await StoreImageAsync("images/"+ rutaFotoPerfil, usuario.UsuarioFotoPerfil);
+            await StoreImageAsync("fotos/"+ rutaFotoPerfil, usuario.UsuarioFotoPerfil);
 
             Usuario newUser = new Usuario()
             {

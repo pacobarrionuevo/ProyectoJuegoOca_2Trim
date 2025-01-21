@@ -41,7 +41,7 @@ namespace JuegoOcaBack.Controllers
         {
             Image newImage = await _service.InsertAsync(createImage);
 
-            return Created($"images/{newImage.Id}", _mapper.ToDto(newImage));
+            return Created($"fotos/{newImage.Id}", _mapper.ToDto(newImage));
         }
 
         [HttpPut("{id}")]
