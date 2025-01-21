@@ -1,16 +1,37 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../../environments/environment';
+import { ApiService } from './api.service';
+import { Result } from '../models/result';
+import { Image } from '../models/image';
+import { CreateOrUpdateImageRequest } from '../models/create-update-image-request';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ImageService {
 
-  private baseURL = `${environment.apiUrl}/images`;
+  constructor(private api: ApiService) { }
 
-  constructor() {}
+  getAllImages(): Promise<Result<Image[]>> {
+    return this.api.get<Image[]>('images');
+  }
 
-  getImageUrl(imageName: string): string {
-    return `${this.baseURL}/${imageName}`;
+  addImage(createOrUpdateImageRequest: CreateOrUpdateImageRequest): Promise<Result<Image>> {
+    const formData = new FormData();
+    formData.append('name', createOrUpdateImageRequest.name);
+    formData.append('file', createOrUpdateImageRequest.file);
+
+    return this.api.post<Image>('images', formData);
+  }
+
+  updateImage(id: number, createOrUpdateImageRequest: CreateOrUpdateImageRequest): Promise<Result> {
+    const formData = new FormData();
+    formData.append('name', createOrUpdateImageRequest.name);
+    formData.append('file', createOrUpdateImageRequest.file);
+
+    return this.api.put(`images/${id}`, formData);
+  }
+
+  deleteImage(id: number): Promise<Result> {
+    return this.api.delete(`images/${id}`);
   }
 }
