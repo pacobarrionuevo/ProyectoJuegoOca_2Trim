@@ -50,7 +50,7 @@ export class LoginComponent {
       } else {
         localStorage.removeItem('authData');
       }
-      this.router.navigate(['/']);
+      this.router.navigate(['/menu']);
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
     }
