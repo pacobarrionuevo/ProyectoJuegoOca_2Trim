@@ -6,32 +6,33 @@
             </h1>
         </div>
         <br>
-        <div class="inputs">
-            <input type="nombre" [(ngModel)]="apodo" placeholder="Introduce tu apodo">
-        </div>
+        <!--JUNTAR SUBMITSTSTSTSTST-->
+        <form [formGroup]="addOrEditForm" (ngSubmit)="createOrUpdateImage()">
+            <label>
+                Apodo:
+                <input type="text" formControlName="Apodo"/> 
+            </label>
+            <label>
+                Email:
+                <input type="text" formControlName="Email"/> 
+            </label>
+            <label>
+                Password:
+                <input type="password" formControlName="Password"/> 
+            </label>
+            <label>
+                Confirmar Password:
+                <input type="text" formControlName="ConfirmarPassword"/> 
+            </label>
+            <label>
+                Foto de perfil:
+                <input type="file" accept="image/png, image/jpg, image/jpeg" (change)="onFileSelected($event)"/>
+            </label>
+            <button type="button" (click)="closeDialog(addOrEditDialog)">Cancelar</button>
+            <input type="submit" [disabled]="!addOrEditForm.valid" />    
+        </form>
+        
         <br>
-    
-        <div class="inputs">
-            <input type="email" [(ngModel)]="email" placeholder="Introduce tu email">
-        </div>
-        <br>
-
-        <div class="inputs">
-            <input type="password" [(ngModel)]="contrasena"  placeholder="Introduce tu contraseña">
-        </div>
-        <br>
-
-        <div class="inputs">
-            <input type="password" [(ngModel)]="confirmar_contrasena"  placeholder="Confirma tu contraseña">
-        </div>
-        <br>
-
-        <div class="inputs">
-            <input type="file" [(ngModel)]="foto_perfil" placeholder="¡Elige una foto de perfil!">
-        </div>
-        <br>
-    
-        <button type="submit" id="button" (click)="submit()">CONFIRMAR</button>
     
         <p id="llevarRegistro">
             Si ya tienes una cuenta, <b><u><a [routerLink]="'/login'">Inicia Sesión aquí</a></u></b>
