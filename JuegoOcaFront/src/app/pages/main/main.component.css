@@ -19,6 +19,7 @@ h1, h2 {
 
 .informacion {
     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     background-color: #F4E19C;
     padding: 20px;
@@ -29,30 +30,31 @@ h1, h2 {
 }
 
 .informacion img {
-    width: 50%;
+    width: 100%;
+    max-width: 400px;
     border-radius: 10px;
+    margin: 0 auto;
 }
 
 .informacion .texto {
-    width: 50%;
-    font-size: 22px;
+    width: 100%;
+    font-size: 1rem;
     color: #7E612C;
-    position: relative;
-}
-
-.informacion .imagenCubilete {
-    width:350px; 
-    height:200px; 
-    position: absolute;
-    top: 70%;   
-    left: 50%;  
-    transform: translate(-50%, -50%); 
+    text-align: center;
 }
 
 .informacion h2 {
     color: #B63A3A;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     margin-bottom: 10px;
+}
+
+.informacion .imagenCubilete {
+    width: 200px;
+    height: auto;
+    position: static;
+    transform: none;
+    margin: 20px auto 0;
 }
 
 .reglas {
@@ -64,7 +66,7 @@ h1, h2 {
 
 .reglas h2 {
     color: #B63A3A;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     margin-bottom: 10px;
     text-align: center;
 }
@@ -72,10 +74,12 @@ h1, h2 {
 .reglas-lista {
     list-style: none;
     padding: 0;
+    margin: 0 auto;
+    max-width: 600px;
 }
 
 .reglas-lista li {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: #7E612C;
     margin-bottom: 15px;
     display: flex;
@@ -90,4 +94,54 @@ h1, h2 {
     border-radius: 50%;
     margin-right: 10px;
     margin-top: 5px;
+}
+
+
+
+@media (max-width: 768px) {
+    .juego-de-la-oca {
+        font-size: 2rem;
+    }
+
+    .informacion {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .informacion .texto {
+        font-size: 0.9rem;
+    }
+
+    .reglas-lista li {
+        font-size: 0.8rem;
+    }
+
+    .botones button {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .juego-de-la-oca {
+        font-size: 1.8rem;
+    }
+
+    .informacion img {
+        max-width: 100%;
+    }
+
+    .informacion .texto {
+        font-size: 0.8rem;
+    }
+
+    .reglas-lista li {
+        font-size: 0.75rem;
+    }
+
+    .botones button {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
 }
