@@ -61,7 +61,7 @@ namespace JuegoOcaBack.Controllers
         }
 
         [HttpPost("Registro")]
-        public async Task<IActionResult> Register([FromBody] UsuarioRegistrarseDTO usuario)
+        public async Task<IActionResult> Register([FromForm] UsuarioRegistrarseDTO usuario)
         {
             if (_context.Usuarios.Any(Usuario => Usuario.UsuarioEmail == usuario.UsuarioEmail))
             {
@@ -78,6 +78,7 @@ namespace JuegoOcaBack.Controllers
                 return BadRequest("No se ha elegido foto de perfil");
             }
 
+            //Eso guarda la ruta
             string rutaFotoPerfil = $"{Guid.NewGuid()}_{usuario.UsuarioFotoPerfil.FileName}"; 
             await StoreImageAsync("fotos/"+ rutaFotoPerfil, usuario.UsuarioFotoPerfil);
 

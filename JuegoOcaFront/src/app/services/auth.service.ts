@@ -16,9 +16,9 @@ export class AuthService {
 
   // Método para registrar un nuevo usuario
   register(authData: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioControlador/Registro`, authData);
+    return this.http.post<AuthResponse>(`${this.URL}/api/Usuario/Registro`, authData);
   }
   login(authData: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioControlador/login`, authData);
+    return this.http.post<AuthResponse>(`${this.URL}/api/Usuario/Login`, authData);
   }
 }
