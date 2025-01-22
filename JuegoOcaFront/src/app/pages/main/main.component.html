@@ -3,7 +3,7 @@
   
     <div class="botones">
       <button *ngIf="!isLoggedIn" [routerLink]="'/login'">Inicia Sesión</button>
-      <button>MENÚ</button>
+       <button *ngIf=" isLoggedIn" [routerLink]="'/menu'">Menú</button>
       <button *ngIf="isLoggedIn" (click)="logout()">Cerrar Sesión</button>
     </div>
   
