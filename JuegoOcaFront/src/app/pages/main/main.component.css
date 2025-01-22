@@ -17,26 +17,6 @@ h1, h2 {
     margin-bottom: 30px;
 }
 
-.botones {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 40px;
-}
-
-.botones button {
-    background-color: #DAC694;
-    border: none;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #3F2E15;
-    padding: 15px 30px;
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    text-transform: uppercase;
-}
-
 .informacion {
     display: flex;
     gap: 20px;
