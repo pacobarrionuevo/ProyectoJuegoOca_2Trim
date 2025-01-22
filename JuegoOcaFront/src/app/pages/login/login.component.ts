@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -11,10 +11,10 @@ import { AuthRequest } from '../../models/auth-request';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent {
   emailoapodo: string = '';
   contrasena: string = '';
-  remember: boolean = false;
+  recuerdame: boolean = false;
   jwt: string | null = null; 
   usuarioId: number | null = null;
 
@@ -25,11 +25,13 @@ export class LoginComponent implements OnInit {
     if (savedAuthData.recuerdame) {
       this.emailoapodo = savedAuthData.emailoapodo || '';
       this.contrasena = savedAuthData.contrasena || '';
-      this.remember = savedAuthData.remember || false;
+      this.recuerdame = savedAuthData.recuerdame || false;
     }
-
-    this.jwt = localStorage.getItem('accessToken'); 
+  
+    // Verifica los dos Storage para el token
+    this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
   }
+  
 
   async submit() {
     const authData: AuthRequest = { 
@@ -38,26 +40,17 @@ export class LoginComponent implements OnInit {
     };
 
     try {
-      const result = await this.authService.login(authData).toPromise();
-      if (result) {
-        if (this.remember) {
-          localStorage.setItem('authData', JSON.stringify({
-            emailoapodo: this.emailoapodo,
-            contrasena: this.contrasena,
-            recuerdame: this.remember
-          }));
-        } else {
-          localStorage.removeItem('authData');
-        }
-        localStorage.setItem('accessToken', result.stringToken);
-        localStorage.setItem('usuarioId', result.usuarioId.toString());
-        this.jwt = result.stringToken;
-        this.usuarioId = result.usuarioId;
-        console.log("Inicio de sesión exitoso.");
-        this.router.navigate(['/']);
+      await this.authService.login(authData, this.recuerdame).toPromise();
+      if (this.recuerdame) {
+        localStorage.setItem('authData', JSON.stringify({
+          emailoapodo: this.emailoapodo,
+          contrasena: this.contrasena,
+          recuerdame: this.recuerdame
+        }));
       } else {
-        console.error("No se recibió un token de acceso.");
+        localStorage.removeItem('authData');
       }
+      this.router.navigate(['/']);
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
     }

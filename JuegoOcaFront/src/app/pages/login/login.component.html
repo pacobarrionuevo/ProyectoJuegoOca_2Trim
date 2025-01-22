@@ -17,8 +17,7 @@
             <br>
             <div class="inputs">
                 <label>
-                    <input type="checkbox" [(ngModel)]="recuerdame" name="recordarme"> Recuérdame
-                </label>
+                <input type="checkbox" [(ngModel)]="recuerdame" [ngModelOptions]="{standalone: true}"/>Recuérdame </label>
             </div>
             <br>
             <button type="submit" id="button">CONFIRMAR</button>

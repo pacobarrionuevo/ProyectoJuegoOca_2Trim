@@ -5,4 +5,5 @@
     UsuarioContrasena: string;
     UsuarioConfirmarContrasena?: string;
     UsuarioFotoPerfil?: string;
+    Remember?:boolean;
   }
