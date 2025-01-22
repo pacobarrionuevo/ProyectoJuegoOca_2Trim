@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -9,22 +9,26 @@ import { AuthRequest } from '../../models/auth-request';
   standalone: true,
   imports: [RouterModule, FormsModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   emailoapodo: string = '';
   contrasena: string = '';
-  recuerdame: boolean = false;
+  remember: boolean = false;
   jwt: string | null = null; 
   usuarioId: number | null = null;
 
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
-    const authData = JSON.parse(localStorage.getItem('authData') || '{}');
-    this.emailoapodo = authData.emailoapodo || '';
-    this.contrasena = authData.contrasena || '';
-    this.recuerdame = authData.recuerdame || false;
+    const savedAuthData = JSON.parse(localStorage.getItem('authData') || '{}');
+    if (savedAuthData.recuerdame) {
+      this.emailoapodo = savedAuthData.emailoapodo || '';
+      this.contrasena = savedAuthData.contrasena || '';
+      this.remember = savedAuthData.remember || false;
+    }
+
+    this.jwt = localStorage.getItem('accessToken'); 
   }
 
   async submit() {
@@ -36,11 +40,11 @@ export class LoginComponent {
     try {
       const result = await this.authService.login(authData).toPromise();
       if (result) {
-        if (this.recuerdame) {
+        if (this.remember) {
           localStorage.setItem('authData', JSON.stringify({
             emailoapodo: this.emailoapodo,
             contrasena: this.contrasena,
-            recuerdame: this.recuerdame
+            recuerdame: this.remember
           }));
         } else {
           localStorage.removeItem('authData');
