@@ -78,16 +78,14 @@ export class RegisterComponent implements OnInit {
       return;
     }
   
-    // Crear FormData
     const formData = new FormData();
     formData.append('UsuarioApodo', this.addOrEditForm.get('Apodo')?.value);
     formData.append('UsuarioEmail', this.addOrEditForm.get('Email')?.value);
     formData.append('UsuarioContrasena', this.addOrEditForm.get('Password')?.value);
     formData.append('UsuarioConfirmarContrasena', this.addOrEditForm.get('ConfirmarPassword')?.value);
-    formData.append('UsuarioFotoPerfil', file); // Añadir la foto de perfil
+    formData.append('UsuarioFotoPerfil', file);
   
     try {
-      // Llamar al servicio de autenticación
       const result = await this.authService.register(formData).toPromise();
       if (result) {
         localStorage.setItem('accessToken', result.stringToken);

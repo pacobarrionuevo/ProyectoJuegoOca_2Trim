@@ -78,6 +78,9 @@ app.MapControllers();
 
 await InitDatabaseAsync(app.Services);
 
+// Empieza el verdadero reto
+app.UseWebSockets();
+
 // Empezamos a atender a las peticiones de nuestro servidor 
 await app.RunAsync();
 
