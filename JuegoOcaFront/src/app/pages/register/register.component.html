@@ -7,30 +7,38 @@
         </div>
         <br>
         <!--JUNTAR SUBMITS-->
-        <form [formGroup]="addOrEditForm" (ngSubmit)="submit()">
-            <label>
-                Apodo:
-                <input type="text" formControlName="Apodo"/> 
-            </label>
-            <label>
-                Email:
-                <input type="text" formControlName="Email"/> 
-            </label>
-            <label>
-                Password:
-                <input type="password" formControlName="Password"/> 
-            </label>
-            <label>
-                Confirmar Password:
-                <input type="text" formControlName="ConfirmarPassword"/> 
-            </label>
-            <label>
-                Foto de perfil:
-                <input type="file" accept="image/png, image/jpg, image/jpeg" (change)="onFileSelected($event)"/>
-            </label>
-            <button type="button" (click)="closeDialog(addOrEditDialog)">Cancelar</button>
-            <input type="submit" [disabled]="!addOrEditForm.valid" />    
-        </form>
+        <div class="formulario">
+            <form [formGroup]="addOrEditForm" (ngSubmit)="submit()">
+                <br>
+                <label class="label">
+                    <b>Apodo:</b>&nbsp;
+                    <input type="text" formControlName="Apodo"/> 
+                </label>
+                <br>
+                <label class="label">
+                    <b>Email:</b>&nbsp;
+                    <input type="text" formControlName="Email"/> 
+                </label>
+                <br>
+                <label class="label">
+                    <b>Contraseña:</b>&nbsp;
+                    <input type="password" formControlName="Password"/> 
+                </label>
+                <br>
+                <label class="label">
+                    <b>Confirmar Contraseña:</b>&nbsp;
+                    <input type="password" formControlName="ConfirmarPassword"/> 
+                </label>
+                <br>
+                <label class="label">
+                    <b>Foto de perfil:</b>&nbsp;
+                    <input type="file" accept="image/png, image/jpg, image/jpeg" (change)="onFileSelected($event)"/>
+                </label>
+                <br>
+                <br>
+                <input type="submit" [disabled]="!addOrEditForm.valid" />    
+            </form>
+        </div>
         
         <br>
     
