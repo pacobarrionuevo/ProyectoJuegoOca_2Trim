@@ -24,12 +24,12 @@ export class AuthService {
     return this.loggedIn.asObservable();
   }
 
-  register(authData: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioControlador/Registro`, authData);
+  register(formData: FormData): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.URL}/api/Usuario/Registro`, formData, {headers: {}});
   }
 
   login(authData: AuthRequest, rememberMe: boolean): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}/api/UsuarioControlador/login`, authData).pipe(
+    return this.http.post<AuthResponse>(`${this.URL}/api/Usuario/login`, authData).pipe(
       tap((response: AuthResponse) => {
         // Borra ambos Storage antes de guardar el token
         localStorage.removeItem('accessToken');
