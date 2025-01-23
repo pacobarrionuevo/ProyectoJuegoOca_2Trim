@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Result } from '../models/result';
 import { Image } from '../models/image';
-import { CreateOrUpdateImageRequest } from '../models/create-update-image-request';
 import { environment } from '../../environments/environment';
+import { CreateOrUpdateImageRequest } from '../models/create-update-imagen-request';
 
 @Injectable({
   providedIn: 'root'

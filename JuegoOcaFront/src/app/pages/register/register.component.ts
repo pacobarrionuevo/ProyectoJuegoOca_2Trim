@@ -70,50 +70,25 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  async createOrUpdateImage() {
-    const createOrUpdateImageRequest: CreateOrUpdateImageRequest = {
-      name: this.addOrEditForm.get('name')?.value,
-      file: this.addOrEditForm.get('file')?.value as File
-    };
-
-    // Añadir nueva imagen
-    if (this.imageToEdit == null) {
-      const request = await this.imageService.addImage(createOrUpdateImageRequest);
-
-      if (request.success) {
-        alert('Imagen añadida con éxito');
-        this.closeDialog(this.addOrEditDialog);
-        this.upateImageList();
-      } else {
-        alert(`Ha ocurrido un error: ${request.error}`)
-      }
-    } 
-    // Actualizar imagen existente
-    else {
-      const request = await this.imageService.updateImage(this.imageToEdit.id, createOrUpdateImageRequest);
-
-      if (request.success) {
-        alert('Imagen actualizada con éxito');
-        this.closeDialog(this.addOrEditDialog);
-        this.upateImageList();
-      } else {
-        alert(`Ha ocurrido un error: ${request.error}`)
-      }
-    }
-  }
-
   async submit() {
-    const authData: AuthRequest = {
-      UsuarioApodo: this.apodo,
-      UsuarioEmail: this.email,
-      UsuarioContrasena: this.contrasena,
-      UsuarioConfirmarContrasena: this.confirmar_contrasena,
-      UsuarioFotoPerfil: this.foto_perfil
-    };
+    const file = this.addOrEditForm.get('file')?.value as File;
   
-
+    if (!file) {
+      alert("Por favor, selecciona una foto de perfil.");
+      return;
+    }
+  
+    // Crear FormData
+    const formData = new FormData();
+    formData.append('UsuarioApodo', this.addOrEditForm.get('Apodo')?.value);
+    formData.append('UsuarioEmail', this.addOrEditForm.get('Email')?.value);
+    formData.append('UsuarioContrasena', this.addOrEditForm.get('Password')?.value);
+    formData.append('UsuarioConfirmarContrasena', this.addOrEditForm.get('ConfirmarPassword')?.value);
+    formData.append('UsuarioFotoPerfil', file); // Añadir la foto de perfil
+  
     try {
-      const result = await this.authService.register(authData).toPromise();
+      // Llamar al servicio de autenticación
+      const result = await this.authService.register(formData).toPromise();
       if (result) {
         localStorage.setItem('accessToken', result.stringToken);
         this.jwt = result.stringToken;
@@ -126,4 +101,6 @@ export class RegisterComponent implements OnInit {
       console.error("Error al registrar:", error);
     }
   }
+  
+  
 }
