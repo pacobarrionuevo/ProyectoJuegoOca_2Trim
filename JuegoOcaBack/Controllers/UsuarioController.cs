@@ -9,23 +9,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace JuegoOcaBack.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsuarioControlador : ControllerBase
+    public class UsuarioController : ControllerBase
     {
         private readonly DBContext _context;
         private readonly PasswordHelper passwordHelper;
         private readonly TokenValidationParameters _tokenParameters;
 
-        public UsuarioControlador(DBContext _dbContext, IOptionsMonitor<JwtBearerOptions> jwtOptions)
+        public UsuarioController(DBContext _dbContext, IOptionsMonitor<JwtBearerOptions> jwtOptions)
         {
             _context = _dbContext;
             _tokenParameters = jwtOptions.Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters;
         }
 
+        
         private UsuarioRegistrarseDTO ToDtoRegistro(Usuario users)
         {
             return new UsuarioRegistrarseDTO()
@@ -34,9 +36,10 @@ namespace JuegoOcaBack.Controllers
                 UsuarioEmail = users.UsuarioEmail,
                 UsuarioContrasena = users.UsuarioContrasena,
                 UsuarioConfirmarContrasena = users.UsuarioConfirmarContrasena,
-                UsuarioFotoPerfil = users.UsuarioFotoPerfil
+                UsuarioFotoPerfil = null
             };
         }
+        
 
         private UsuarioDTO ToDto(Usuario users)
         {
@@ -47,7 +50,7 @@ namespace JuegoOcaBack.Controllers
                 UsuarioEmail = users.UsuarioEmail,
                 UsuarioContrasena = users.UsuarioContrasena,
                 UsuarioConfirmarContrasena = users.UsuarioConfirmarContrasena,
-                UsuarioFotoPerfil = users.UsuarioFotoPerfil
+                UsuarioFotoPerfil = null
             };
         }
 
@@ -58,7 +61,7 @@ namespace JuegoOcaBack.Controllers
         }
 
         [HttpPost("Registro")]
-        public async Task<IActionResult> Register([FromBody] UsuarioRegistrarseDTO usuario)
+        public async Task<IActionResult> Register([FromForm] UsuarioRegistrarseDTO usuario)
         {
             if (_context.Usuarios.Any(Usuario => Usuario.UsuarioEmail == usuario.UsuarioEmail))
             {
@@ -70,13 +73,22 @@ namespace JuegoOcaBack.Controllers
                 return BadRequest("Las contraseñas no coinciden");
             }
 
+            if (usuario.UsuarioFotoPerfil == null || usuario.UsuarioFotoPerfil.Length == 0)
+            {
+                return BadRequest("No se ha elegido foto de perfil");
+            }
+
+            //Eso guarda la ruta
+            string rutaFotoPerfil = $"{Guid.NewGuid()}_{usuario.UsuarioFotoPerfil.FileName}"; 
+            await StoreImageAsync("fotos/"+ rutaFotoPerfil, usuario.UsuarioFotoPerfil);
+
             Usuario newUser = new Usuario()
             {
                 UsuarioApodo = usuario.UsuarioApodo,
                 UsuarioEmail = usuario.UsuarioEmail,
                 UsuarioContrasena = PasswordHelper.Hash(usuario.UsuarioContrasena),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash(usuario.UsuarioConfirmarContrasena),
-                UsuarioFotoPerfil = usuario.UsuarioFotoPerfil
+                UsuarioFotoPerfil = rutaFotoPerfil
             };
 
             await _context.Usuarios.AddAsync(newUser);
@@ -151,6 +163,13 @@ namespace JuegoOcaBack.Controllers
             string accessToken = tokenHandler.WriteToken(token);
 
             return Ok(new { StringToken = accessToken, user.UsuarioId });
+        }
+
+        private async Task StoreImageAsync(string relativePath, IFormFile file)
+        {
+            using Stream stream = file.OpenReadStream();
+
+            await FileHelper.SaveAsync(stream, relativePath);
         }
 
     }

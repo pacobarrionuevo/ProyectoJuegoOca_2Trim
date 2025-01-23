@@ -53,6 +53,6 @@ export class LoginComponent {
       this.router.navigate(['/menu']);
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
-    }
-  }
+    }
+  }
 }

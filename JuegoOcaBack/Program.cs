@@ -3,6 +3,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using JuegoOcaBack;
 using JuegoOcaBack.Models.Database;
+using JuegoOcaBack.Models.Database.Repositorios;
+using JuegoOcaBack.Models.Mappers;
+using JuegoOcaBack.Services;
 using Microsoft.IdentityModel.Tokens;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
@@ -20,6 +23,11 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services.AddScoped<DBContext>();
 builder.Services.AddScoped<UnitOfWork>();
+builder.Services.AddScoped<ImageRepository>();
+
+builder.Services.AddTransient<ImageService>();
+
+builder.Services.AddTransient<ImageMapper>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
