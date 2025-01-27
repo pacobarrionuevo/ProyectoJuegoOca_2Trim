@@ -6,6 +6,7 @@ using JuegoOcaBack.Models.Database;
 using JuegoOcaBack.Models.Database.Repositorios;
 using JuegoOcaBack.Models.Mappers;
 using JuegoOcaBack.Services;
+using JuegoOcaBack.WebSocketAdvanced;
 using Microsoft.IdentityModel.Tokens;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
@@ -28,6 +29,8 @@ builder.Services.AddScoped<ImageRepository>();
 builder.Services.AddTransient<ImageService>();
 
 builder.Services.AddTransient<ImageMapper>();
+
+builder.Services.AddTransient<Middleware>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -67,9 +70,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
 app.UseCors();
+
+app.UseStaticFiles();
+
+// Empieza el verdadero reto
+app.UseWebSockets();
+
+app.UseMiddleware<Middleware>();
+
+app.UseHttpsRedirection();
+
+// routing
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -77,9 +89,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 await InitDatabaseAsync(app.Services);
-
-// Empieza el verdadero reto
-app.UseWebSockets();
 
 // Empezamos a atender a las peticiones de nuestro servidor 
 await app.RunAsync();

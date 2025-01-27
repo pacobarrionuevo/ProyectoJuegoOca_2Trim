@@ -15,6 +15,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         // Eventos para notificar cuando se recibe un mensaje o se desconecta un usuario
         public event Func<WebSocketHandler, string, Task> MessageReceived;
+        // manejar más aparte de strings
         public event Func<WebSocketHandler, Task> Disconnected;
 
         public WebSocketHandler(int id, WebSocket webSocket)
