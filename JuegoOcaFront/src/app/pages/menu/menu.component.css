@@ -1,0 +1,179 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    color: #333;
+  }
+  
+  .sidebar {
+    width: 250px;
+    background: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .profile-section {
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 20px;
+  }
+  
+  .avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
+  
+  .username {
+    font-size: 24px;
+    color: #5a738e;
+    margin: 10px 0;
+  }
+  
+  .btn {
+    background: #3498db;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .btn:hover {
+    background-color: #2980b9;
+  }
+  
+  .search-section {
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 20px;
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    border: 1px solid #cccccc;
+    box-sizing: border-box;
+  }
+  
+  .friends-section {
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 20px;
+  }
+  
+  .friend {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .friend-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  .friend-username {
+    flex: 1;
+    font-size: 18px;
+    color: #5a738e;
+  }
+  
+  .friend-status {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .friend-status.connected {
+    color: green;
+  }
+  
+  .friend-status.disconnected {
+    color: red;
+  }
+  
+  .friend-status.playing {
+    color: orange;
+  }
+  
+  .requests-section {
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 20px;
+  }
+  
+  .request {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .request-username {
+    flex: 1;
+    font-size: 18px;
+    color: #5a738e;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .actions .btn {
+    padding: 5px 10px;
+  }
+  
+  .active-users-section {
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 20px;
+  }
+  
+  .active-users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .active-user {
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+  }
+  
+  .active-user-info {
+    flex: 1;
+    font-size: 18px;
+    color: #5a738e;
+  }
+  
+  .active-user-status {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .matchmaking-button {
+    background: #3498db;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+  }
+  
+  .matchmaking-button:hover {
+    background-color: #2980b9;
+  }
+  
