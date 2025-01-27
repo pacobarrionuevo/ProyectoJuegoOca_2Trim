@@ -78,7 +78,6 @@ app.UseStaticFiles();
 app.UseWebSockets();
 
 app.UseMiddleware<Middleware>();
-
 app.UseHttpsRedirection();
 
 // routing
