@@ -1,46 +1,30 @@
-  <div class="sidebar">
-    <div class="profile-section">
-      <!--La imagen tiene que ser la ruta del backend-->
-      <img src="path-to-avatar.png" alt="profilePicture" class="profilePicture">
-      <h2 class="username">Apodo</h2>
-      <button class="btn">Cerrar Sesión</button>
-      <button class="btn">Perfil</button>
+<div class="menu">
+  <div class="lado-izquierdo">
+    <img src="ruta/al/avatar.jpg" alt="Avatar" class="avatar">
+    <span class="apodo">Apodo del Usuario</span>
+    <button (click)="cerrarSesion()">Cerrar Sesión</button>
+    <br>
+    <br>
+    <br>
+    <div class="estadisticas">
+      <span>Usuarios activos: 0</span>
+      <br>
+      <span>Partidas activas: 0</span>
+      <br>
+      <span>Jugadores en partidas: 0</span>
     </div>
-    <div class="search-section">
-      <input type="text" placeholder="Buscar amigo" class="search-input">
-      <input type="text" placeholder="Buscar usuario" class="search-input">
-    </div>
-    <div class="friends-section">
-      <h3>Amigos</h3>
-      <div class="friend">
-        <img src="path-to-friend-avatar.png" alt="Avatar" class="friend-avatar">
-        <div class="friend-info">
-          <span class="friend-name">Nombre Amigo</span>
-          <span class="friend-status">Conectado</span>
-        </div>
-      </div>
-    </div>
-    <div class="requests-section">
-      <h3>Solicitudes de Amistad</h3>
-      <div class="friend-request">
-        <span class="request-info">Solicitud de Nombre Usuario</span>
-        <button class="btn">Aceptar</button>
-        <button class="btn">Rechazar</button>
-      </div>
-    </div>
-    <div class="invitations-section">
-      <h3>Invitaciones a Partidas</h3>
-      <div class="invitation">
-        <span class="invitation-info">Invitación de Nombre Usuario</span>
-        <button class="btn">Aceptar</button>
-        <button class="btn">Rechazar</button>
-      </div>
-    </div>
-    <div class="stats-section">
-      <h3>Estadísticas</h3>
-      <p>Usuarios activos: <span class="stats-value">100</span></p>
-      <p>Partidas en curso: <span class="stats-value">20</span></p>
-      <p>Jugadores en partidas: <span class="stats-value">40</span></p>
-    </div>
-    <button class="btn-matching">Emparejamiento</button>
   </div>
+
+  <div class="lado-medio">
+    <div class="columna">Solicitudes de Amistad</div>
+    <div class="columna">Solicitudes de partida</div> 
+    <div class="columna">Amigos</div> <!--Buscador-->
+    <div class="columna">Usuarios</div> <!--Buscador, pero no muestra todos los usuarios-->
+  </div>
+
+  
+
+  <div class="lado-derecho">
+    salguerada
+  </div>
+</div>
