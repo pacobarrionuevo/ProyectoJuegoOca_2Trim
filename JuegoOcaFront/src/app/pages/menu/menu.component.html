@@ -1,46 +1,36 @@
-
-  <div class="sidebar">
-    <div class="profile-section">
-      <img src="path-to-avatar.png" alt="Avatar" class="avatar">
-      <h2 class="username">Apodo</h2>
-      <button class="btn">Cerrar Sesión</button>
-      <button class="btn">Perfil</button>
-    </div>
-    <div class="search-section">
-      <input type="text" placeholder="Buscar amigo" class="search-input">
-      <input type="text" placeholder="Buscar usuario" class="search-input">
-    </div>
-    <div class="friends-section">
-      <h3>Amigos</h3>
-      <div class="friend">
-        <img src="path-to-friend-avatar.png" alt="Avatar" class="friend-avatar">
-        <div class="friend-info">
-          <span class="friend-name">Nombre Amigo</span>
-          <span class="friend-status">Conectado</span>
-        </div>
-      </div>
-    </div>
-    <div class="requests-section">
-      <h3>Solicitudes de Amistad</h3>
-      <div class="friend-request">
-        <span class="request-info">Solicitud de Nombre Usuario</span>
-        <button class="btn">Aceptar</button>
-        <button class="btn">Rechazar</button>
-      </div>
-    </div>
-    <div class="invitations-section">
-      <h3>Invitaciones a Partidas</h3>
-      <div class="invitation">
-        <span class="invitation-info">Invitación de Nombre Usuario</span>
-        <button class="btn">Aceptar</button>
-        <button class="btn">Rechazar</button>
-      </div>
-    </div>
-    <div class="stats-section">
-      <h3>Estadísticas</h3>
-      <p>Usuarios activos: <span class="stats-value">100</span></p>
-      <p>Partidas en curso: <span class="stats-value">20</span></p>
-      <p>Jugadores en partidas: <span class="stats-value">40</span></p>
-    </div>
-    <button class="btn-matching">Emparejamiento</button>
+<div class="menu-lateral">
+  <div class="perfil">
+    <img src="ruta/al/avatar.jpg" alt="Avatar" class="avatar">
+    <span class="apodo">Apodo del Usuario</span>
+    <button (click)="cambiarSeccion('perfil')">Perfil</button>
+    <button (click)="cerrarSesion()">Cerrar Sesión</button>
   </div>
+
+  <div class="secciones">
+    <button (click)="cambiarSeccion('amigos')">Amigos</button>
+    <button (click)="cambiarSeccion('solicitudes')">Solicitudes</button>
+    <button (click)="cambiarSeccion('estadisticas')">Estadísticas</button>
+    <button (click)="irAEmparejamiento()">Emparejamiento</button>
+  </div>
+
+  <div *ngIf="activeSection === 'amigos'" class="contenido">
+    <h2>Amigos</h2>
+    <input type="text" placeholder="Buscar amigos..." />
+    <ul>
+      <li *ngFor="let amigo of amigos">
+        {{ amigo.nombre }} <button (click)="eliminarAmigo(amigo)">Eliminar</button>
+      </li>
+    </ul>
+  </div>
+
+  <div *ngIf="activeSection === 'solicitudes'" class="contenido">
+    <h2>Solicitudes de Amistad</h2>
+  </div>
+
+  <div *ngIf="activeSection === 'estadisticas'" class="contenido">
+    <h2>Estadísticas</h2>
+    <p>Usuarios activos: 100</p>
+    <p>Partidas en curso: 20</p>
+    <p>Jugadores en partidas: 80</p>
+  </div>
+</div>
