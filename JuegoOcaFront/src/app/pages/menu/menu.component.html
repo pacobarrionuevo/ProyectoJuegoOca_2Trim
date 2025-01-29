@@ -1,36 +1,30 @@
-<div class="menu-lateral">
-  <div class="perfil">
+<div class="menu">
+  <div class="lado-izquierdo">
     <img src="ruta/al/avatar.jpg" alt="Avatar" class="avatar">
     <span class="apodo">Apodo del Usuario</span>
-    <button (click)="cambiarSeccion('perfil')">Perfil</button>
     <button (click)="cerrarSesion()">Cerrar Sesión</button>
+    <br>
+    <br>
+    <br>
+    <div class="estadisticas">
+      <span>Usuarios activos: 0</span>
+      <br>
+      <span>Partidas activas: 0</span>
+      <br>
+      <span>Jugadores en partidas: 0</span>
+    </div>
   </div>
 
-  <div class="secciones">
-    <button (click)="cambiarSeccion('amigos')">Amigos</button>
-    <button (click)="cambiarSeccion('solicitudes')">Solicitudes</button>
-    <button (click)="cambiarSeccion('estadisticas')">Estadísticas</button>
-    <button  [routerLink]="'/matchmaking'">Emparejamiento</button>
+  <div class="lado-medio">
+    <div class="columna">Solicitudes de Amistad</div>
+    <div class="columna">Solicitudes de partida</div> 
+    <div class="columna">Amigos</div> <!--Buscador-->
+    <div class="columna">Usuarios</div> <!--Buscador, pero no muestra todos los usuarios-->
   </div>
 
-  <div *ngIf="activeSection === 'amigos'" class="contenido">
-    <h2>Amigos</h2>
-    <input type="text" placeholder="Buscar amigos..." />
-    <ul>
-      <li *ngFor="let amigo of amigos">
-        {{ amigo.nombre }} <button (click)="eliminarAmigo(amigo)">Eliminar</button>
-      </li>
-    </ul>
-  </div>
+  
 
-  <div *ngIf="activeSection === 'solicitudes'" class="contenido">
-    <h2>Solicitudes de Amistad</h2>
-  </div>
-
-  <div *ngIf="activeSection === 'estadisticas'" class="contenido">
-    <h2>Estadísticas</h2>
-    <p>Usuarios activos: 100</p>
-    <p>Partidas en curso: 20</p>
-    <p>Jugadores en partidas: 80</p>
+  <div class="lado-derecho">
+    salguerada
   </div>
 </div>

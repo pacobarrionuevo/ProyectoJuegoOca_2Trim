@@ -37,6 +37,29 @@
   background-color: #ccc;
 }
 
+.menu {
+  display: grid;
+  grid-template-columns: 1fr 4fr 1fr;
+  grid-gap: 5%;
+  grid-auto-rows: max-content;
+  border: 5px;
+}
+
 .contenido {
   margin-top: 20px;
+}
+
+.lado-medio {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 5%;
+  grid-auto-rows: max-content;
+  border: 5px;
+}
+
+.columna {
+  background-color: #f4f4f4; 
+  padding: 20px; 
+  border: 1px solid #ccc; 
+  text-align: center; 
 }
