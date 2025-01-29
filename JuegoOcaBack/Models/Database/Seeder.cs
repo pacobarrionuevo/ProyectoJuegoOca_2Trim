@@ -24,6 +24,8 @@ namespace JuegoOcaBack.Models.Database
             {
                 new Usuario() { UsuarioId = 1, UsuarioApodo = "Paco", UsuarioEmail = "paco@gmail.com" , UsuarioContrasena = PasswordHelper.Hash("paco33"), UsuarioConfirmarContrasena = PasswordHelper.Hash("paco33"), UsuarioFotoPerfil = "prueba" }
             };
+
+            await _dBContext.AddRangeAsync(usuarios);
         }
     }
 }
