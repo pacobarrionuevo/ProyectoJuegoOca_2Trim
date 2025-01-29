@@ -10,7 +10,7 @@
     <button (click)="cambiarSeccion('amigos')">Amigos</button>
     <button (click)="cambiarSeccion('solicitudes')">Solicitudes</button>
     <button (click)="cambiarSeccion('estadisticas')">Estadísticas</button>
-    <button (click)="irAEmparejamiento()">Emparejamiento</button>
+    <button  [routerLink]="'/matchmaking'">Emparejamiento</button>
   </div>
 
   <div *ngIf="activeSection === 'amigos'" class="contenido">

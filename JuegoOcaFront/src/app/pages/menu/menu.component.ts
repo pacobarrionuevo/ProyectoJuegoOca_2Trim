@@ -57,9 +57,5 @@ export class MenuComponent {
   }
 
 
-  irAEmparejamiento() {
-
-    console.log('Navegando a Emparejamiento');
-    alert('Redirigiendo a la vista de Emparejamiento...');
-  }
+ 
 }
