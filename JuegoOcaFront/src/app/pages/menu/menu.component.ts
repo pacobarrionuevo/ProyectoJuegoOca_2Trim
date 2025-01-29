@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import {Subscription} from 'rxjs';
+import { WebsocketService } from '../../services/websocket.service';
 
 @Component({
   selector: 'app-menu',
@@ -8,7 +10,41 @@ import { RouterModule } from '@angular/router';
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
 })
-export class MenuComponent {
+export class MenuComponent implements OnInit, OnDestroy {
+
+  message: string = '';
+  serverResponse: string = '';
+  isConnected: boolean = false;
+  connected$: Subscription;
+  messageReceived$: Subscription;
+  disconnected$: Subscription;
+  type: 'rxjs';
+
+  constructor(private webSocketService: WebsocketService) { }
+
+  ngOnInit(): void {
+    this.connected$ = this.webSocketService.connected.subscribe(() => this.isConnected = true);
+    this.messageReceived$ = this.webSocketService.messageReceived.subscribe(message => this.serverResponse = message);
+    this.disconnected$ = this.webSocketService.disconnected.subscribe(() => this.isConnected = false);
+  }
+
+  connectRxjs() {
+    this.webSocketService.connectRxjs();
+  }
+
+  send() {
+    this.webSocketService.sendRxjs(this.message);
+  }
+
+  disconnect() {
+    this.webSocketService.disconnectRxjs();
+  }
+
+  ngOnDestroy(): void {
+    this.connected$.unsubscribe();
+    this.messageReceived$.unsubscribe();
+    this.disconnected$.unsubscribe();
+  }
  
   activeSection: string = 'amigos';
 
