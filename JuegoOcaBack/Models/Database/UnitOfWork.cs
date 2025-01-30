@@ -9,11 +9,13 @@ namespace JuegoOcaBack.Models.Database
 
         //Todas los repositorios de los productos que queremos guardar
         public ImageRepository _imageRepository { get; init; }
+        public FriendRequestRepository _friendRequestRepository { get; init; }
 
-        public UnitOfWork(DBContext context, ImageRepository imageRepository)
+        public UnitOfWork(DBContext context, ImageRepository imageRepository, FriendRequestRepository FriendRequestRepository)
         {
             _context = context;
             _imageRepository = imageRepository;
+            _friendRequestRepository = FriendRequestRepository;
         }
 
         //Método para guardar

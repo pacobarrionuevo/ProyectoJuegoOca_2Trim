@@ -65,7 +65,7 @@ export class AuthService {
         const payload = JSON.parse(payloadJson);
         return {
           id: payload.id || 'ID no disponible',
-          name: payload.emailoapodo || 'Nombre no disponible',
+          name: payload.name || 'Nombre no disponible',
           email: payload.Email || 'Correo no disponible',
           profilePicture: payload.FotoPerfil || 'Foto no disponible'
         };

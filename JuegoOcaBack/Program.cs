@@ -25,8 +25,11 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddScoped<DBContext>();
 builder.Services.AddScoped<UnitOfWork>();
 builder.Services.AddScoped<ImageRepository>();
+builder.Services.AddScoped<FriendRequestRepository>();
 
 builder.Services.AddTransient<ImageService>();
+builder.Services.AddTransient<FriendRequestService>();
+builder.Services.AddTransient<WebSocketService>();
 
 builder.Services.AddTransient<ImageMapper>();
 
