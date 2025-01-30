@@ -1,9 +1,6 @@
 <div class="menu">
   <div class="lado-izquierdo">
-    <img src="ruta/al/avatar.jpg" alt="Avatar" class="avatar">
-    <span class="apodo">Apodo del Usuario</span>
-    <br>
-    <br>
+    <!--Pruebas de WebSockets que no tiene pinta que vayan a llegar a ninguna parte-->
     @if (isConnected) {
       <button (click)="disconnect()">Desconectar</button>
     
@@ -18,19 +15,6 @@
       @else {
       <button (click)="connectRxjs()">Conectar rxjs</button>
       }
-    <br>
-    <br>
-    <button (click)="logout()">Cerrar Sesión</button>
-    <br>
-    <br>
-    <br>
-    <div class="estadisticas">
-      <span>Usuarios activos: 0</span>
-      <br>
-      <span>Partidas activas: 0</span>
-      <br>
-      <span>Jugadores en partidas: 0</span>
-    </div>
   </div>
 
   <div class="perfil">
@@ -39,7 +23,30 @@
     <button (click)="logout()" class="cerrar-sesion-btn">Cerrar Sesión</button>
   </div>
 
-  
+  <br>
+
+  <div class="solicitudes">
+    <h2>Solicitudes de Amistad</h2>
+  </div>
+
+  <br>
+
+  <div class="solicitudes">
+    <h2>Solicitudes de Partidas</h2>
+  </div>
+
+  <br>
+
+  <div class="amigos">
+    <h2>Amigos</h2>
+    <input type="text" placeholder="Buscar amigos..." />
+    <ul>
+    
+    </ul>
+  </div>
+
+  <br>
+
   <div class="usuarios">
     <h2>Buscar Usuarios</h2>
     <input type="text" [(ngModel)]="terminoBusqueda" (input)="buscarUsuarios()" placeholder="Buscar usuarios..." />
@@ -48,20 +55,5 @@
         {{ usuario.UsuarioApodo }}
       </li>
     </ul>
-  </div>
-
-
-  <div class="solicitudes">
-    <h2>Solicitudes de Amistad</h2>
-    
-  </div>
-
- 
-  <div class="amigos">
-    <h2>Amigos</h2>
-    <input type="text" placeholder="Buscar amigos..." />
-    <ul>
-    
-    </ul>
-  </div>
+  </div>  
 </div>
