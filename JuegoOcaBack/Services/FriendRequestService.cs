@@ -21,7 +21,7 @@ namespace JuegoOcaBack.Services
             if (sender == null || receiver == null)
                 throw new Exception("Uno o ambos usuarios no existen.");
 
-            var friendship = new Friendship
+            var friendship = new Amistad
             {
                 Users = new List<Usuario> { sender, receiver },
                 IsAccepted = false
@@ -75,7 +75,7 @@ namespace JuegoOcaBack.Services
                               .ToList();
         }
 
-        public async Task<List<Friendship>> GetPendingRequests(int userId)
+        public async Task<List<Amistad>> GetPendingRequests(int userId)
         {
             return await _unitOfWork._friendRequestRepository
                 .GetQueryable()

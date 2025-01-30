@@ -41,14 +41,14 @@ namespace JuegoOcaBack.Models.Database
             };
 
 
-            Friendship amistad1 = new Friendship()
+            Amistad amistad1 = new Amistad()
             {
                 FriendshipId = 1,
                 Users = new List<Usuario> { usuario1, usuario2 },
                 IsAccepted = true
             };
 
-            Friendship solicitud1 = new Friendship()
+            Amistad solicitud1 = new Amistad()
             {
                 FriendshipId = 2,
                 Users = new List<Usuario> { usuario1, usuario2 },
