@@ -4,7 +4,6 @@
     {
         public int AmistadId { get; set; }
         public bool IsAccepted { get; set; } = false;
-        
-        public List<UsuarioTieneAmistad> Amistades { get; set; }
+        public List<UsuarioTieneAmistad> AmistadUsuario { get; set; }
     }
 }
