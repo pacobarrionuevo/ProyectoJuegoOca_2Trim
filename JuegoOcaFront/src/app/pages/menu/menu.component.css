@@ -49,8 +49,24 @@
   transition: background-color 0.3s;
 }
 
+.perfilButton {
+  padding: 10px 20px;
+  background-color: #25c309;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.botones {
+  display: flex;
+  align-items: center;
+}
+
 .cerrar-sesion-btn:hover {
-  background-color: #c82333;
+  background-color: #229209;
 }
 
 .usuarios {

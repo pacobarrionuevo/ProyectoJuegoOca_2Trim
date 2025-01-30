@@ -18,9 +18,15 @@
   </div>
 
   <div class="perfil">
-    <img [src]="usuarioFotoPerfil" alt="Foto de Perfil" class="perfil-foto">
-    <span class="perfil-apodo">{{ usuarioApodo }}</span>
-    <button (click)="logout()" class="cerrar-sesion-btn">Cerrar Sesión</button>
+    <div>
+      <img [src]="usuarioFotoPerfil" alt="Foto de Perfil" class="perfil-foto">
+      <span class="perfil-apodo">{{ usuarioApodo }}</span>
+    </div>
+    <br>
+    <div class="botones">
+      <button [routerLink]="'/perfil'" class="perfilButton">PERFIL</button>
+      <button (click)="logout()" class="cerrar-sesion-btn">CERRAR SESIÓN</button>
+    </div>
   </div>
 
   <br>
