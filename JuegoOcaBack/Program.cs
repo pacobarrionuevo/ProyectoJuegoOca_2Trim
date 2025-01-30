@@ -30,6 +30,7 @@ builder.Services.AddTransient<ImageService>();
 
 builder.Services.AddTransient<ImageMapper>();
 
+builder.Services.AddSingleton<WebSocketNetwork>();
 builder.Services.AddTransient<Middleware>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

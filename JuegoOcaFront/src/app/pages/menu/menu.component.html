@@ -2,6 +2,24 @@
   <div class="lado-izquierdo">
     <img src="ruta/al/avatar.jpg" alt="Avatar" class="avatar">
     <span class="apodo">Apodo del Usuario</span>
+    <br>
+    <br>
+    @if (isConnected) {
+      <button (click)="disconnect()">Desconectar</button>
+    
+      <form (ngSubmit)="send()">
+        <input type="text" placeholder="Escribe tu mensaje" [(ngModel)]="message" [ngModelOptions]="{standalone: true}" />
+        <input type="submit" value="Enviar" />
+      </form>
+    
+      <div>{{serverResponse}}</div>
+    
+      }
+      @else {
+      <button (click)="connectRxjs()">Conectar rxjs</button>
+      }
+    <br>
+    <br>
     <button (click)="cerrarSesion()">Cerrar Sesión</button>
     <br>
     <br>
