@@ -20,7 +20,7 @@
       }
     <br>
     <br>
-    <button (click)="cerrarSesion()">Cerrar Sesión</button>
+    <button (click)="logout()">Cerrar Sesión</button>
     <br>
     <br>
     <br>
@@ -33,16 +33,35 @@
     </div>
   </div>
 
-  <div class="lado-medio">
-    <div class="columna">Solicitudes de Amistad</div>
-    <div class="columna">Solicitudes de partida</div> 
-    <div class="columna">Amigos</div> <!--Buscador-->
-    <div class="columna">Usuarios</div> <!--Buscador, pero no muestra todos los usuarios-->
+  <div class="perfil">
+    <img [src]="usuarioFotoPerfil" alt="Foto de Perfil" class="perfil-foto">
+    <span class="perfil-apodo">{{ usuarioApodo }}</span>
+    <button (click)="logout()" class="cerrar-sesion-btn">Cerrar Sesión</button>
   </div>
 
   
+  <div class="usuarios">
+    <h2>Buscar Usuarios</h2>
+    <input type="text" [(ngModel)]="terminoBusqueda" (input)="buscarUsuarios()" placeholder="Buscar usuarios..." />
+    <ul>
+      <li *ngFor="let usuario of usuariosFiltrados">
+        {{ usuario.UsuarioApodo }}
+      </li>
+    </ul>
+  </div>
 
-  <div class="lado-derecho">
-    salguerada
+
+  <div class="solicitudes">
+    <h2>Solicitudes de Amistad</h2>
+    
+  </div>
+
+ 
+  <div class="amigos">
+    <h2>Amigos</h2>
+    <input type="text" placeholder="Buscar amigos..." />
+    <ul>
+    
+    </ul>
   </div>
 </div>

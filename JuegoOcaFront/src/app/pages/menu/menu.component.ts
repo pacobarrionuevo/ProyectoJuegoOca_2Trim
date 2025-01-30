@@ -1,15 +1,20 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import {Subscription} from 'rxjs';
 import { WebsocketService } from '../../services/websocket.service';
 import { FormsModule } from '@angular/forms';
+import { User } from '../../models/User';
+import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [RouterModule, FormsModule],
   templateUrl: './menu.component.html',
-  styleUrl: './menu.component.css'
+  imports: [CommonModule, FormsModule, RouterModule],
+  styleUrls: ['./menu.component.css']
 })
 export class MenuComponent implements OnInit, OnDestroy {
 
@@ -21,9 +26,21 @@ export class MenuComponent implements OnInit, OnDestroy {
   disconnected$: Subscription;
   type: 'rxjs';
 
-  constructor(private webSocketService: WebsocketService) { }
+  usuarios: User[] = []; 
+  usuariosFiltrados: User[] = [];
+  terminoBusqueda: string = '';
+  
+  amigos: User[] = []; 
+  amigosFiltrados: User[] = [];
+  busquedaAmigos: string = '';
+  
+  vistaActiva: string = 'amigos'; 
+
+  constructor(private webSocketService: WebsocketService, private apiService: ApiService, private authService: AuthService, private router: Router) { }
 
   ngOnInit(): void {
+    this.obtenerUsuarios();
+    this.cargarInfoUsuario(); 
     this.connected$ = this.webSocketService.connected.subscribe(() => this.isConnected = true);
     this.messageReceived$ = this.webSocketService.messageReceived.subscribe(message => this.serverResponse = message);
     this.disconnected$ = this.webSocketService.disconnected.subscribe(() => this.isConnected = false);
@@ -49,51 +66,45 @@ export class MenuComponent implements OnInit, OnDestroy {
  
   activeSection: string = 'amigos';
 
- 
-  amigos = [
-    { nombre: 'Amigo 1' },
-    { nombre: 'Amigo 2' },
-    { nombre: 'Amigo 3' }
-  ];
+  usuarioApodo: string = ''; 
+  usuarioFotoPerfil: string = '';
 
-
-  solicitudesPendientes = [
-    { nombre: 'Usuario 1' },
-    { nombre: 'Usuario 2' }
-  ];
-
-
-  cambiarSeccion(seccion: string) {
-    this.activeSection = seccion;
-  }
-
-  
-  eliminarAmigo(amigo: any) {
-    if (confirm(`¿Estás seguro de que quieres eliminar a ${amigo.nombre}?`)) {
-      this.amigos = this.amigos.filter(a => a !== amigo);
+  async obtenerUsuarios(): Promise<void> {
+    const result = await this.apiService.getUsuarios();
+    if (result.isSuccess()) {
+      this.usuarios = result.getData() || []; 
+      this.usuariosFiltrados = this.usuarios; 
+    } else {
+      console.error('Error al obtener usuarios:', result.getError());
     }
   }
 
-
-  aceptarSolicitud(solicitud: any) {
-    this.amigos.push(solicitud); 
-    this.solicitudesPendientes = this.solicitudesPendientes.filter(s => s !== solicitud); // Eliminar de las solicitudes
-    alert(`${solicitud.nombre} ha sido añadido a tus amigos.`);
+  buscarUsuarios(): void {
+    if (this.terminoBusqueda) {
+      this.usuariosFiltrados = this.usuarios.filter(usuario =>
+        usuario.UsuarioApodo.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
+      );
+    } else {
+      this.usuariosFiltrados = this.usuarios;
+    }
   }
 
-
-  rechazarSolicitud(solicitud: any) {
-    this.solicitudesPendientes = this.solicitudesPendientes.filter(s => s !== solicitud); // Eliminar de las solicitudes
-    alert(`Solicitud de ${solicitud.nombre} rechazada.`);
+  cambiarVista(vista: string): void {
+    this.vistaActiva = vista;
   }
 
- 
-  cerrarSesion() {
-   
-    console.log('Sesión cerrada');
-    alert('Has cerrado sesión.');
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/login']); 
   }
 
-
- 
+  cargarInfoUsuario(): void {
+    const userInfo = this.authService.getUserDataFromToken();
+    if (userInfo) {
+      this.usuarioApodo = userInfo.name;
+      this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`; 
+    } else {
+      console.error('No se pudo obtener la información del usuario desde el token.');
+    }
+  }
 }
