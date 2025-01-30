@@ -19,7 +19,7 @@ export class ApiService {
 
   // Método para obtener la lista de usuarios
   async getUsuarios(): Promise<Result<User[]>> {
-    const path = 'api/Usuario/ListaUsuario'; 
+    const path = '/api/Usuario/ListaUsuario'; 
     return this.get<User[]>(path);
   }
 
