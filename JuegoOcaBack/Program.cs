@@ -26,6 +26,7 @@ builder.Services.AddScoped<DBContext>();
 builder.Services.AddScoped<UnitOfWork>();
 builder.Services.AddScoped<ImageRepository>();
 builder.Services.AddScoped<FriendRequestRepository>();
+builder.Services.AddScoped<UserRepository>();
 
 builder.Services.AddTransient<ImageService>();
 builder.Services.AddTransient<FriendRequestService>();
