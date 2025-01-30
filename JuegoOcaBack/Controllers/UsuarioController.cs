@@ -151,6 +151,8 @@ namespace JuegoOcaBack.Controllers
             {"id", user.UsuarioId},
             {"Apodo", user.UsuarioApodo},
             {"Email", user.UsuarioEmail},
+            {"FotoPerfil",user.UsuarioFotoPerfil}
+
         },
                 Expires = DateTime.UtcNow.AddDays(5),
                 SigningCredentials = new SigningCredentials(

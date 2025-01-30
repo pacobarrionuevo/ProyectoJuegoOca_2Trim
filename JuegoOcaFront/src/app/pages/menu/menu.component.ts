@@ -1,62 +1,76 @@
-import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ApiService } from '../../services/api.service';
+import { User } from '../../models/User';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-menu',
-  standalone: true,
-  imports: [RouterModule],
   templateUrl: './menu.component.html',
-  styleUrl: './menu.component.css'
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  styleUrls: ['./menu.component.css']
 })
-export class MenuComponent {
- 
-  activeSection: string = 'amigos';
+export class MenuComponent implements OnInit {
+  usuarios: User[] = []; 
+  usuariosFiltrados: User[] = [];
+  terminoBusqueda: string = '';
+  
+  amigos: User[] = []; 
+  amigosFiltrados: User[] = [];
+  busquedaAmigos: string = '';
+  
+  vistaActiva: string = 'amigos'; 
 
- 
-  amigos = [
-    { nombre: 'Amigo 1' },
-    { nombre: 'Amigo 2' },
-    { nombre: 'Amigo 3' }
-  ];
+  usuarioApodo: string = ''; 
+  usuarioFotoPerfil: string = '';
 
+  constructor(private apiService: ApiService, private authService: AuthService, private router: Router) { }
 
-  solicitudesPendientes = [
-    { nombre: 'Usuario 1' },
-    { nombre: 'Usuario 2' }
-  ];
-
-
-  cambiarSeccion(seccion: string) {
-    this.activeSection = seccion;
+  ngOnInit(): void {
+    this.obtenerUsuarios();
+    this.cargarInfoUsuario(); 
   }
 
-  
-  eliminarAmigo(amigo: any) {
-    if (confirm(`¿Estás seguro de que quieres eliminar a ${amigo.nombre}?`)) {
-      this.amigos = this.amigos.filter(a => a !== amigo);
+  async obtenerUsuarios(): Promise<void> {
+    const result = await this.apiService.getUsuarios();
+    if (result.isSuccess()) {
+      this.usuarios = result.getData() || []; 
+      this.usuariosFiltrados = this.usuarios; 
+    } else {
+      console.error('Error al obtener usuarios:', result.getError());
     }
   }
 
-
-  aceptarSolicitud(solicitud: any) {
-    this.amigos.push(solicitud); 
-    this.solicitudesPendientes = this.solicitudesPendientes.filter(s => s !== solicitud); // Eliminar de las solicitudes
-    alert(`${solicitud.nombre} ha sido añadido a tus amigos.`);
+  buscarUsuarios(): void {
+    if (this.terminoBusqueda) {
+      this.usuariosFiltrados = this.usuarios.filter(usuario =>
+        usuario.UsuarioApodo.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
+      );
+    } else {
+      this.usuariosFiltrados = this.usuarios;
+    }
   }
 
-
-  rechazarSolicitud(solicitud: any) {
-    this.solicitudesPendientes = this.solicitudesPendientes.filter(s => s !== solicitud); // Eliminar de las solicitudes
-    alert(`Solicitud de ${solicitud.nombre} rechazada.`);
+  cambiarVista(vista: string): void {
+    this.vistaActiva = vista;
   }
 
- 
-  cerrarSesion() {
-   
-    console.log('Sesión cerrada');
-    alert('Has cerrado sesión.');
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/login']); 
   }
 
-
- 
+  cargarInfoUsuario(): void {
+    const userInfo = this.authService.getUserDataFromToken();
+    if (userInfo) {
+      this.usuarioApodo = userInfo.name;
+      this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`; 
+    } else {
+      console.error('No se pudo obtener la información del usuario desde el token.');
+    }
+  }
 }

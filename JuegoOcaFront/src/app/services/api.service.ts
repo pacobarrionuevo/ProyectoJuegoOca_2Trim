@@ -1,8 +1,10 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Result } from '../models/result';
 import { Observable, lastValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { User } from '../models/User';
+
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +17,13 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
+  // Método para obtener la lista de usuarios
+  async getUsuarios(): Promise<Result<User[]>> {
+    const path = 'api/Usuario/ListaUsuario'; 
+    return this.get<User[]>(path);
+  }
+
+  // Métodos existentes (get, post, put, delete, sendRequest, getHeader)
   async get<T = void>(path: string, params: any = {}, responseType: 'json' | 'text' | 'blob' | 'arraybuffer' = 'json'): Promise<Result<T>> {
     const url = `${this.BASE_URL}${path}`;
     const request$ = this.http.get(url, {
