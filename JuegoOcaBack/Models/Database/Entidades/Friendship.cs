@@ -2,11 +2,9 @@
 {
     public class Friendship
     {
-        public int Id { get; set; }
-        public int UserId { get; set; }
-        public Usuario User { get; set; }
+        public int FriendshipId { get; set; }
+        public List<Usuario> Users { get; set; }
+        public bool IsAccepted { get; set; } = false;        
 
-        public int FriendId { get; set; }
-        public Usuario Friend { get; set; }
     }
 }

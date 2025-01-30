@@ -1,57 +1,62 @@
-﻿using JuegoOcaBack.Services;
+﻿using JuegoOcaBack.Models.Database.Entidades;
+using JuegoOcaBack.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JuegoOcaBack.Controllers
 {
-    [Route("api/amigos")]
     [ApiController]
-    public class FriendRequestController : ControllerBase
+    [Route("api/friendship")]
+    public class FriendshipController : ControllerBase
     {
         private readonly FriendRequestService _friendRequestService;
 
-        public FriendRequestController(FriendRequestService friendRequestService)
+        public FriendshipController(FriendRequestService friendRequestService)
         {
             _friendRequestService = friendRequestService;
         }
 
-        [HttpPost("enviar")]
-        public async Task<IActionResult> EnviarSolicitud([FromQuery] int senderId, [FromQuery] int receiverId)
+        [HttpPost("send")]
+        public async Task<IActionResult> SendFriendRequest([FromBody] dynamic request)
         {
-            var resultado = await _friendRequestService.EnviarSolicitudAsync(senderId, receiverId);
-            if (!resultado)
-                return BadRequest("No se pudo enviar la solicitud. Puede que ya exista.");
+            if (request == null || request.senderId == null || request.receiverId == null)
+                return BadRequest("Los IDs del remitente y receptor son requeridos.");
 
-            return Ok("Solicitud enviada exitosamente.");
+            await _friendRequestService.AddFriendRequest((int)request.senderId, (int)request.receiverId);
+            return Ok("Solicitud de amistad enviada.");
         }
 
-        [HttpPost("aceptar")]
-        public async Task<IActionResult> AceptarSolicitud([FromQuery] int senderId, [FromQuery] int receiverId)
+        [HttpPost("accept")]
+        public async Task<IActionResult> AcceptFriendRequest([FromBody] dynamic request)
         {
-            var resultado = await _friendRequestService.AceptarSolicitudAsync(senderId, receiverId);
-            if (!resultado)
-                return BadRequest("No se pudo aceptar la solicitud.");
+            if (request == null || request.senderId == null || request.receiverId == null)
+                return BadRequest("Los IDs del remitente y receptor son requeridos.");
 
-            return Ok("Solicitud aceptada exitosamente.");
+            await _friendRequestService.AcceptFriendRequest((int)request.senderId, (int)request.receiverId);
+            return Ok("Solicitud de amistad aceptada.");
         }
 
-        [HttpDelete("eliminar")]
-        public async Task<IActionResult> EliminarAmistad([FromQuery] int userId, [FromQuery] int friendId)
+        [HttpDelete("reject")]
+        public async Task<IActionResult> RejectFriendRequest([FromBody] dynamic request)
         {
-            var resultado = await _friendRequestService.EliminarAmistadAsync(userId, friendId);
-            if (!resultado)
-                return BadRequest("No se pudo eliminar la amistad.");
+            if (request == null || request.senderId == null || request.receiverId == null)
+                return BadRequest("Los IDs del remitente y receptor son requeridos.");
 
-            return Ok("Amistad eliminada exitosamente.");
+            await _friendRequestService.RejectFriendRequest((int)request.senderId, (int)request.receiverId);
+            return Ok("Solicitud de amistad rechazada.");
         }
 
-        [HttpGet("listar")]
-        public async Task<IActionResult> ObtenerAmigos([FromQuery] int usuarioId)
+        [HttpGet("friends/{userId}")]
+        public async Task<IActionResult> GetFriends(int userId)
         {
-            var amigos = await _friendRequestService.ObtenerAmigosAsync(usuarioId);
-            if (amigos == null || !amigos.Any())
-                return NotFound("No se encontraron amigos.");
+            var friends = await _friendRequestService.GetFriends(userId);
+            return Ok(friends);
+        }
 
-            return Ok(amigos);
+        [HttpGet("pending/{userId}")]
+        public async Task<IActionResult> GetPendingRequests(int userId)
+        {
+            var requests = await _friendRequestService.GetPendingRequests(userId);
+            return Ok(requests);
         }
     }
 }

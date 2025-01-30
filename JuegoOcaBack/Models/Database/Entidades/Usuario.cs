@@ -11,8 +11,8 @@
 
         //Ahora nos pasamos al inglés, cambiar código 
         public List<Friendship> Friendships { get; set; } = new List<Friendship>();
-        public List<FriendRequest> RequestsSent { get; set; } = new List<FriendRequest>();
-        public List<FriendRequest> RequestsReceived { get; set; } = new List<FriendRequest>();
+        public List<Friendship> RequestsSent { get; set; } = new List<Friendship>();
+        public List<Friendship> RequestsReceived { get; set; } = new List<Friendship>();
 
     }
 }
