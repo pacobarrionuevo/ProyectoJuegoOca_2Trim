@@ -20,8 +20,6 @@
   <div class="perfil">
     <div>
       <img [src]="usuarioFotoPerfil" alt="Foto de Perfil" class="perfil-foto">
-      <br>
-
       <span class="perfil-apodo">{{ usuarioApodo }}</span>
     </div>
     <br>
@@ -49,7 +47,6 @@
     <h2>Amigos</h2>
     <input type="text" placeholder="Buscar amigos..." />
     <ul>
-    
     </ul>
   </div>
 
@@ -60,7 +57,8 @@
     <input type="text" [(ngModel)]="terminoBusqueda" (input)="buscarUsuarios()" placeholder="Buscar usuarios..." />
     <ul>
       <li *ngFor="let usuario of usuariosFiltrados">
-        {{ usuario.UsuarioApodo }}
+        <img [src]="getFotoPerfilUrl(usuario.UsuarioFotoPerfil)" alt="Foto de Perfil" class="usuario-foto">
+        <span class="usuario-apodo">{{ usuario.UsuarioApodo }}</span>
       </li>
     </ul>
   </div>  

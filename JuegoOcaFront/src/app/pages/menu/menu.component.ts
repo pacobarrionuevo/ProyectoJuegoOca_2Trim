@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import {Subscription} from 'rxjs';
+import { Subscription } from 'rxjs';
 import { WebsocketService } from '../../services/websocket.service';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../models/User';
@@ -36,7 +36,15 @@ export class MenuComponent implements OnInit, OnDestroy {
   
   vistaActiva: string = 'amigos'; 
 
-  constructor(private webSocketService: WebsocketService, private apiService: ApiService, private authService: AuthService, private router: Router) { }
+  usuarioApodo: string = ''; 
+  usuarioFotoPerfil: string = '';
+
+  constructor(
+    private webSocketService: WebsocketService, 
+    private apiService: ApiService, 
+    private authService: AuthService, 
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
     this.obtenerUsuarios();
@@ -45,7 +53,9 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.messageReceived$ = this.webSocketService.messageReceived.subscribe(message => this.serverResponse = message);
     this.disconnected$ = this.webSocketService.disconnected.subscribe(() => this.isConnected = false);
   }
-
+  getFotoPerfilUrl(fotoPerfil: string): string {
+    return `${environment.apiUrl}/fotos/${fotoPerfil}`;
+  }
   connectRxjs() {
     this.webSocketService.connectRxjs();
   }
@@ -65,9 +75,6 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
  
   activeSection: string = 'amigos';
-
-  usuarioApodo: string = ''; 
-  usuarioFotoPerfil: string = '';
 
   async obtenerUsuarios(): Promise<void> {
     const result = await this.apiService.getUsuarios();
@@ -101,7 +108,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
-      this.usuarioApodo = userInfo.email;
+      this.usuarioApodo = userInfo.name; 
       this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`; 
     } else {
       console.error('No se pudo obtener la información del usuario desde el token.');
