@@ -53,9 +53,11 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.messageReceived$ = this.webSocketService.messageReceived.subscribe(message => this.serverResponse = message);
     this.disconnected$ = this.webSocketService.disconnected.subscribe(() => this.isConnected = false);
   }
+
   getFotoPerfilUrl(fotoPerfil: string): string {
     return `${environment.apiUrl}/fotos/${fotoPerfil}`;
   }
+
   connectRxjs() {
     this.webSocketService.connectRxjs();
   }
@@ -76,14 +78,13 @@ export class MenuComponent implements OnInit, OnDestroy {
  
   activeSection: string = 'amigos';
 
-  async obtenerUsuarios(): Promise<void> {
-    const result = await this.apiService.getUsuarios();
-    if (result.isSuccess()) {
-      this.usuarios = result.getData() || []; 
+  obtenerUsuarios(): void {
+    this.apiService.getUsuarios().subscribe(usuarios => {
+      console.log('Usuarios obtenidos:', usuarios); 
+      this.usuarios = usuarios;
       this.usuariosFiltrados = this.usuarios; 
-    } else {
-      console.error('Error al obtener usuarios:', result.getError());
-    }
+      console.log('Usuarios filtrados:', this.usuariosFiltrados);
+    });
   }
 
   buscarUsuarios(): void {
@@ -92,7 +93,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         usuario.UsuarioApodo.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
       );
     } else {
-      this.usuariosFiltrados = this.usuarios;
+      this.usuariosFiltrados = this.usuarios; // Si no hay  búsqueda, muestra todos los usuarios
     }
   }
 
