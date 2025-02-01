@@ -16,7 +16,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   background-color: #DAC694;
   border-radius: 10px;
   padding: 20px;
@@ -64,41 +64,23 @@
 }
 
 .cerrar-sesion-btn:hover {
-  background-color: #229209;
+  background-color: #a90303;
 }
 
-.usuarios {
-  grid-column: 1 / span 2;
-  background-color: #DAC694;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.perfilButton:hover {
+  background-color: #048d09;
+}
+
+.elementosMenu {
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  margin: 20px auto; 
+  padding: 20px; 
+  max-width: 600px; 
   width: 100%;
-  height: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 10px;
-  border: 1px solid #7E612C;
-  text-align: left;
-}
-
-.solicitudes {
-  grid-column: 2 / span 1;
   background-color: #DAC694;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.amigos {
   grid-column: 2 / span 1;
-  background-color: #DAC694;
   border-radius: 10px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

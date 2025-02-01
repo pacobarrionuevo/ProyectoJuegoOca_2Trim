@@ -89,14 +89,18 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   buscarUsuarios(): void {
     if (this.terminoBusqueda) {
-      this.usuariosFiltrados = this.usuarios.filter(usuario =>
-        usuario.UsuarioApodo.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
-      );
+      // Filtra los usuarios si hay un término de búsqueda
+      this.usuariosFiltrados = this.usuarios.filter(usuario => {
+        // Si UsuarioApodo no está definido, lo trata como una cadena vacía
+        const apodo = usuario.UsuarioApodo || '';
+        return apodo.toLowerCase().includes(this.terminoBusqueda.toLowerCase());
+      });
     } else {
-      this.usuariosFiltrados = this.usuarios; // Si no hay  búsqueda, muestra todos los usuarios
+      // Si no hay término de búsqueda, muestra todos los usuarios
+      this.usuariosFiltrados = this.usuarios;
     }
+    console.log('Usuarios filtrados después de buscar:', this.usuariosFiltrados); // Depuración
   }
-
   cambiarVista(vista: string): void {
     this.vistaActiva = vista;
   }
