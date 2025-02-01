@@ -55,11 +55,21 @@
   <div class="usuarios">
     <h2>Buscar Usuarios</h2>
     <input type="text" [(ngModel)]="terminoBusqueda" (input)="buscarUsuarios()" placeholder="Buscar usuarios..." />
-    <ul>
-      <li *ngFor="let usuario of usuariosFiltrados">
-        <img [src]="getFotoPerfilUrl(usuario.UsuarioFotoPerfil)" alt="Foto de Perfil" class="usuario-foto">
-        <span class="usuario-apodo">{{ usuario.UsuarioApodo }}</span>
-      </li>
-    </ul>
-  </div>  
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Apodo</th>
+          <th>Email</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let usuario of usuariosFiltrados"> 
+          <td>{{ usuario.UsuarioId }}</td>
+          <td>{{ usuario.UsuarioApodo }}</td>
+          <td>{{ usuario.UsuarioEmail }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>

@@ -18,9 +18,8 @@ export class ApiService {
   constructor(private http: HttpClient) { }
 
   // Método para obtener la lista de usuarios
-  async getUsuarios(): Promise<Result<User[]>> {
-    const path = '/api/Usuario/ListaUsuario'; 
-    return this.get<User[]>(path);
+  getUsuarios(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.BASE_URL}/api/Usuario/ListaUsuario`);
   }
 
   // Métodos existentes (get, post, put, delete, sendRequest, getHeader)
