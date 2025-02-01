@@ -9,7 +9,7 @@
         public string UsuarioContrasena { get; set; }
         public string UsuarioConfirmarContrasena { get; set; }
 
-        public List<UsuarioTieneAmistad> Amistades { get; set; }
+        public List<UsuarioTieneAmistad> UsuarioAmistad { get; set; }
 
     }
 }
