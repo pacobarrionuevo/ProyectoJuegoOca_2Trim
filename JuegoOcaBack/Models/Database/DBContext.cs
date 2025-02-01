@@ -18,6 +18,7 @@ namespace JuegoOcaBack.Models.Database
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Image> Images { get; set; }
         public DbSet<Amistad> Friendships { get; set; }
+        public DbSet<UsuarioTieneAmistad> UsuarioTieneAmistad { get; set; }
 
         // Configuramos el EntityFramework para crear un archivo de BBDD Sqlite
 

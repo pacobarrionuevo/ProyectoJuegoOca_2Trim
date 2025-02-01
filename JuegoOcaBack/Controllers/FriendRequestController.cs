@@ -1,62 +1,58 @@
-﻿using JuegoOcaBack.Models.Database.Entidades;
+﻿using Microsoft.AspNetCore.Mvc;
 using JuegoOcaBack.Services;
-using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using JuegoOcaBack.Models.Database.Entidades;
 
 namespace JuegoOcaBack.Controllers
 {
     [ApiController]
-    [Route("api/friendship")]
-    public class FriendshipController : ControllerBase
+    [Route("api/[controller]")]
+    public class FriendRequestController : ControllerBase
     {
         private readonly FriendRequestService _friendRequestService;
 
-        public FriendshipController(FriendRequestService friendRequestService)
+        public FriendRequestController(FriendRequestService friendRequestService)
         {
             _friendRequestService = friendRequestService;
         }
 
         [HttpPost("send")]
-        public async Task<IActionResult> SendFriendRequest([FromBody] dynamic request)
+        public async Task<IActionResult> SendFriendRequest(int senderId, int receiverId)
         {
-            if (request == null || request.senderId == null || request.receiverId == null)
-                return BadRequest("Los IDs del remitente y receptor son requeridos.");
-
-            await _friendRequestService.AddFriendRequest((int)request.senderId, (int)request.receiverId);
-            return Ok("Solicitud de amistad enviada.");
+            var result = await _friendRequestService.SendFriendRequest(senderId, receiverId);
+            if (result) return Ok();
+            return BadRequest();
         }
 
         [HttpPost("accept")]
-        public async Task<IActionResult> AcceptFriendRequest([FromBody] dynamic request)
+        public async Task<IActionResult> AcceptFriendRequest(int amistadId)
         {
-            if (request == null || request.senderId == null || request.receiverId == null)
-                return BadRequest("Los IDs del remitente y receptor son requeridos.");
-
-            await _friendRequestService.AcceptFriendRequest((int)request.senderId, (int)request.receiverId);
-            return Ok("Solicitud de amistad aceptada.");
+            var result = await _friendRequestService.AcceptFriendRequest(amistadId);
+            if (result) return Ok();
+            return BadRequest();
         }
 
-        [HttpDelete("reject")]
-        public async Task<IActionResult> RejectFriendRequest([FromBody] dynamic request)
+        [HttpPost("reject")]
+        public async Task<IActionResult> RejectFriendRequest(int amistadId)
         {
-            if (request == null || request.senderId == null || request.receiverId == null)
-                return BadRequest("Los IDs del remitente y receptor son requeridos.");
-
-            await _friendRequestService.RejectFriendRequest((int)request.senderId, (int)request.receiverId);
-            return Ok("Solicitud de amistad rechazada.");
+            var result = await _friendRequestService.RejectFriendRequest(amistadId);
+            if (result) return Ok();
+            return BadRequest();
         }
 
-        [HttpGet("friends/{userId}")]
-        public async Task<IActionResult> GetFriends(int userId)
+        [HttpGet("friends/{usuarioId}")]
+        public async Task<ActionResult<List<Usuario>>> GetFriendsList(int usuarioId)
         {
-            var friends = await _friendRequestService.GetFriends(userId);
-            return Ok(friends);
+            var amigos = await _friendRequestService.GetFriendsList(usuarioId);
+            return Ok(amigos);
         }
 
-        [HttpGet("pending/{userId}")]
-        public async Task<IActionResult> GetPendingRequests(int userId)
+        [HttpGet("pending/{usuarioId}")]
+        public async Task<ActionResult<List<Amistad>>> GetPendingFriendRequests(int usuarioId)
         {
-            var requests = await _friendRequestService.GetPendingRequests(userId);
-            return Ok(requests);
+            var solicitudesPendientes = await _friendRequestService.GetPendingFriendRequests(usuarioId);
+            return Ok(solicitudesPendientes);
         }
     }
 }
