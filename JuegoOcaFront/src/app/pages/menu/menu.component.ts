@@ -136,7 +136,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       });
     }
   }
-  
+ 
 
   cargarSolicitudesPendientes(): void {
     if (this.usuarioId) {
