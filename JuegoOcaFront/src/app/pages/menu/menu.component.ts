@@ -34,10 +34,13 @@ export class MenuComponent implements OnInit, OnDestroy {
   amigosFiltrados: User[] = [];
   busquedaAmigos: string = '';
   
+  solicitudesPendientes: any[] = []; 
+
   vistaActiva: string = 'amigos'; 
 
   usuarioApodo: string = ''; 
   usuarioFotoPerfil: string = '';
+  usuarioId: number | null = null; 
 
   constructor(
     private webSocketService: WebsocketService, 
@@ -49,6 +52,8 @@ export class MenuComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.obtenerUsuarios();
     this.cargarInfoUsuario(); 
+    this.cargarAmigos();
+    this.cargarSolicitudesPendientes();
     this.connected$ = this.webSocketService.connected.subscribe(() => this.isConnected = true);
     this.messageReceived$ = this.webSocketService.messageReceived.subscribe(message => this.serverResponse = message);
     this.disconnected$ = this.webSocketService.disconnected.subscribe(() => this.isConnected = false);
@@ -89,12 +94,14 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   buscarUsuarios(): void {
     if (this.terminoBusqueda) {
-      this.usuariosFiltrados = this.usuarios.filter(usuario =>
-        usuario.UsuarioApodo.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
-      );
+      this.usuariosFiltrados = this.usuarios.filter(usuario => {
+        const apodo = usuario.UsuarioApodo || '';
+        return apodo.toLowerCase().includes(this.terminoBusqueda.toLowerCase());
+      });
     } else {
-      this.usuariosFiltrados = this.usuarios; // Si no hay  búsqueda, muestra todos los usuarios
+      this.usuariosFiltrados = this.usuarios;
     }
+    console.log('Usuarios filtrados después de buscar:', this.usuariosFiltrados);
   }
 
   cambiarVista(vista: string): void {
@@ -109,10 +116,62 @@ export class MenuComponent implements OnInit, OnDestroy {
   cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
-      this.usuarioApodo = userInfo.name;
+      this.usuarioApodo = userInfo.name; 
       this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`; 
+      this.usuarioId = userInfo.id; 
     } else {
       console.error('No se pudo obtener la información del usuario desde el token.');
     }
   }
+
+  cargarAmigos(): void {
+    if (this.usuarioId) {
+      this.apiService.getFriendsList(this.usuarioId).subscribe(amigos => {
+        this.amigos = amigos.map(amigo => ({
+          UsuarioApodo: amigo.usuarioApodo,
+          UsuarioId: amigo.usuarioId,
+          UsuarioFotoPerfil: amigo.usuarioFotoPerfil
+        }));
+        this.amigosFiltrados = this.amigos;
+      });
+    }
+  }
+ 
+
+  cargarSolicitudesPendientes(): void {
+    if (this.usuarioId) {
+      this.apiService.getPendingFriendRequests(this.usuarioId).subscribe(solicitudes => {
+        this.solicitudesPendientes = solicitudes;
+      });
+    }
+  }
+
+  async aceptarSolicitud(amistadId: number): Promise<void> {
+    try {
+      const resultado = await this.apiService.post(`/api/FriendRequest/accept`, { amistadId });
+      console.log('Respuesta del servidor:', resultado);
+      if (resultado.success) {
+        this.cargarSolicitudesPendientes();
+        this.cargarAmigos();
+      } else {
+        console.error('Error al aceptar la solicitud:', resultado['errorMessage']);
+      }
+    } catch (error) {
+      console.error('Error en la solicitud de aceptación:', error);
+    }
+  }
+  
+  async rechazarSolicitud(amistadId: number): Promise<void> {
+    try {
+      const resultado = await this.apiService.post(`/api/FriendRequest/reject`, { amistadId });
+      if (resultado.success) {
+        this.cargarSolicitudesPendientes();
+      } else {
+        console.error('Error al rechazar la solicitud:', resultado['errorMessage']);
+      }
+    } catch (error) {
+      console.error('Error en la solicitud de rechazo:', error);
+    }
+  }
+  
 }

@@ -1,25 +1,8 @@
 <div class="menu">
-  <div class="lado-izquierdo">
-    <!--Pruebas de WebSockets que no tiene pinta que vayan a llegar a ninguna parte-->
-    @if (isConnected) {
-      <button (click)="disconnect()">Desconectar</button>
-    
-      <form (ngSubmit)="send()">
-        <input type="text" placeholder="Escribe tu mensaje" [(ngModel)]="message" [ngModelOptions]="{standalone: true}" />
-        <input type="submit" value="Enviar" />
-      </form>
-    
-      <div>{{serverResponse}}</div>
-    
-      }
-      @else {
-      <button (click)="connectRxjs()">Conectar rxjs</button>
-      }
-  </div>
-
   <div class="perfil">
     <div>
       <img [src]="usuarioFotoPerfil" alt="Foto de Perfil" class="perfil-foto">
+      <br>
       <span class="perfil-apodo">{{ usuarioApodo }}</span>
     </div>
     <br>
@@ -31,46 +14,42 @@
 
   <br>
 
-  <div class="solicitudes">
+  <div class="elementosMenu">
     <h2>Solicitudes de Amistad</h2>
+    <div *ngFor="let solicitud of solicitudesPendientes">
+      <span>{{ solicitud.usuario.UsuarioApodo }}</span>
+      <button (click)="aceptarSolicitud(solicitud.amistad.AmistadId)">Aceptar</button>
+      <button (click)="rechazarSolicitud(solicitud.amistad.AmistadId)">Rechazar</button>
+    </div>
   </div>
 
   <br>
 
-  <div class="solicitudes">
+  <div class="elementosMenu">
     <h2>Solicitudes de Partidas</h2>
   </div>
 
   <br>
 
-  <div class="amigos">
+  <div class="elementosMenu">
     <h2>Amigos</h2>
-    <input type="text" placeholder="Buscar amigos..." />
-    <ul>
-    </ul>
+    <input type="text" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
+    <div *ngFor="let amigo of amigosFiltrados">
+      <p><strong>Apodo:</strong> {{ amigo.UsuarioApodo || 'Sin apodo' }}</p>
+      <p><strong>ID:</strong> {{ amigo.UsuarioId || 'Sin ID' }}</p>
+      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="getFotoPerfilUrl(amigo.UsuarioFotoPerfil)" alt="Foto de perfil" width="100">
+    </div>
   </div>
 
   <br>
 
-  <div class="usuarios">
+  <div class="elementosMenu">
     <h2>Buscar Usuarios</h2>
-    <input type="text" [(ngModel)]="terminoBusqueda" (input)="buscarUsuarios()" placeholder="Buscar usuarios..." />
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Apodo</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let usuario of usuariosFiltrados"> 
-          <td>{{ usuario.UsuarioId }}</td>
-          <td>{{ usuario.UsuarioApodo }}</td>
-          <td>{{ usuario.UsuarioEmail }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <input type="text" [(ngModel)]="terminoBusqueda" placeholder="Buscar usuarios..." />
+    <button (click)="buscarUsuarios()">Buscar</button>
+    <div *ngFor="let usuario of usuariosFiltrados"> 
+      <span>{{ usuario.UsuarioApodo }}</span>
+    </div>
   </div>
 </div>
 <button [routerLink]="'/matchmaking'" class="perfilButton">JUGAR</button>
