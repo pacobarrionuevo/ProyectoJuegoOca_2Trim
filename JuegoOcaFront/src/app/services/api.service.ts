@@ -17,9 +17,25 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
-  // Método para obtener la lista de usuarios
   getUsuarios(): Observable<User[]> {
     return this.http.get<User[]>(`${this.BASE_URL}/api/Usuario/ListaUsuario`);
+  }
+
+  getFriendsList(usuarioId: number): Observable<User[]> {
+    return this.http.get<User[]>(`${this.BASE_URL}/api/FriendRequest/friends/${usuarioId}`);
+  }
+
+  getPendingFriendRequests(usuarioId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.BASE_URL}/api/FriendRequest/pending/${usuarioId}`);
+  }
+
+  acceptFriendRequest(amistadId: number): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/api/FriendRequest/accept`, { amistadId });
+  }
+
+  // Método para rechazar una solicitud de amistad
+  rejectFriendRequest(amistadId: number): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/api/FriendRequest/reject`, { amistadId });
   }
 
   // Métodos existentes (get, post, put, delete, sendRequest, getHeader)

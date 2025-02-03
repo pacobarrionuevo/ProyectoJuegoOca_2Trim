@@ -16,6 +16,11 @@
 
   <div class="elementosMenu">
     <h2>Solicitudes de Amistad</h2>
+    <div *ngFor="let solicitud of solicitudesPendientes">
+      <span>{{ solicitud.usuario.UsuarioApodo }}</span>
+      <button (click)="aceptarSolicitud(solicitud.amistad.AmistadId)">Aceptar</button>
+      <button (click)="rechazarSolicitud(solicitud.amistad.AmistadId)">Rechazar</button>
+    </div>
   </div>
 
   <br>
@@ -28,7 +33,12 @@
 
   <div class="elementosMenu">
     <h2>Amigos</h2>
-    <input type="text" placeholder="Buscar amigos..." />
+    <input type="text" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
+    <div *ngFor="let amigo of amigosFiltrados">
+      <p><strong>Apodo:</strong> {{ amigo.UsuarioApodo || 'Sin apodo' }}</p>
+      <p><strong>ID:</strong> {{ amigo.UsuarioId || 'Sin ID' }}</p>
+      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="getFotoPerfilUrl(amigo.UsuarioFotoPerfil)" alt="Foto de perfil" width="100">
+    </div>
   </div>
 
   <br>
@@ -36,11 +46,9 @@
   <div class="elementosMenu">
     <h2>Buscar Usuarios</h2>
     <input type="text" [(ngModel)]="terminoBusqueda" placeholder="Buscar usuarios..." />
-    <button (click)="buscarUsuarios()">Buscar</button> <!-- Botón para buscar -->
+    <button (click)="buscarUsuarios()">Buscar</button>
     <div *ngFor="let usuario of usuariosFiltrados"> 
-      <span>
-        {{ usuario.UsuarioApodo }}
-      </span>
+      <span>{{ usuario.UsuarioApodo }}</span>
     </div>
-</div>
+  </div>
 </div>
