@@ -129,7 +129,6 @@ export class MenuComponent implements OnInit, OnDestroy {
       this.apiService.getFriendsList(this.usuarioId).subscribe(amigos => {
         this.amigos = amigos.map(amigo => ({
           UsuarioApodo: amigo.usuarioApodo,
-          UsuarioId: amigo.usuarioId,
           UsuarioFotoPerfil: amigo.usuarioFotoPerfil
         }));
         this.amigosFiltrados = this.amigos;
