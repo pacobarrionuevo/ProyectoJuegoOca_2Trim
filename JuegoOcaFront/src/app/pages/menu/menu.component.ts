@@ -128,16 +128,14 @@ export class MenuComponent implements OnInit, OnDestroy {
     if (this.usuarioId) {
       this.apiService.getFriendsList(this.usuarioId).subscribe(amigos => {
         this.amigos = amigos.map(amigo => ({
-          UsuarioApodo: amigo.usuarioApodo,
-          UsuarioId: amigo.usuarioId,
-          UsuarioFotoPerfil: amigo.usuarioFotoPerfil
+          UsuarioApodo: amigo.UsuarioApodo,
+          UsuarioFotoPerfil: amigo.UsuarioFotoPerfil
         }));
         this.amigosFiltrados = this.amigos;
       });
     }
   }
- 
-
+  
   cargarSolicitudesPendientes(): void {
     if (this.usuarioId) {
       this.apiService.getPendingFriendRequests(this.usuarioId).subscribe(solicitudes => {
