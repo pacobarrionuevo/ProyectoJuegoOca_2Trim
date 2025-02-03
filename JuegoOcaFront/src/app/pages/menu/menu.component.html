@@ -34,10 +34,9 @@
   <div class="elementosMenu">
     <h2>Amigos</h2>
     <input type="text" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
-    <div *ngFor="let amigo of amigosFiltrados">
+    <div class="lista" *ngFor="let amigo of amigosFiltrados">
+      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="getFotoPerfilUrl(amigo.UsuarioFotoPerfil)" alt="Foto de perfil" width="100"> 
       <p><strong>Apodo:</strong> {{ amigo.UsuarioApodo || 'Sin apodo' }}</p>
-      <p><strong>ID:</strong> {{ amigo.UsuarioId || 'Sin ID' }}</p>
-      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="getFotoPerfilUrl(amigo.UsuarioFotoPerfil)" alt="Foto de perfil" width="100">
     </div>
   </div>
 
