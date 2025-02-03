@@ -88,7 +88,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       console.log(usuarios);
       this.usuarios = usuarios.map(usuario => ({
         UsuarioApodo: usuario.usuarioApodo,
-          UsuarioFotoPerfil: usuario.usuarioFotoPerfil
+        UsuarioFotoPerfil: usuario.usuarioFotoPerfil
       }));
       this.usuariosFiltrados = [...this.usuarios]; 
     });

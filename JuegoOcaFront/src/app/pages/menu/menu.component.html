@@ -33,7 +33,7 @@
 
   <div class="elementosMenu">
     <h2>Amigos</h2>
-    <input type="text" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
+    <input type="text" class="lista" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
       <img *ngIf="amigo.UsuarioFotoPerfil" [src]="getFotoPerfilUrl(amigo.UsuarioFotoPerfil)" alt="Foto de perfil" width="100"> 
       <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>
@@ -46,8 +46,9 @@
     <h2>Buscar Usuarios</h2>
     <input type="text" [(ngModel)]="terminoBusqueda" placeholder="Buscar usuarios..." />
     <button (click)="buscarUsuarios()">Buscar</button>
-    
+    <br>
     <div *ngFor="let usuario of usuariosFiltrados">
+      <img [src]="getFotoPerfilUrl(usuario.UsuarioFotoPerfil)" alt="Foto de perfil" width="100">
       <span>{{ usuario.UsuarioApodo }}</span>
     </div>
   </div>

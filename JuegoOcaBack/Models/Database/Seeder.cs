@@ -30,7 +30,7 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioEmail = "paco@gmail.com",
                 UsuarioContrasena = PasswordHelper.Hash("paco33"),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("paco33"),
-                UsuarioFotoPerfil = "prueba",
+                UsuarioFotoPerfil = "fotos/7f9790f9-6386-4870-956c-e95f5401fb93_BalatroImagen.jpeg",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>()
             };
 
