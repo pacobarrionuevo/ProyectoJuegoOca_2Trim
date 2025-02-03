@@ -1,12 +1,15 @@
 <div class="botones">
-    <button>
-     Jugar con amigos   
+    <button class="boton-juego">
+        <img [src]="NinosJugandoALaOca" alt="Tablero del Juego de la Oca">
+        <span>Jugar con amigos</span>
     </button>
-    <button>
-        Jugar con Bot
+    <button class="boton-juego">
+        <img [src]="ROB" alt="Tablero del Juego de la Oca">
+        <span>Jugar con Bot</span>
     </button>
-    <button>
-        Jugar aleatorio
+    <button class="boton-juego">
+        <img [src]="tablero" alt="Tablero del Juego de la Oca">
+        <span>Jugar aleatorio</span>
     </button>
-    <button [routerLink]="'/menu'" class="perfilButton">Volver al menú</button>
+    <button [routerLink]="'/menu'" class="boton-volver">Volver al menú</button>
 </div>
