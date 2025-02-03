@@ -109,7 +109,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
-      this.usuarioApodo = userInfo.name; 
+      this.usuarioApodo = userInfo.name;
       this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`; 
     } else {
       console.error('No se pudo obtener la información del usuario desde el token.');
