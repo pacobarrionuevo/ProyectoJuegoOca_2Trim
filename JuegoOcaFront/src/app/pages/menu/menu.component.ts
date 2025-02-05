@@ -85,24 +85,25 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
-      console.log('Usuarios obtenidos:', usuarios); 
-      this.usuarios = usuarios;
-      this.usuariosFiltrados = this.usuarios; 
-      console.log('Usuarios filtrados:', this.usuariosFiltrados);
+      console.log(usuarios);
+      this.usuarios = usuarios.map(usuario => ({
+        UsuarioApodo: usuario.UsuarioApodo,
+        UsuarioFotoPerfil: usuario.UsuarioFotoPerfil
+      }));
+      this.usuariosFiltrados = [...this.usuarios]; 
     });
-  }
+  }  
 
   buscarUsuarios(): void {
-    if (this.terminoBusqueda) {
-      this.usuariosFiltrados = this.usuarios.filter(usuario => {
-        const apodo = usuario.UsuarioApodo || '';
-        return apodo.toLowerCase().includes(this.terminoBusqueda.toLowerCase());
-      });
+    if (this.terminoBusqueda.trim() !== '') {
+      this.usuariosFiltrados = this.usuarios.filter(usuario => 
+        usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
+      );
     } else {
-      this.usuariosFiltrados = this.usuarios;
+      this.usuariosFiltrados = [...this.usuarios];
     }
-    console.log('Usuarios filtrados después de buscar:', this.usuariosFiltrados);
   }
+  
 
   cambiarVista(vista: string): void {
     this.vistaActiva = vista;
