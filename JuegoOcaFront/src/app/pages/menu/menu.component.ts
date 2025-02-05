@@ -95,8 +95,6 @@ export class MenuComponent implements OnInit, OnDestroy {
       this.usuariosFiltrados = [...this.usuarios]; 
     });
   }
-  
-    
 
   buscarUsuarios(): void {
     if (this.terminoBusqueda.trim() !== '') {
@@ -107,10 +105,22 @@ export class MenuComponent implements OnInit, OnDestroy {
       this.usuariosFiltrados = [...this.usuarios];
     }
   }
-  
 
-  cambiarVista(vista: string): void {
-    this.vistaActiva = vista;
+  enviarSolicitud(receiverId: number): void {
+    if (this.usuarioId === null) {
+      console.error('Usuario no autenticado.');
+      return;
+    }
+  
+    this.apiService.sendFriendRequest(this.usuarioId, receiverId).subscribe({
+      next: () => {
+        console.log('Solicitud de amistad enviada con éxito.');
+        this.cargarSolicitudesPendientes();
+      },
+      error: (error) => {
+        console.error('Error al enviar la solicitud de amistad:', error);
+      }
+    });
   }
 
   logout() {

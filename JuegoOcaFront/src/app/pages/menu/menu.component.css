@@ -124,11 +124,6 @@ input[type="text"]:focus-visible {
   outline: none;
 }
 
-.div_usuarios {
-  display: grid;
-  grid-template-rows: 1fr 1fr 1fr;
-}
-
 .botonesListaUsuario {
   background-color: blueviolet;
   color: whitesmoke;

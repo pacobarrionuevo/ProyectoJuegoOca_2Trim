@@ -47,11 +47,12 @@
     <input type="text" [(ngModel)]="terminoBusqueda" placeholder="Buscar usuarios..." />
     <button (click)="buscarUsuarios()">Buscar</button>
     <br>
-    <div class="div_usuarios" *ngFor="let usuario of usuariosFiltrados">
-      <img [src]="usuario.UsuarioFotoPerfil" width="100">&nbsp;
+    <div *ngFor="let usuario of usuariosFiltrados">
+      <img [src]="usuario.UsuarioFotoPerfil" alt="Foto de perfil" width="50" height="50">&nbsp;
       <span>{{ usuario.UsuarioApodo }}</span>&nbsp;
       <button class="botonesListaUsuario" [routerLink]="'/perfil'">Ir al Perfil</button>&nbsp;
-      <button class="botonesListaUsuario">Solicitud Amistad</button>
+      <button (click)="enviarSolicitud(usuario.UsuarioId)">Enviar Solicitud</button>
     </div>
   </div>
 </div>
+
