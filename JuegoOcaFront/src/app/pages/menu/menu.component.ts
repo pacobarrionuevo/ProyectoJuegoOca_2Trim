@@ -59,8 +59,8 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.disconnected$ = this.webSocketService.disconnected.subscribe(() => this.isConnected = false);
   }
 
-  getFotoPerfilUrl(fotoPerfil: string): string {
-    return `${environment.apiUrl}/fotos/${fotoPerfil}`;
+  getFotoPerfilUrl(fotoPerfil: string | undefined): string {
+    return fotoPerfil ? `${environment.apiUrl}/fotos/${fotoPerfil}` : 'default-image-path';
   }
 
   connectRxjs() {
@@ -80,19 +80,21 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.messageReceived$.unsubscribe();
     this.disconnected$.unsubscribe();
   }
- 
+
   activeSection: string = 'amigos';
 
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
-      console.log(usuarios);
+      console.log('Usuarios obtenidos:', usuarios); // Log para verificar los datos en consola
       this.usuarios = usuarios.map(usuario => ({
         UsuarioApodo: usuario.UsuarioApodo,
         UsuarioFotoPerfil: usuario.UsuarioFotoPerfil
       }));
-      this.usuariosFiltrados = [...this.usuarios]; 
+      this.usuariosFiltrados = [...this.usuarios];
+    }, error => {
+      console.error('Error al obtener usuarios:', error);
     });
-  }  
+  }
 
   buscarUsuarios(): void {
     if (this.terminoBusqueda.trim() !== '') {
@@ -103,7 +105,6 @@ export class MenuComponent implements OnInit, OnDestroy {
       this.usuariosFiltrados = [...this.usuarios];
     }
   }
-  
 
   cambiarVista(vista: string): void {
     this.vistaActiva = vista;
@@ -111,14 +112,14 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']); 
+    this.router.navigate(['/login']);
   }
 
   cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
-      this.usuarioApodo = userInfo.name; 
-      this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`; 
+      this.usuarioApodo = userInfo.name;
+      this.usuarioFotoPerfil = this.getFotoPerfilUrl(userInfo.profilePicture); 
       this.usuarioId = userInfo.id; 
     } else {
       console.error('No se pudo obtener la información del usuario desde el token.');
@@ -136,7 +137,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       });
     }
   }
-  
+
   cargarSolicitudesPendientes(): void {
     if (this.usuarioId) {
       this.apiService.getPendingFriendRequests(this.usuarioId).subscribe(solicitudes => {
@@ -159,7 +160,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       console.error('Error en la solicitud de aceptación:', error);
     }
   }
-  
+
   async rechazarSolicitud(amistadId: number): Promise<void> {
     try {
       const resultado = await this.apiService.post(`/api/FriendRequest/reject`, { amistadId });
@@ -172,5 +173,4 @@ export class MenuComponent implements OnInit, OnDestroy {
       console.error('Error en la solicitud de rechazo:', error);
     }
   }
-  
 }
