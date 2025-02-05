@@ -48,10 +48,8 @@
     <button (click)="buscarUsuarios()">Buscar</button>
     <br>
     <div *ngFor="let usuario of usuariosFiltrados">
-      <img [src]="getFotoPerfilUrl(usuario.UsuarioFotoPerfil)" alt="Foto de perfil" width="100">
+      <img [src]="usuario.UsuarioFotoPerfil" alt="Foto de perfil" width="100">&nbsp;
       <span>{{ usuario.UsuarioApodo }}</span>
     </div>
   </div>
-  
-  
 </div>

@@ -83,16 +83,20 @@ export class MenuComponent implements OnInit, OnDestroy {
  
   activeSection: string = 'amigos';
 
-  obtenerUsuarios(): void {
+  obtenerUsuarios(): void { 
     this.apiService.getUsuarios().subscribe(usuarios => {
-      console.log(usuarios);
       this.usuarios = usuarios.map(usuario => ({
         UsuarioApodo: usuario.usuarioApodo,
         UsuarioFotoPerfil: usuario.usuarioFotoPerfil
+          ? `${environment.apiUrl}/fotos/${usuario.usuarioFotoPerfil}`
+          : 'assets/default-profile.png' 
       }));
+      console.log(this.usuarios);
       this.usuariosFiltrados = [...this.usuarios]; 
     });
-  }  
+  }
+  
+    
 
   buscarUsuarios(): void {
     if (this.terminoBusqueda.trim() !== '') {
@@ -123,6 +127,7 @@ export class MenuComponent implements OnInit, OnDestroy {
     } else {
       console.error('No se pudo obtener la información del usuario desde el token.');
     }
+    console.log(userInfo);
   }
 
   cargarAmigos(): void {
