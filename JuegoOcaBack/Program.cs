@@ -30,7 +30,6 @@ builder.Services.AddScoped<UserRepository>();
 
 builder.Services.AddTransient<ImageService>();
 builder.Services.AddTransient<FriendRequestService>();
-builder.Services.AddTransient<WebSocketService>();
 
 builder.Services.AddTransient<ImageMapper>();
 

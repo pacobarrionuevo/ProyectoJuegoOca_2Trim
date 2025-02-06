@@ -19,7 +19,7 @@ export class LoginComponent {
   usuarioId: number | null = null;
 
   constructor(private authService: AuthService, private router: Router) {}
-
+  //coger el token, crear el socket y pasandole el token por la ruta
   ngOnInit(): void {
     const savedAuthData = JSON.parse(localStorage.getItem('authData') || '{}');
     if (savedAuthData.recuerdame) {
