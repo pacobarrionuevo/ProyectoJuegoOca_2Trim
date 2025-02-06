@@ -16,15 +16,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, FormsModule, RouterModule],
   styleUrls: ['./menu.component.css']
 })
-export class MenuComponent implements OnInit, OnDestroy {
-
-  message: string = '';
-  serverResponse: string = '';
-  isConnected: boolean = false;
-  connected$: Subscription;
-  messageReceived$: Subscription;
-  disconnected$: Subscription;
-  type: 'rxjs';
+export class MenuComponent implements OnInit {
 
   usuarios: User[] = []; 
   usuariosFiltrados: User[] = [];
@@ -54,34 +46,11 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.cargarInfoUsuario(); 
     this.cargarAmigos();
     this.cargarSolicitudesPendientes();
-    this.connected$ = this.webSocketService.connected.subscribe(() => this.isConnected = true);
-    this.messageReceived$ = this.webSocketService.messageReceived.subscribe(message => this.serverResponse = message);
-    this.disconnected$ = this.webSocketService.disconnected.subscribe(() => this.isConnected = false);
   }
 
   getFotoPerfilUrl(fotoPerfil: string): string {
     return `${environment.apiUrl}/fotos/${fotoPerfil}`;
   }
-
-  connectRxjs() {
-    this.webSocketService.connectRxjs();
-  }
-
-  send() {
-    this.webSocketService.sendRxjs(this.message);
-  }
-
-  disconnect() {
-    this.webSocketService.disconnectRxjs();
-  }
-
-  ngOnDestroy(): void {
-    this.connected$.unsubscribe();
-    this.messageReceived$.unsubscribe();
-    this.disconnected$.unsubscribe();
-  }
- 
-  activeSection: string = 'amigos';
 
   obtenerUsuarios(): void { 
     this.apiService.getUsuarios().subscribe(usuarios => {
