@@ -42,7 +42,7 @@ export class WebsocketService {
   connectRxjs(token: string) {
     this.rxjsSocket = webSocket({
       // Aquí es donde agregamos el token a la URL
-      url: `ws://localhost:7077/ws/connect?token=${token}`,
+      url: `wss://localhost:7077/ws/connect?token=${token}`,
   
       openObserver: {
         next: () => this.onConnected()
