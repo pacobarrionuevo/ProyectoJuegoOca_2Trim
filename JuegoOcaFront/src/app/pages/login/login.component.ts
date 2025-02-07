@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AuthRequest } from '../../models/auth-request';
+import { WebsocketService } from '../../services/websocket.service';  // Importar WebSocketService
 
 @Component({
   selector: 'app-login',
@@ -16,10 +17,13 @@ export class LoginComponent {
   contrasena: string = '';
   recuerdame: boolean = false;
   jwt: string | null = null; 
-  usuarioId: number | null = null;
 
-  constructor(private authService: AuthService, private router: Router) {}
-  //coger el token, crear el socket y pasandole el token por la ruta
+  constructor(
+    private authService: AuthService, 
+    private websocketService: WebsocketService,  // Inyectar WebSocketService
+    private router: Router
+  ) {}
+
   ngOnInit(): void {
     const savedAuthData = JSON.parse(localStorage.getItem('authData') || '{}');
     if (savedAuthData.recuerdame) {
@@ -27,11 +31,13 @@ export class LoginComponent {
       this.contrasena = savedAuthData.contrasena || '';
       this.recuerdame = savedAuthData.recuerdame || false;
     }
-  
-    // Verifica los dos Storage para el token
+
+    // Verifica los dos Storage para el token y conecta el WebSocket si hay sesión
     this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    if (this.jwt) {
+      this.websocketService.connectRxjs(this.jwt);
+    }
   }
-  
 
   async submit() {
     const authData: AuthRequest = { 
@@ -41,6 +47,15 @@ export class LoginComponent {
 
     try {
       await this.authService.login(authData, this.recuerdame).toPromise();
+      
+      // Obtener el token después del login
+      this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+
+      // Conectar WebSocket con el token
+      if (this.jwt) {
+        this.websocketService.connectRxjs(this.jwt);
+      }
+
       if (this.recuerdame) {
         localStorage.setItem('authData', JSON.stringify({
           emailoapodo: this.emailoapodo,
@@ -50,9 +65,10 @@ export class LoginComponent {
       } else {
         localStorage.removeItem('authData');
       }
+
       this.router.navigate(['/menu']);
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
-    }
-  }
+    }
+  }
 }

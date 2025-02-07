@@ -24,11 +24,9 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     context.Request.Headers["Authorization"] = $"Bearer {token}";
                 }
 
-                /*
                 using WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 await _webSocketNetwork.HandleAsync(webSocket);
-                */
-                //todo esto va en el controlador, pero tengo que ver cómo lo cambio
+                
                 return;
             }         
             
