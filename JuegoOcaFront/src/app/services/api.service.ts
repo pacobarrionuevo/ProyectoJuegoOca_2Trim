@@ -21,6 +21,10 @@ export class ApiService {
     return this.http.get<User[]>(`${this.BASE_URL}/api/Usuario/ListaUsuario`);
   }
 
+  sendFriendRequest(senderId: number, receiverId: number): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/api/FriendRequest/send`, { senderId, receiverId });
+  }  
+
   getFriendsList(usuarioId: number): Observable<User[]> {
     return this.http.get<User[]>(`${this.BASE_URL}/api/FriendRequest/friends/${usuarioId}`);
   }

@@ -1,66 +1,34 @@
 ﻿using System.Net.WebSockets;
-using System.Text;
-using JuegoOcaBack.Services;
-using JuegoOcaBack.WebSocketAdvanced;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using JuegoOcaBack.WebSocketAdvanced; 
 
-namespace JuegoOcaBack.Controllers
+namespace TuNamespace.Controllers
 {
-    [Route("socket")]
+    [Route("ws")]
     [ApiController]
     public class WebSocketController : ControllerBase
     {
-        private readonly WebSocketService _websocketService;
         private readonly WebSocketNetwork _websocketNetwork;
 
-        public WebSocketController(WebSocketService websocketService, WebSocketNetwork websocketNetwork)
+        public WebSocketController(WebSocketNetwork websocketNetwork)
         {
-            _websocketService = websocketService;
             _websocketNetwork = websocketNetwork;
         }
 
-        [HttpGet]
+        [HttpGet("connect")]
         public async Task ConnectAsync()
         {
-            // Si la petición es de tipo websocket la aceptamos
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
-                // Aceptamos la solicitud
                 WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-
-                // Manejamos la solicitud.
-                await _websocketService.HandleAsync(webSocket);
-            }
-            // En caso contrario la rechazamos
-            else
-            {
-                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            }
-
-            // Cuando este método finalice, se cerrará automáticamente la conexión con el websocket
-        }
-
-        [HttpGet("advanced")]
-        public async Task AdvancedConnectAsync()
-        {
-            // Si la petición es de tipo websocket la aceptamos
-            if (HttpContext.WebSockets.IsWebSocketRequest)
-            {
-                // Aceptamos la solicitud
-                WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-
-                // Manejamos la solicitud.
                 await _websocketNetwork.HandleAsync(webSocket);
             }
-            // En caso contrario la rechazamos
             else
             {
                 HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             }
-
-            // Cuando este método finalice, se cerrará automáticamente la conexión con el websocket
         }
     }
-
 }

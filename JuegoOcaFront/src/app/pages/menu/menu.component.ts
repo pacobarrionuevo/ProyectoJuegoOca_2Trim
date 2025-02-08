@@ -16,15 +16,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, FormsModule, RouterModule],
   styleUrls: ['./menu.component.css']
 })
-export class MenuComponent implements OnInit, OnDestroy {
-
-  message: string = '';
-  serverResponse: string = '';
-  isConnected: boolean = false;
-  connected$: Subscription;
-  messageReceived$: Subscription;
-  disconnected$: Subscription;
-  type: 'rxjs';
+export class MenuComponent implements OnInit {
 
   usuarios: User[] = []; 
   usuariosFiltrados: User[] = [];
@@ -54,45 +46,22 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.cargarInfoUsuario(); 
     this.cargarAmigos();
     this.cargarSolicitudesPendientes();
-    this.connected$ = this.webSocketService.connected.subscribe(() => this.isConnected = true);
-    this.messageReceived$ = this.webSocketService.messageReceived.subscribe(message => this.serverResponse = message);
-    this.disconnected$ = this.webSocketService.disconnected.subscribe(() => this.isConnected = false);
   }
 
   getFotoPerfilUrl(fotoPerfil: string | undefined): string {
     return fotoPerfil ? `${environment.apiUrl}/fotos/${fotoPerfil}` : 'default-image-path';
   }
 
-  connectRxjs() {
-    this.webSocketService.connectRxjs();
-  }
-
-  send() {
-    this.webSocketService.sendRxjs(this.message);
-  }
-
-  disconnect() {
-    this.webSocketService.disconnectRxjs();
-  }
-
-  ngOnDestroy(): void {
-    this.connected$.unsubscribe();
-    this.messageReceived$.unsubscribe();
-    this.disconnected$.unsubscribe();
-  }
-
-  activeSection: string = 'amigos';
-
-  obtenerUsuarios(): void {
+  obtenerUsuarios(): void { 
     this.apiService.getUsuarios().subscribe(usuarios => {
-      console.log('Usuarios obtenidos:', usuarios); // Log para verificar los datos en consola
       this.usuarios = usuarios.map(usuario => ({
-        UsuarioApodo: usuario.UsuarioApodo,
-        UsuarioFotoPerfil: usuario.UsuarioFotoPerfil
+        UsuarioApodo: usuario.usuarioApodo,
+        UsuarioFotoPerfil: usuario.usuarioFotoPerfil
+          ? `${environment.apiUrl}/fotos/${usuario.usuarioFotoPerfil}`
+          : 'assets/default-profile.png' 
       }));
-      this.usuariosFiltrados = [...this.usuarios];
-    }, error => {
-      console.error('Error al obtener usuarios:', error);
+      console.log(this.usuarios);
+      this.usuariosFiltrados = [...this.usuarios]; 
     });
   }
 
@@ -106,8 +75,21 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
-  cambiarVista(vista: string): void {
-    this.vistaActiva = vista;
+  enviarSolicitud(receiverId: number): void {
+    if (this.usuarioId === null) {
+      console.error('Usuario no autenticado.');
+      return;
+    }
+  
+    this.apiService.sendFriendRequest(this.usuarioId, receiverId).subscribe({
+      next: () => {
+        console.log('Solicitud de amistad enviada con éxito.');
+        this.cargarSolicitudesPendientes();
+      },
+      error: (error) => {
+        console.error('Error al enviar la solicitud de amistad:', error);
+      }
+    });
   }
 
   logout() {
@@ -124,6 +106,7 @@ export class MenuComponent implements OnInit, OnDestroy {
     } else {
       console.error('No se pudo obtener la información del usuario desde el token.');
     }
+    console.log(userInfo);
   }
 
   cargarAmigos(): void {

@@ -68,7 +68,7 @@
 }
 
 .perfilButton:hover {
-  background-color: #048d09;
+  background-color: #047008;
 }
 
 .elementosMenu {
@@ -84,6 +84,7 @@
   border-radius: 10px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  justify-content: center;
 }
 
 .lista {
@@ -96,9 +97,10 @@
   color: whitesmoke;
 }
 
-h2 {
-  margin-bottom: 10px;
-  color: #B63A3A;
+.titulo {
+  font-weight: bold;
+  font-size:larger;
+  color: rgb(159, 9, 9)
 }
 
 input[type="text"] {
@@ -120,6 +122,11 @@ input[type="text"]:focus-visible {
   margin-bottom: 10px;
   color: whitesmoke;
   outline: none;
+}
+
+.botonesListaUsuario {
+  background-color: blueviolet;
+  color: whitesmoke;
 }
 
 

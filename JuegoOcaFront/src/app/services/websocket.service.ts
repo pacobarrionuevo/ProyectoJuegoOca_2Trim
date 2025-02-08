@@ -39,32 +39,26 @@ export class WebsocketService {
     return this.rxjsSocket && !this.rxjsSocket.closed;
   }
 
-  connectRxjs() {
+  connectRxjs(token: string) {
     this.rxjsSocket = webSocket({
-      url: environment.socketUrl,
-
-      // Evento de apertura de conexión
+      // Aquí es donde agregamos el token a la URL
+      url: `wss://localhost:7077/ws/connect?token=${token}`,
+  
       openObserver: {
         next: () => this.onConnected()
       },
-
-      // La versión de Rxjs está configurada por defecto para manejar JSON
-      // Si queremos manejar cadenas de texto en crudo debemos configurarlo
+  
       serializer: (value: string) => value,
       deserializer: (event: MessageEvent) => event.data
     });
-
+  
     this.rxjsSocket.subscribe({
-      // Evento de mensaje recibido
       next: (message: string) => this.onMessageReceived(message),
-
-      // Evento de error generado
       error: (error) => this.onError(error),
-
-      // Evento de cierre de conexión
       complete: () => this.onDisconnected()
     });
   }
+  
 
   sendRxjs(message: string) {
     this.rxjsSocket.next(message);

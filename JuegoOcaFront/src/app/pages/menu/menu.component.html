@@ -15,7 +15,7 @@
   <br>
 
   <div class="elementosMenu">
-    <h2>Solicitudes de Amistad</h2>
+    <p class="titulo">Solicitudes de Amistad</p>
     <div *ngFor="let solicitud of solicitudesPendientes">
       <span>{{ solicitud.usuario.UsuarioApodo }}</span>
       <button (click)="aceptarSolicitud(solicitud.amistad.AmistadId)">Aceptar</button>
@@ -26,13 +26,13 @@
   <br>
 
   <div class="elementosMenu">
-    <h2>Solicitudes de Partidas</h2>
+    <p class="titulo">Solicitudes de Partidas</p>
   </div>
 
   <br>
 
   <div class="elementosMenu">
-    <h2>Amigos</h2>
+    <p class="titulo">Amigos</p>
     <input type="text" class="lista" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
       <img *ngIf="amigo.UsuarioFotoPerfil" [src]="getFotoPerfilUrl(amigo.UsuarioFotoPerfil)" alt="Foto de perfil" width="100"> 
@@ -43,14 +43,16 @@
   <br>
 
   <div class="elementosMenu">
-    <h2>Buscar Usuarios</h2>
+    <p class="titulo">Buscar Usuarios</p>
     <input type="text" [(ngModel)]="terminoBusqueda" placeholder="Buscar usuarios..." />
     <button (click)="buscarUsuarios()">Buscar</button>
     <br>
     <div *ngFor="let usuario of usuariosFiltrados">
-      <img [src]="getFotoPerfilUrl(usuario.UsuarioFotoPerfil)" alt="Foto de perfil" width="100">
-      <span>{{ usuario.UsuarioApodo }}</span>
+      <img [src]="usuario.UsuarioFotoPerfil" alt="Foto de perfil" width="50" height="50">&nbsp;
+      <span>{{ usuario.UsuarioApodo }}</span>&nbsp;
+      <button class="botonesListaUsuario" [routerLink]="'/perfil'">Ir al Perfil</button>&nbsp;
+      <button (click)="enviarSolicitud(usuario.UsuarioId)">Enviar Solicitud</button>
     </div>
   </div>
 </div>
-<button [routerLink]="'/matchmaking'" class="perfilButton">JUGAR</button>
+

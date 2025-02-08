@@ -51,7 +51,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             // Guardamos una copia de los WebSocketHandler para evitar problemas de concurrencia
             WebSocketHandler[] handlers = _handlers.ToArray();
             int totalHandlers = handlers.Length;
-
+            //using scope para lo que quiera mirar en la bbdd
             string messageToNew = $"Hay {totalHandlers} usuarios conectados, tu id es {newHandler.Id}";
             string messageToOthers = $"Se ha conectado usuario con id {newHandler.Id}. En total hay {totalHandlers} usuarios conectados";
 
