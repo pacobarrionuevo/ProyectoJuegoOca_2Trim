@@ -8,7 +8,6 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 })
 export class WebsocketService {
 
-  // Eventos
   connected = new Subject<void>();
   messageReceived = new Subject<any>();
   disconnected = new Subject<void>();
