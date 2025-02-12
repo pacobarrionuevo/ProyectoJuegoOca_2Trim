@@ -48,8 +48,8 @@ export class MenuComponent implements OnInit {
     this.cargarSolicitudesPendientes();
   }
 
-  getFotoPerfilUrl(fotoPerfil: string | undefined): string {
-    return fotoPerfil ? `${environment.apiUrl}/fotos/${fotoPerfil}` : 'default-image-path';
+  getFotoPerfilUrl(fotoPerfil: string): string {
+    return `${environment.apiUrl}/fotos/${fotoPerfil}`;
   }
 
   obtenerUsuarios(): void { 
@@ -94,14 +94,14 @@ export class MenuComponent implements OnInit {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login']); 
   }
 
   cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
-      this.usuarioApodo = userInfo.name;
-      this.usuarioFotoPerfil = this.getFotoPerfilUrl(userInfo.profilePicture); 
+      this.usuarioApodo = userInfo.name; 
+      this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`; 
       this.usuarioId = userInfo.id; 
     } else {
       console.error('No se pudo obtener la información del usuario desde el token.');
@@ -113,14 +113,14 @@ export class MenuComponent implements OnInit {
     if (this.usuarioId) {
       this.apiService.getFriendsList(this.usuarioId).subscribe(amigos => {
         this.amigos = amigos.map(amigo => ({
-          UsuarioApodo: amigo.UsuarioApodo,
-          UsuarioFotoPerfil: amigo.UsuarioFotoPerfil
+          UsuarioApodo: amigo.usuarioApodo,
+          UsuarioFotoPerfil: amigo.usuarioFotoPerfil
         }));
         this.amigosFiltrados = this.amigos;
       });
     }
   }
-
+  
   cargarSolicitudesPendientes(): void {
     if (this.usuarioId) {
       this.apiService.getPendingFriendRequests(this.usuarioId).subscribe(solicitudes => {
@@ -143,7 +143,7 @@ export class MenuComponent implements OnInit {
       console.error('Error en la solicitud de aceptación:', error);
     }
   }
-
+  
   async rechazarSolicitud(amistadId: number): Promise<void> {
     try {
       const resultado = await this.apiService.post(`/api/FriendRequest/reject`, { amistadId });
@@ -156,4 +156,5 @@ export class MenuComponent implements OnInit {
       console.error('Error en la solicitud de rechazo:', error);
     }
   }
+  
 }
