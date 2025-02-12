@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using JuegoOcaBack.Models.Database.Entidades;
 
+
 namespace JuegoOcaBack.Controllers
 {
     [ApiController]
@@ -18,14 +19,33 @@ namespace JuegoOcaBack.Controllers
         }
 
         [HttpPost("send")]
-        public async Task<IActionResult> SendFriendRequest(int senderId, int receiverId)
+        public async Task<IActionResult> SendFriendRequest(int receiverId)
         {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId");
+            if (userIdClaim == null)
+            {
+                return Unauthorized("El usuario no está autenticado o no tiene el claim 'userId'.");
+            }
+
+            var senderId = int.Parse(userIdClaim.Value);
+
+
+            if (senderId == receiverId)
+            {
+                return BadRequest("No puedes enviarte una solicitud a ti mismo.");
+            }
+
             var result = await _friendRequestService.SendFriendRequest(senderId, receiverId);
-            if (result) return Ok();
-            return BadRequest();
+
+            if (result)  // Verificas si es true o false
+            {
+                return Ok();
+            }
+            return StatusCode(500, "Error al enviar la solicitud.");
         }
 
-        [HttpPost("accept")]
+
+            [HttpPost("accept")]
         public async Task<IActionResult> AcceptFriendRequest(int amistadId)
         {
             var result = await _friendRequestService.AcceptFriendRequest(amistadId);
