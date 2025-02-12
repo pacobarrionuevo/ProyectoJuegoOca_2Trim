@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AuthRequest } from '../../models/auth-request';
-import { WebsocketService } from '../../services/websocket.service';  // Importar WebSocketService
+import { WebsocketService } from '../../services/websocket.service'; 
 
 @Component({
   selector: 'app-login',
@@ -20,7 +20,7 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService, 
-    private websocketService: WebsocketService,  // Inyectar WebSocketService
+    private websocketService: WebsocketService,
     private router: Router
   ) {}
 
@@ -34,7 +34,7 @@ export class LoginComponent {
 
     // Verifica los dos Storage para el token y conecta el WebSocket si hay sesión
     this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    if (this.jwt) {
+    if (this.jwt && !this.websocketService.isConnectedRxjs()) {
       this.websocketService.connectRxjs(this.jwt);
     }
   }

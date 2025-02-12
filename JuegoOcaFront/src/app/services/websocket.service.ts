@@ -8,7 +8,6 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 })
 export class WebsocketService {
 
-  // Eventos
   connected = new Subject<void>();
   messageReceived = new Subject<any>();
   disconnected = new Subject<void>();
@@ -40,6 +39,11 @@ export class WebsocketService {
   }
 
   connectRxjs(token: string) {
+    if (this.isConnectedRxjs()) {
+      console.log('WebSocket ya está conectado.');
+      return;
+    }
+
     this.rxjsSocket = webSocket({
       // Aquí es donde agregamos el token a la URL
       url: `wss://localhost:7077/ws/connect?token=${token}`,
