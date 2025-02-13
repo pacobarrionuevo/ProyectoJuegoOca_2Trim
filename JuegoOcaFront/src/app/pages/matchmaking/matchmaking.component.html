@@ -1,1 +1,15 @@
-<p>matchmaking works!</p>
+<div class="botones">
+    <button class="boton-juego">
+        <img [src]="NinosJugandoALaOca" alt="Tablero del Juego de la Oca">
+        <span>Jugar con amigos</span>
+    </button>
+    <button class="boton-juego">
+        <img [src]="ROB" alt="Tablero del Juego de la Oca">
+        <span>Jugar con Bot</span>
+    </button>
+    <button class="boton-juego">
+        <img [src]="tablero" alt="Tablero del Juego de la Oca">
+        <span>Jugar aleatorio</span>
+    </button>
+    <button [routerLink]="'/menu'" class="boton-volver">Volver al menú</button>
+</div>

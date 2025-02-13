@@ -35,7 +35,7 @@ builder.Services.AddTransient<ImageService>();
 builder.Services.AddTransient<FriendRequestService>();
 
 builder.Services.AddTransient<ImageMapper>();
-
+builder.Services.AddTransient<GameService>();
 builder.Services.AddSingleton<WebSocketNetwork>();
 builder.Services.AddTransient<Middleware>();
 

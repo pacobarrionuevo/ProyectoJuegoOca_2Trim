@@ -72,26 +72,13 @@ namespace JuegoOcaBack.Services
 
         public async Task<List<Usuario>> GetFriendsList(int usuarioId)
         {
-            var amigos = new List<Usuario>();
-            var usuarioTieneAmistades = await _unitOfWork._context.UsuarioTieneAmistad
+            var amigos = await _unitOfWork._context.UsuarioTieneAmistad
                 .Include(uta => uta.amistad)
                 .Include(uta => uta.usuario)
-                .Where(uta => uta.UsuarioId == usuarioId && uta.amistad.IsAccepted)
+                .Where(uta => uta.amistad.IsAccepted && uta.UsuarioId != usuarioId &&
+                              uta.amistad.AmistadUsuario.Any(au => au.UsuarioId == usuarioId))
+                .Select(uta => uta.usuario)
                 .ToListAsync();
-
-            foreach (var uta in usuarioTieneAmistades)
-            {
-                var amigo = await _unitOfWork._context.UsuarioTieneAmistad
-                    .Include(uta => uta.usuario)
-                    .Where(uta => uta.AmistadId == uta.amistad.AmistadId && uta.UsuarioId != usuarioId)
-                    .Select(uta => uta.usuario)
-                    .FirstOrDefaultAsync();
-
-                if (amigo != null)
-                {
-                    amigos.Add(amigo);
-                }
-            }
 
             return amigos;
         }

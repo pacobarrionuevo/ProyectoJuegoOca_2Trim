@@ -21,9 +21,7 @@ export class ApiService {
     return this.http.get<User[]>(`${this.BASE_URL}/api/Usuario/ListaUsuario`);
   }
 
-  sendFriendRequest(senderId: number, receiverId: number): Observable<any> {
-    return this.http.post(`${this.BASE_URL}/api/FriendRequest/send`, { senderId, receiverId });
-  }  
+
 
   getFriendsList(usuarioId: number): Observable<User[]> {
     return this.http.get<User[]>(`${this.BASE_URL}/api/FriendRequest/friends/${usuarioId}`);
@@ -33,15 +31,29 @@ export class ApiService {
     return this.http.get<any[]>(`${this.BASE_URL}/api/FriendRequest/pending/${usuarioId}`);
   }
 
+  sendFriendRequest(receiverId: number): Observable<any> {
+    const params = new HttpParams().set('receiverId', receiverId.toString());
+    return this.http.post(`${this.BASE_URL}/api/FriendRequest/send`, {}, {
+      headers: this.getHeader(),
+      params: params
+    });
+  }
+  
+  
   acceptFriendRequest(amistadId: number): Observable<any> {
-    return this.http.post(`${this.BASE_URL}/api/FriendRequest/accept`, { amistadId });
+    return this.http.post(`${this.BASE_URL}/api/FriendRequest/accept`, { amistadId }, {
+      headers: this.getHeader()
+    });
   }
-
-  // Método para rechazar una solicitud de amistad
+  
+  
   rejectFriendRequest(amistadId: number): Observable<any> {
-    return this.http.post(`${this.BASE_URL}/api/FriendRequest/reject`, { amistadId });
+    return this.http.post(`${this.BASE_URL}/api/FriendRequest/reject`, null, {
+      headers: this.getHeader(),
+      params: { amistadId: amistadId.toString() }
+    });
   }
-
+  
   // Métodos existentes (get, post, put, delete, sendRequest, getHeader)
   async get<T = void>(path: string, params: any = {}, responseType: 'json' | 'text' | 'blob' | 'arraybuffer' = 'json'): Promise<Result<T>> {
     const url = `${this.BASE_URL}${path}`;
@@ -117,18 +129,17 @@ export class ApiService {
     return result;
   }
 
-  private getHeader(accept = null, contentType = null): HttpHeaders {
+  private getHeader(contentType: string | null = 'application/json'): HttpHeaders {
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     let header: any = {};
-
-    // Para cuando haya que poner un JWT
-    header['Authorization'] = `Bearer ${this.jwt}`;
-
-    if (accept)
-      header['Accept'] = accept;
-
-    if (contentType)
+  
+    if (token) {
+      header['Authorization'] = `Bearer ${token}`;  
+    }
+    if (contentType) {
       header['Content-Type'] = contentType;
-
+    }
     return new HttpHeaders(header);
   }
+  
 }
