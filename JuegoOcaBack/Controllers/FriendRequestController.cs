@@ -37,7 +37,7 @@ namespace JuegoOcaBack.Controllers
 
             var result = await _friendRequestService.SendFriendRequest(senderId, receiverId);
 
-            if (result) 
+            if (result)     
             {
                 return Ok();
             }
