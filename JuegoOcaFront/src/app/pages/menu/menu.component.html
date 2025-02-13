@@ -17,10 +17,12 @@
   <div class="elementosMenu">
     <p class="titulo">Solicitudes de Amistad</p>
     <div *ngFor="let solicitud of solicitudesPendientes">
-      <span>{{ solicitud.usuario.UsuarioApodo }}</span>
+      <img *ngIf="solicitud.usuario?.UsuarioFotoPerfil" [src]="solicitud.usuario.UsuarioFotoPerfil" alt="Foto de perfil" width="50" height="50">
+      <span>{{ solicitud.usuario?.UsuarioApodo || 'Usuario desconocido' }}</span>
       <button (click)="aceptarSolicitud(solicitud.amistad.AmistadId)">Aceptar</button>
       <button (click)="rechazarSolicitud(solicitud.amistad.AmistadId)">Rechazar</button>
     </div>
+    
   </div>
 
   <br>
@@ -37,7 +39,7 @@
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
       <img *ngIf="amigo.UsuarioFotoPerfil" [src]="getFotoPerfilUrl(amigo.UsuarioFotoPerfil)" alt="Foto de perfil" width="100"> 
       <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
-      <p>Estado de conexión</p>&nbsp;
+      
       <button [routerLink]="'/perfil'">Ver perfil</button>&nbsp;
       <button>Invitar a partida</button>&nbsp;
     </div>

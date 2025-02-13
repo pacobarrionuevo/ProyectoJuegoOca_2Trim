@@ -56,7 +56,10 @@ export class MenuComponent implements OnInit {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
       this.usuarioApodo = userInfo.name;
-      this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`;
+      this.usuarioFotoPerfil = userInfo.profilePicture 
+      ? `${environment.apiUrl}/fotos/${userInfo.profilePicture}` 
+      : this.perfil_deffault;
+    
       this.usuarioId = userInfo.id;
     } else {
       console.error('No se pudo obtener la información del usuario desde el token.');
@@ -76,8 +79,8 @@ export class MenuComponent implements OnInit {
   validarUrlImagen(fotoPerfil: string | null): string {
     if (fotoPerfil) {
       return `${environment.apiUrl}/fotos/${fotoPerfil}`;
-    }
-    return `${environment.apiUrl}/images/Perfil_Deffault.png`;
+    } else{ return `${environment.apiUrl}/fotos/Perfil_Deffault.png`;}
+   
 
   }
   

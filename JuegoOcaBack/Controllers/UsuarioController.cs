@@ -50,7 +50,7 @@ namespace JuegoOcaBack.Controllers
                 UsuarioEmail = users.UsuarioEmail,
                 UsuarioContrasena = users.UsuarioContrasena,
                 UsuarioConfirmarContrasena = users.UsuarioConfirmarContrasena,
-                UsuarioFotoPerfil = null
+                UsuarioFotoPerfil = users.UsuarioFotoPerfil
             };
         }
 
@@ -60,7 +60,7 @@ namespace JuegoOcaBack.Controllers
             return _context.Usuarios.Select(ToDto);
         }
 
-        [HttpPost("Registro")]
+        [HttpPost("Registro")]  
         public async Task<IActionResult> Register([FromForm] UsuarioRegistrarseDTO usuario)
         {
             if (_context.Usuarios.Any(Usuario => Usuario.UsuarioEmail == usuario.UsuarioEmail))
