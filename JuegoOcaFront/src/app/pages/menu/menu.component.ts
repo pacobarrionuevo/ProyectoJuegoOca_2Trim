@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Component, OnInit } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { WebsocketService } from '../../services/websocket.service';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../models/User';
@@ -9,15 +8,21 @@ import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { ImageService } from '../../services/image.service';
+import { SolicitudAmistad } from '../../models/solicitud-amistad';
+import { FriendService } from '../../services/friend.service';
+
 
 @Component({
   selector: 'app-menu',
   standalone: true,
   templateUrl: './menu.component.html',
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   styleUrls: ['./menu.component.css']
 })
 export class MenuComponent implements OnInit {
+  getFotoPerfilUrl(arg0: string) {
+throw new Error('Method not implemented.');
+}
 
   usuarios: User[] = []; 
   usuariosFiltrados: User[] = [];
@@ -27,29 +32,29 @@ export class MenuComponent implements OnInit {
   amigosFiltrados: User[] = [];
   busquedaAmigos: string = '';
   
-  solicitudesPendientes: any[] = []; 
+  solicitudesPendientes: SolicitudAmistad[] = [];
 
   usuarioApodo: string = ''; 
   usuarioFotoPerfil: string = '';
   usuarioId: number | null = null;
-  perfil_deffault: string; 
+  perfil_default: string; 
 
   constructor(
     private webSocketService: WebsocketService, 
     private apiService: ApiService, 
     private authService: AuthService, 
     private router: Router,
-    private imageService: ImageService
-    
+    private imageService: ImageService,
+    private friendService: FriendService
   ) { 
-    this.perfil_deffault = this.imageService.getImageUrl('Perfil_Deffault.png');
+    this.perfil_default = this.imageService.getImageUrl('Perfil_Deffault.png');
   }
 
   ngOnInit(): void {
     this.obtenerUsuarios();
     this.cargarInfoUsuario(); 
     this.cargarAmigos();
-    this.cargarSolicitudesPendientes();
+    this.obtenerSolicitudesPendientes();
 
     this.webSocketService.messageReceived.subscribe((message: any) => {
       console.log("Mensaje recibido de WebSocket:", message);
@@ -66,13 +71,10 @@ export class MenuComponent implements OnInit {
     }
   }
 
-  getFotoPerfilUrl(fotoPerfil: string): string {
-    return `${environment.apiUrl}/fotos/${fotoPerfil}`;
-  }
-
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
       this.usuarios = usuarios.map(usuario => ({
+        UsuarioId: usuario.usuarioId, 
         UsuarioApodo: usuario.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(usuario.usuarioFotoPerfil)
       }));
@@ -81,39 +83,55 @@ export class MenuComponent implements OnInit {
   }
   
   validarUrlImagen(fotoPerfil: string | null): string {
-    if (fotoPerfil) {
-      return `${environment.apiUrl}/fotos/${fotoPerfil}`;
-    }
-    return `${environment.apiUrl}/images/Perfil_Deffault.png`;
-
+    return fotoPerfil ? `${environment.apiUrl}/fotos/${fotoPerfil}` : this.perfil_default;
   }
 
   buscarUsuarios(): void {
-    if (this.terminoBusqueda.trim() !== '') {
-      this.usuariosFiltrados = this.usuarios.filter(usuario => 
-        usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
-      );
-    } else {
-      this.usuariosFiltrados = [...this.usuarios];
-    }
+    this.usuariosFiltrados = this.terminoBusqueda.trim() 
+      ? this.usuarios.filter(usuario => 
+          usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
+        ) 
+      : [...this.usuarios];
   }
 
   enviarSolicitud(receiverId: number): void {
-    if (this.usuarioId === null) {
+    if (!this.usuarioId) {
       console.error('Usuario no autenticado.');
       return;
     }
-
-    this.apiService.sendFriendRequest(this.usuarioId).subscribe({
+  
+    this.apiService.sendFriendRequest(receiverId).subscribe({
       next: () => {
-        console.log('Solicitud de amistad enviada con éxito.');
-        this.cargarSolicitudesPendientes();
+        console.log(`Solicitud de amistad enviada a ${receiverId}`);
+        this.obtenerSolicitudesPendientes();
       },
       error: (error) => {
-        console.error('Error al enviar la solicitud de amistad:', error);
+        console.error('Error al enviar la solicitud:', error);
       }
     });
   }
+  
+  obtenerSolicitudesPendientes() {
+    this.friendService.getPendingRequests().subscribe({
+      next: (solicitudes) => this.solicitudesPendientes = solicitudes,
+      error: (error) => console.error('Error obteniendo solicitudes:', error)
+    });
+  }
+
+  aceptarSolicitud(amistadId: number) {
+    this.friendService.aceptarSolicitud(amistadId).subscribe({
+      next: () => this.obtenerSolicitudesPendientes(),
+      error: (error) => console.error('Error aceptando solicitud:', error)
+    });
+  }
+
+  rechazarSolicitud(amistadId: number) {
+    this.friendService.rechazarSolicitud(amistadId).subscribe({
+      next: () => this.obtenerSolicitudesPendientes(),
+      error: (error) => console.error('Error rechazando solicitud:', error)
+    });
+  }
+  
 
   logout() {
     this.authService.logout();
@@ -124,60 +142,25 @@ export class MenuComponent implements OnInit {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
       this.usuarioApodo = userInfo.name; 
-      this.usuarioFotoPerfil = `${environment.apiUrl}/fotos/${userInfo.profilePicture}`; 
+      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture); 
       this.usuarioId = userInfo.id; 
     } else {
-      console.error('No se pudo obtener la información del usuario desde el token.');
+      console.error('No se pudo obtener la información del usuario.');
     }
-    console.log(userInfo);
   }
 
   cargarAmigos(): void {
     if (this.usuarioId) {
       this.apiService.getFriendsList(this.usuarioId).subscribe(amigos => {
         this.amigos = amigos.map(amigo => ({
+          UsuarioId: amigo.usuarioId,
           UsuarioApodo: amigo.usuarioApodo,
-          UsuarioFotoPerfil: amigo.usuarioFotoPerfil
+          UsuarioFotoPerfil: this.validarUrlImagen(amigo.usuarioFotoPerfil),
+          UsuarioEstado: amigo.usuarioEstado
         }));
-        this.amigosFiltrados = this.amigos;
-      });
-    }
-  }
-  
-  cargarSolicitudesPendientes(): void {
-    if (this.usuarioId) {
-      this.apiService.getPendingFriendRequests(this.usuarioId).subscribe(solicitudes => {
-        this.solicitudesPendientes = solicitudes;
+        this.amigosFiltrados = [...this.amigos];
       });
     }
   }
 
-  async aceptarSolicitud(amistadId: number): Promise<void> {
-    try {
-      const resultado = await this.apiService.post(`/api/FriendRequest/accept`, { amistadId });
-      console.log('Respuesta del servidor:', resultado);
-      if (resultado.success) {
-        this.cargarSolicitudesPendientes();
-        this.cargarAmigos();
-      } else {
-        console.error('Error al aceptar la solicitud:', resultado['errorMessage']);
-      }
-    } catch (error) {
-      console.error('Error en la solicitud de aceptación:', error);
-    }
-  }
-  
-  async rechazarSolicitud(amistadId: number): Promise<void> {
-    try {
-      const resultado = await this.apiService.post(`/api/FriendRequest/reject`, { amistadId });
-      if (resultado.success) {
-        this.cargarSolicitudesPendientes();
-      } else {
-        console.error('Error al rechazar la solicitud:', resultado['errorMessage']);
-      }
-    } catch (error) {
-      console.error('Error en la solicitud de rechazo:', error);
-    }
-  }
-  
 }

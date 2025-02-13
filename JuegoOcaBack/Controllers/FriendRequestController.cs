@@ -1,14 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using JuegoOcaBack.Services;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using JuegoOcaBack.Models.Database.Entidades;
-
+using Microsoft.AspNetCore.Authorization;
 
 namespace JuegoOcaBack.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class FriendRequestController : ControllerBase
     {
         private readonly FriendRequestService _friendRequestService;
@@ -19,58 +21,49 @@ namespace JuegoOcaBack.Controllers
         }
 
         [HttpPost("send")]
-        public async Task<IActionResult> SendFriendRequest(int receiverId)
+        public async Task<IActionResult> SendFriendRequest([FromQuery] int receiverId)
         {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "userId");
-            if (userIdClaim == null)
-            {
-                return Unauthorized("El usuario no está autenticado o no tiene el claim 'userId'.");
-            }
-
-            var senderId = int.Parse(userIdClaim.Value);
-
+            if (!int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "id")?.Value, out var senderId))
+                return Unauthorized("Usuario no autenticado.");
 
             if (senderId == receiverId)
-            {
                 return BadRequest("No puedes enviarte una solicitud a ti mismo.");
-            }
 
             var result = await _friendRequestService.SendFriendRequest(senderId, receiverId);
 
-            if (result)     
-            {
-                return Ok();
-            }
-            return StatusCode(500, "Error al enviar la solicitud.");
+            return result ? Ok() : StatusCode(500, "Error al enviar la solicitud.");
         }
 
-
-            [HttpPost("accept")]
-        public async Task<IActionResult> AcceptFriendRequest(int amistadId)
+        [HttpPost("accept")]
+        public async Task<IActionResult> AcceptFriendRequest([FromQuery] int amistadId)
         {
             var result = await _friendRequestService.AcceptFriendRequest(amistadId);
-            if (result) return Ok();
-            return BadRequest();
+            return result ? Ok() : BadRequest();
         }
 
         [HttpPost("reject")]
-        public async Task<IActionResult> RejectFriendRequest(int amistadId)
+        public async Task<IActionResult> RejectFriendRequest([FromQuery] int amistadId)
         {
             var result = await _friendRequestService.RejectFriendRequest(amistadId);
-            if (result) return Ok();
-            return BadRequest();
+            return result ? Ok() : BadRequest();
         }
 
-        [HttpGet("friends/{usuarioId}")]
-        public async Task<ActionResult<List<Usuario>>> GetFriendsList(int usuarioId)
+        [HttpGet("friends")]
+        public async Task<ActionResult<List<Usuario>>> GetFriendsList()
         {
+            if (!int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "id")?.Value, out var usuarioId))
+                return Unauthorized("Usuario no autenticado.");
+
             var amigos = await _friendRequestService.GetFriendsList(usuarioId);
             return Ok(amigos);
         }
 
-        [HttpGet("pending/{usuarioId}")]
-        public async Task<ActionResult<List<Amistad>>> GetPendingFriendRequests(int usuarioId)
+        [HttpGet("pending")]
+        public async Task<ActionResult<List<Amistad>>> GetPendingFriendRequests()
         {
+            if (!int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "id")?.Value, out var usuarioId))
+                return Unauthorized("Usuario no autenticado.");
+
             var solicitudesPendientes = await _friendRequestService.GetPendingFriendRequests(usuarioId);
             return Ok(solicitudesPendientes);
         }

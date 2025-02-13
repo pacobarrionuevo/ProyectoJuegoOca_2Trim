@@ -19,32 +19,31 @@ namespace JuegoOcaBack.Services
 
         public async Task<bool> SendFriendRequest(int senderId, int receiverId)
         {
-            var amistad = new Amistad
-            {
-                IsAccepted = false
-            };
+            var sender = await _unitOfWork._context.Usuarios.FindAsync(senderId);
+            var receiver = await _unitOfWork._context.Usuarios.FindAsync(receiverId);
 
-            await _unitOfWork._friendRequestRepository.InsertAsync(amistad);
+            if (sender == null || receiver == null) return false;
+
+            var amistad = new Amistad { IsAccepted = false };
+
+            _unitOfWork._context.Friendships.Add(amistad);
             await _unitOfWork.SaveAsync();
 
-            var usuarioTieneAmistadSender = new UsuarioTieneAmistad
+            _unitOfWork._context.UsuarioTieneAmistad.Add(new UsuarioTieneAmistad
             {
                 UsuarioId = senderId,
                 AmistadId = amistad.AmistadId,
-                usuario = await _unitOfWork._context.Usuarios.FindAsync(senderId),
+                usuario = sender,
                 amistad = amistad
-            };
+            });
 
-            var usuarioTieneAmistadReceiver = new UsuarioTieneAmistad
+            _unitOfWork._context.UsuarioTieneAmistad.Add(new UsuarioTieneAmistad
             {
                 UsuarioId = receiverId,
                 AmistadId = amistad.AmistadId,
-                usuario = await _unitOfWork._context.Usuarios.FindAsync(receiverId),
+                usuario = receiver,
                 amistad = amistad
-            };
-
-            _unitOfWork._context.UsuarioTieneAmistad.Add(usuarioTieneAmistadSender);
-            _unitOfWork._context.UsuarioTieneAmistad.Add(usuarioTieneAmistadReceiver);
+            });
 
             return await _unitOfWork.SaveAsync();
         }
@@ -72,27 +71,22 @@ namespace JuegoOcaBack.Services
 
         public async Task<List<Usuario>> GetFriendsList(int usuarioId)
         {
-            var amigos = await _unitOfWork._context.UsuarioTieneAmistad
+            return await _unitOfWork._context.UsuarioTieneAmistad
                 .Include(uta => uta.amistad)
                 .Include(uta => uta.usuario)
-                .Where(uta => uta.amistad.IsAccepted && uta.UsuarioId != usuarioId &&
-                              uta.amistad.AmistadUsuario.Any(au => au.UsuarioId == usuarioId))
+                .Where(uta => uta.amistad.IsAccepted && uta.amistad.AmistadUsuario.Any(au => au.UsuarioId == usuarioId))
                 .Select(uta => uta.usuario)
                 .ToListAsync();
-
-            return amigos;
         }
 
         public async Task<List<Amistad>> GetPendingFriendRequests(int usuarioId)
         {
-            var solicitudesPendientes = await _unitOfWork._context.UsuarioTieneAmistad
+            return await _unitOfWork._context.UsuarioTieneAmistad
                 .Include(uta => uta.amistad)
                 .Include(uta => uta.usuario)
                 .Where(uta => uta.UsuarioId == usuarioId && !uta.amistad.IsAccepted)
                 .Select(uta => uta.amistad)
                 .ToListAsync();
-
-            return solicitudesPendientes;
         }
     }
 }
