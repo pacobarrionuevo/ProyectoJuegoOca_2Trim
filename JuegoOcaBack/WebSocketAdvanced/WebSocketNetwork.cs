@@ -1,4 +1,8 @@
 ﻿using System.Net.WebSockets;
+using System.Text.Json;
+using JuegoOcaBack.Models.Database;
+using JuegoOcaBack.Models.Database.Entidades;
+using JuegoOcaBack.Models.DTO;
 
 namespace JuegoOcaBack.WebSocketAdvanced
 {
@@ -11,6 +15,11 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private readonly List<WebSocketHandler> _handlers = new List<WebSocketHandler>();
         // Semáforo para controlar el acceso a la lista de WebSocketHandler
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        private readonly IServiceProvider _serviceProvider;
+        public WebSocketNetwork(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
 
         public async Task HandleAsync(WebSocket webSocket)
         {
@@ -44,27 +53,46 @@ namespace JuegoOcaBack.WebSocketAdvanced
             return handler;
         }
 
-        private Task NotifyUserConnectedAsync(WebSocketHandler newHandler)
+        private async Task NotifyUserConnectedAsync(WebSocketHandler WSHandler)
         {
             // Lista donde guardar las tareas de envío de mensajes
             List<Task> tasks = new List<Task>();
             // Guardamos una copia de los WebSocketHandler para evitar problemas de concurrencia
             WebSocketHandler[] handlers = _handlers.ToArray();
             int totalHandlers = handlers.Length;
-            //using scope para lo que quiera mirar en la bbdd
-            string messageToNew = $"Hay {totalHandlers} usuarios conectados, tu id es {newHandler.Id}";
-            string messageToOthers = $"Se ha conectado usuario con id {newHandler.Id}. En total hay {totalHandlers} usuarios conectados";
 
-            // Enviamos un mensaje personalizado al nuevo usuario y otro al resto
-            foreach (WebSocketHandler handler in handlers)
+            string mensajeDemas = "amigo conectado";
+
+            using (var scope = _serviceProvider.CreateScope())
             {
-                string message = handler.Id == newHandler.Id ? messageToNew : messageToOthers;
+                var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
+                var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
+                Usuario usuario = await wsMethods.GetUserById(WSHandler.Id);
+                if (usuario != null)
+                {
+                    usuario.UsuarioEstado = "Conectado";
+                    await wsMethods.UpdateUserAsync(usuario);
+                }
 
-                tasks.Add(handler.SendAsync(message));
+                var amigos = await unitOfWork._friendRequestRepository.GetFriendsList(WSHandler.Id);
+
+                foreach (WebSocketHandler handler in handlers)
+                {
+                    if (amigos.Any(a => a.UsuarioId == handler.Id))
+                    {
+                        MensajeAmigoDTO message = new MensajeAmigoDTO
+                        {
+                            Message = mensajeDemas,
+                            FriendId = WSHandler.Id,
+                            Quantity = totalHandlers
+                        };
+                        string messageToSend = JsonSerializer.Serialize(message, JsonSerializerOptions.Web);
+                        tasks.Add(handler.SendAsync(messageToSend));
+                    }
+                }
             }
 
-            // Devolvemos una tarea que se completará cuando todas las tareas de envío de mensajes se completen
-            return Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
         }
 
         private async Task OnDisconnectedAsync(WebSocketHandler disconnectedHandler)

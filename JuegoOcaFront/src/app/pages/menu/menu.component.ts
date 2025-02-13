@@ -46,6 +46,19 @@ export class MenuComponent implements OnInit {
     this.cargarInfoUsuario(); 
     this.cargarAmigos();
     this.cargarSolicitudesPendientes();
+
+    this.webSocketService.messageReceived.subscribe((message: any) => {
+      if (message.FriendId) {
+        this.actualizarEstadoAmigo(message.FriendId, "Conectado");
+      }
+    });
+  }
+
+  actualizarEstadoAmigo(friendId: number, estado: string) {
+    const amigo = this.amigos.find(a => a.UsuarioId === friendId);
+    if (amigo) {
+      amigo.UsuarioEstado = estado;
+    }
   }
 
   getFotoPerfilUrl(fotoPerfil: string): string {

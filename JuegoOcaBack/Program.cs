@@ -7,6 +7,7 @@ using JuegoOcaBack.Models.Database.Repositorios;
 using JuegoOcaBack.Models.Mappers;
 using JuegoOcaBack.Services;
 using JuegoOcaBack.WebSocketAdvanced;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 Directory.SetCurrentDirectory(AppContext.BaseDirectory);
@@ -14,6 +15,7 @@ Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<Settings>(builder.Configuration.GetSection(Settings.SECTION_NAME));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<Settings>>().Value);
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -27,6 +29,7 @@ builder.Services.AddScoped<UnitOfWork>();
 builder.Services.AddScoped<ImageRepository>();
 builder.Services.AddScoped<FriendRequestRepository>();
 builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<WebSocketMethods>();
 
 builder.Services.AddTransient<ImageService>();
 builder.Services.AddTransient<FriendRequestService>();

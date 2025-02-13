@@ -18,7 +18,15 @@ export class WebsocketService {
   }
 
   private onMessageReceived(message: string) {
-    this.messageReceived.next(message);
+    try {
+      const parsedMessage = JSON.parse(message);
+  
+      if (parsedMessage.Message === "amigo conectado") {
+        this.messageReceived.next(parsedMessage);
+      }
+    } catch (error) {
+      console.error("Error al parsear el mensaje WebSocket:", error);
+    }
   }
 
   private onError(error: any) {

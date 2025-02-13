@@ -4,5 +4,6 @@ export interface User {
     UsuarioEmail: string;
     UsuarioFotoPerfil?: string; 
     UsuarioContrasena?: string; 
-    UsuarioConfirmarContrasena?: string; 
+    UsuarioConfirmarContrasena?: string;
+    UsuarioEstado?: string; 
   }

@@ -31,7 +31,8 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioContrasena = PasswordHelper.Hash("paco33"),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("paco33"),
                 UsuarioFotoPerfil = "fotos/7f9790f9-6386-4870-956c-e95f5401fb93_BalatroImagen.jpeg",
-                UsuarioAmistad = new List<UsuarioTieneAmistad>()
+                UsuarioAmistad = new List<UsuarioTieneAmistad>(),
+                UsuarioEstado = "Desconectado"
             };
 
             Usuario usuario2 = new Usuario()
@@ -42,7 +43,8 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioContrasena = PasswordHelper.Hash("salguero33"),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("salguero33"),
                 UsuarioFotoPerfil = "prueba",
-                UsuarioAmistad = new List<UsuarioTieneAmistad>()
+                UsuarioAmistad = new List<UsuarioTieneAmistad>(),
+                UsuarioEstado = "Desconectado"
             };
 
             Usuario usuario3 = new Usuario()
@@ -53,7 +55,8 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioContrasena = PasswordHelper.Hash("laura33"),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("laura33"),
                 UsuarioFotoPerfil = "prueba",
-                UsuarioAmistad = new List<UsuarioTieneAmistad>()
+                UsuarioAmistad = new List<UsuarioTieneAmistad>(),
+                UsuarioEstado = "Desconectado"
             };
 
             Usuario usuario4 = new Usuario()
@@ -64,7 +67,8 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioContrasena = PasswordHelper.Hash("carlos33"),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("carlos33"),
                 UsuarioFotoPerfil = "prueba",
-                UsuarioAmistad = new List<UsuarioTieneAmistad>()
+                UsuarioAmistad = new List<UsuarioTieneAmistad>(),
+                UsuarioEstado = "Desconectado"
             };
 
             // Amistad entre usuario1 y usuario2

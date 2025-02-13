@@ -11,5 +11,6 @@
 
         public List<UsuarioTieneAmistad> UsuarioAmistad { get; set; }
 
+        public string UsuarioEstado { get; set; }
     }
 }
