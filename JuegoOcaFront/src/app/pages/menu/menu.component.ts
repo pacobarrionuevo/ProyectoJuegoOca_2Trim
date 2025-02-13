@@ -48,8 +48,9 @@ export class MenuComponent implements OnInit {
     this.cargarSolicitudesPendientes();
 
     this.webSocketService.messageReceived.subscribe((message: any) => {
+      console.log("Mensaje recibido de WebSocket:", message);
       if (message.FriendId) {
-        this.actualizarEstadoAmigo(message.FriendId, "Conectado");
+        this.actualizarEstadoAmigo(message.FriendId, message.Estado);
       }
     });
   }

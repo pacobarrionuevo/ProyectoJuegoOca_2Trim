@@ -50,7 +50,8 @@ namespace JuegoOcaBack.Controllers
                 UsuarioEmail = users.UsuarioEmail,
                 UsuarioContrasena = users.UsuarioContrasena,
                 UsuarioConfirmarContrasena = users.UsuarioConfirmarContrasena,
-                UsuarioFotoPerfil = null
+                UsuarioFotoPerfil = null,
+                UsuarioEstado = users.UsuarioEstado
             };
         }
 
@@ -88,7 +89,8 @@ namespace JuegoOcaBack.Controllers
                 UsuarioEmail = usuario.UsuarioEmail,
                 UsuarioContrasena = PasswordHelper.Hash(usuario.UsuarioContrasena),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash(usuario.UsuarioConfirmarContrasena),
-                UsuarioFotoPerfil = rutaFotoPerfil
+                UsuarioFotoPerfil = rutaFotoPerfil,
+                UsuarioEstado = "Conectado"
             };
 
             await _context.Usuarios.AddAsync(newUser);

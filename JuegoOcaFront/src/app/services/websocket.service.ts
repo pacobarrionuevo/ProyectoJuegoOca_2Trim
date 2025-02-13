@@ -25,12 +25,17 @@ export class WebsocketService {
   }
 
   private onMessageReceived(message: string) {
+    console.log("Mensaje recibido desde WebSocket:", message);
     try {
       const parsedMessage = JSON.parse(message);
+      console.log("Mensaje parseado correctamente:", parsedMessage);
   
       if (parsedMessage.Message === "amigo conectado") {
-        this.messageReceived.next(parsedMessage);
+        this.messageReceived.next({ FriendId: parsedMessage.FriendId, Estado: "Conectado" });
+      } else if (parsedMessage.Message === "amigo desconectado") {
+        this.messageReceived.next({ FriendId: parsedMessage.FriendId, Estado: "Desconectado" });
       }
+
     } catch (error) {
       console.error("Error al parsear el mensaje WebSocket:", error);
     }
