@@ -8,12 +8,13 @@ import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
+import { ImageService } from '../../services/image.service';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  templateUrl: './menu.component.html',
   imports: [CommonModule, FormsModule, RouterModule],
+  templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.css']
 })
 export class MenuComponent implements OnInit {
@@ -31,12 +32,18 @@ export class MenuComponent implements OnInit {
   usuarioApodo: string = '';
   usuarioFotoPerfil: string = '';
   usuarioId: number | null = null;
-
+  perfil_deffault: string;
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
-    private router: Router
-  ) { }
+    private router: Router,
+    private imageService: ImageService
+    
+
+  ) {
+     this.perfil_deffault = this.imageService.getImageUrl('Perfil_Deffault.png');
+
+  }
 
   ngOnInit(): void {
     this.cargarInfoUsuario();
@@ -60,13 +67,20 @@ export class MenuComponent implements OnInit {
     this.apiService.getUsuarios().subscribe(usuarios => {
       this.usuarios = usuarios.map(usuario => ({
         UsuarioApodo: usuario.usuarioApodo,
-        UsuarioFotoPerfil: usuario.usuarioFotoPerfil
-          ? `${environment.apiUrl}/fotos/${usuario.usuarioFotoPerfil}`
-          : 'assets/default-profile.png'
+        UsuarioFotoPerfil: this.validarUrlImagen(usuario.usuarioFotoPerfil)
       }));
       this.usuariosFiltrados = [...this.usuarios];
     });
   }
+  
+  validarUrlImagen(fotoPerfil: string | null): string {
+    if (fotoPerfil) {
+      return `${environment.apiUrl}/fotos/${fotoPerfil}`;
+    }
+    return `${environment.apiUrl}/images/Perfil_Deffault.png`;
+
+  }
+  
 
   buscarUsuarios(): void {
     if (this.terminoBusqueda.trim() !== '') {
