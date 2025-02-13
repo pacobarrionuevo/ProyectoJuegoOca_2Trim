@@ -11,6 +11,13 @@ export class WebsocketService {
   connected = new Subject<void>();
   messageReceived = new Subject<any>();
   disconnected = new Subject<void>();
+  rxjsSocket: WebSocketSubject<string>;
+
+  private tokenKey = 'websocket_token';
+
+  constructor() {
+    this.reconnectIfNeeded();
+  }
 
   private onConnected() {
     console.log('Socket connected');
@@ -38,10 +45,6 @@ export class WebsocketService {
     this.disconnected.next();
   }
 
-  // ============ Usando Rxjs =============
-
-  rxjsSocket: WebSocketSubject<string>;
-
   isConnectedRxjs() {
     return this.rxjsSocket && !this.rxjsSocket.closed;
   }
@@ -51,6 +54,8 @@ export class WebsocketService {
       console.log('WebSocket ya está conectado.');
       return;
     }
+
+    localStorage.setItem(this.tokenKey, token);
 
     this.rxjsSocket = webSocket({
       // Aquí es donde agregamos el token a la URL
@@ -73,11 +78,26 @@ export class WebsocketService {
   
 
   sendRxjs(message: string) {
-    this.rxjsSocket.next(message);
+    if (this.isConnectedRxjs()) {
+      this.rxjsSocket.next(message);
+    } else {
+      console.warn('No se puede enviar el mensaje. WebSocket no conectado.');
+    }
   }
 
   disconnectRxjs() {
-    this.rxjsSocket.complete();
-    this.rxjsSocket = null;
+    if (this.rxjsSocket) {
+      this.rxjsSocket.complete();
+      this.rxjsSocket = null;
+    }
+    localStorage.removeItem(this.tokenKey);
+  }
+
+  private reconnectIfNeeded() {
+    const storedToken = localStorage.getItem(this.tokenKey);
+    if (storedToken) {
+      console.log('Reconectando WebSocket después de recarga...');
+      this.connectRxjs(storedToken);
+    }
   }
 }
