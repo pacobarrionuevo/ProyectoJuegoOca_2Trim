@@ -94,45 +94,6 @@ throw new Error('Method not implemented.');
       : [...this.usuarios];
   }
 
-  enviarSolicitud(receiverId: number): void {
-    if (!this.usuarioId) {
-      console.error('Usuario no autenticado.');
-      return;
-    }
-  
-    this.apiService.sendFriendRequest(receiverId).subscribe({
-      next: () => {
-        console.log(`Solicitud de amistad enviada a ${receiverId}`);
-        this.obtenerSolicitudesPendientes();
-      },
-      error: (error) => {
-        console.error('Error al enviar la solicitud:', error);
-      }
-    });
-  }
-  
-  obtenerSolicitudesPendientes() {
-    this.friendService.getPendingRequests().subscribe({
-      next: (solicitudes) => this.solicitudesPendientes = solicitudes,
-      error: (error) => console.error('Error obteniendo solicitudes:', error)
-    });
-  }
-
-  aceptarSolicitud(amistadId: number) {
-    this.friendService.aceptarSolicitud(amistadId).subscribe({
-      next: () => this.obtenerSolicitudesPendientes(),
-      error: (error) => console.error('Error aceptando solicitud:', error)
-    });
-  }
-
-  rechazarSolicitud(amistadId: number) {
-    this.friendService.rechazarSolicitud(amistadId).subscribe({
-      next: () => this.obtenerSolicitudesPendientes(),
-      error: (error) => console.error('Error rechazando solicitud:', error)
-    });
-  }
-  
-
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']); 
@@ -149,18 +110,66 @@ throw new Error('Method not implemented.');
     }
   }
 
-  cargarAmigos(): void {
-    if (this.usuarioId) {
-      this.apiService.getFriendsList(this.usuarioId).subscribe(amigos => {
-        this.amigos = amigos.map(amigo => ({
-          UsuarioId: amigo.usuarioId,
-          UsuarioApodo: amigo.usuarioApodo,
-          UsuarioFotoPerfil: this.validarUrlImagen(amigo.usuarioFotoPerfil),
-          UsuarioEstado: amigo.usuarioEstado
-        }));
-        this.amigosFiltrados = [...this.amigos];
-      });
-    }
+  enviarSolicitud(receiverId: number): void {
+    this.friendService.sendFriendRequest(receiverId).subscribe({
+      next: () => {
+        console.log(`Solicitud de amistad enviada a ${receiverId}`);
+        this.obtenerSolicitudesPendientes();
+      },
+      error: (error) => {
+        console.error('Error al enviar la solicitud:', error);
+      }
+    });
   }
+  
+  obtenerSolicitudesPendientes() {
+    this.friendService.getPendingRequests().subscribe({
+      next: (solicitudes) => this.solicitudesPendientes = solicitudes,
+      error: (error) => console.error('Error obteniendo solicitudes:', error)
+    });
+  }
+  
+  aceptarSolicitud(solicitud: any) {
+    console.log('Solicitud recibida:', solicitud); // Debug
+  
+    if (!solicitud) {
+      console.error('Error: La solicitud es null o undefined');
+      return;
+    }
+  
+    if (!solicitud.amistadId) {
+      console.error('Error: amistadId no está definido en la solicitud:', solicitud);
+      return;
+    }
+  
+    const amistadId = solicitud.amistadId;
+    console.log('Enviando amistadId:', amistadId);
+  
+    this.friendService.aceptarSolicitud(amistadId).subscribe({
+      next: (res) => console.log('Solicitud aceptada:', res),
+      error: (err) => console.error('Error al aceptar solicitud:', err),
+    });
+  }
+  
+  
+  
+  rechazarSolicitud(amistadId: number) {
+    this.friendService.rechazarSolicitud(amistadId).subscribe({
+      next: () => this.obtenerSolicitudesPendientes(),
+      error: (error) => console.error('Error rechazando solicitud:', error)
+    });
+  }
+  
+  cargarAmigos(): void {
+    this.friendService.getFriendsList().subscribe(amigos => {
+      this.amigos = amigos.map(amigo => ({
+        UsuarioId: amigo.usuarioId,
+        UsuarioApodo: amigo.usuarioApodo,
+        UsuarioFotoPerfil: this.validarUrlImagen(amigo.usuarioFotoPerfil),
+        UsuarioEstado: amigo.usuarioEstado
+      }));
+      this.amigosFiltrados = [...this.amigos];
+    });
 
+}
 }

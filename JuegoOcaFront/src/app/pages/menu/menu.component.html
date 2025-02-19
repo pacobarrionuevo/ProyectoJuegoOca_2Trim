@@ -19,8 +19,8 @@
     <div *ngFor="let solicitud of solicitudesPendientes">
       <img *ngIf="solicitud.usuario?.UsuarioFotoPerfil" [src]="solicitud.usuario.UsuarioFotoPerfil" alt="Foto de perfil" width="50" height="50">
       <span>{{ solicitud.usuario?.UsuarioApodo || 'Usuario desconocido' }}</span>
-      <button (click)="aceptarSolicitud(solicitud.amistad.AmistadId)">Aceptar</button>
-      <button (click)="rechazarSolicitud(solicitud.amistad.AmistadId)">Rechazar</button>
+      <button (click)="aceptarSolicitud(solicitud)">Aceptar</button>
+      <button (click)="rechazarSolicitud(solicitud.amistad?.AmistadId)">Rechazar</button>
     </div>
   </div>
 
