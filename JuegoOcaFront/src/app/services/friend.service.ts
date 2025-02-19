@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SolicitudAmistad } from '../models/solicitud-amistad';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FriendService {
-  private apiUrl = 'https://tu-api.com/api/friend-requests'; // Cambia por la URL correcta
+  private apiUrl = `${environment.apiUrl}/api/FriendRequest`; 
 
   constructor(private http: HttpClient) { }
 
@@ -16,10 +17,10 @@ export class FriendService {
   }
 
   aceptarSolicitud(amistadId: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/accept`, { amistadId });
+    return this.http.post(`${this.apiUrl}/accept?amistadId=`, { amistadId });
   }
 
   rechazarSolicitud(amistadId: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/reject`, { amistadId });
+    return this.http.post(`${this.apiUrl}/reject?amistadId=`, { amistadId });
   }
 }

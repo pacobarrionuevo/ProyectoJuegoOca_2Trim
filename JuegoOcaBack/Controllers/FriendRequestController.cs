@@ -34,19 +34,27 @@ namespace JuegoOcaBack.Controllers
             return result ? Ok() : StatusCode(500, "Error al enviar la solicitud.");
         }
 
+
         [HttpPost("accept")]
         public async Task<IActionResult> AcceptFriendRequest([FromQuery] int amistadId)
         {
-            var result = await _friendRequestService.AcceptFriendRequest(amistadId);
-            return result ? Ok() : BadRequest();
+            if (!int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "id")?.Value, out var receiverId))
+                return Unauthorized("Usuario no autenticado.");
+
+            var result = await _friendRequestService.AcceptFriendRequest(amistadId, receiverId);
+            return result ? Ok() : BadRequest("No se pudo aceptar la solicitud.");
         }
 
         [HttpPost("reject")]
         public async Task<IActionResult> RejectFriendRequest([FromQuery] int amistadId)
         {
-            var result = await _friendRequestService.RejectFriendRequest(amistadId);
-            return result ? Ok() : BadRequest();
+            if (!int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "id")?.Value, out var receiverId))
+                return Unauthorized("Usuario no autenticado.");
+
+            var result = await _friendRequestService.RejectFriendRequest(amistadId, receiverId);
+            return result ? Ok() : BadRequest("No se pudo rechazar la solicitud.");
         }
+
 
         [HttpGet("friends")]
         public async Task<ActionResult<List<Usuario>>> GetFriendsList()
@@ -58,6 +66,7 @@ namespace JuegoOcaBack.Controllers
             return Ok(amigos);
         }
 
+
         [HttpGet("pending")]
         public async Task<ActionResult<List<Amistad>>> GetPendingFriendRequests()
         {
@@ -67,5 +76,6 @@ namespace JuegoOcaBack.Controllers
             var solicitudesPendientes = await _friendRequestService.GetPendingFriendRequests(usuarioId);
             return Ok(solicitudesPendientes);
         }
+
     }
 }

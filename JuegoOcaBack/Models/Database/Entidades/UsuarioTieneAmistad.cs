@@ -6,6 +6,8 @@
         public int AmistadId { get; set; }
         public int UsuarioTieneAmistadId { get; set; }
 
+        public bool esQuienMandaSolicitud { get; set; }
+
         public Usuario usuario { get; set; }
         public Amistad amistad { get; set; }
     }

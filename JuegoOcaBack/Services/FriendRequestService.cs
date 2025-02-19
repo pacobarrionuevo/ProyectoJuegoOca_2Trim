@@ -1,6 +1,5 @@
 ﻿using JuegoOcaBack.Models.Database;
 using JuegoOcaBack.Models.Database.Entidades;
-using JuegoOcaBack.Models.Database.Repositorios;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,83 +9,135 @@ namespace JuegoOcaBack.Services
 {
     public class FriendRequestService
     {
-        private readonly UnitOfWork _unitOfWork;
+        private readonly DBContext _context;
 
-        public FriendRequestService(UnitOfWork unitOfWork)
+        public FriendRequestService(DBContext context)
         {
-            _unitOfWork = unitOfWork;
+            _context = context;
         }
 
+        // Envía una solicitud de amistad
         public async Task<bool> SendFriendRequest(int senderId, int receiverId)
         {
-            var sender = await _unitOfWork._context.Usuarios.FindAsync(senderId);
-            var receiver = await _unitOfWork._context.Usuarios.FindAsync(receiverId);
+            // Evitar solicitud a uno mismo
+            if (senderId == receiverId)
+                return false;
 
-            if (sender == null || receiver == null) return false;
+            // Verificar que no exista ya una solicitud pendiente o amistad entre estos usuarios
+            var exists = await _context.Friendships
+                .Include(a => a.AmistadUsuario)
+                .AnyAsync(a =>
+                    !a.IsAccepted &&
+                    a.AmistadUsuario.Any(ua => ua.UsuarioId == senderId) &&
+                    a.AmistadUsuario.Any(ua => ua.UsuarioId == receiverId)
+                );
+            if (exists)
+                return false;
 
-            var amistad = new Amistad { IsAccepted = false };
+            // Crear la solicitud en estado pendiente
+            var amistad = new Amistad() { IsAccepted = false };
+            _context.Friendships.Add(amistad);
+            await _context.SaveChangesAsync(); // Para obtener el AmistadId generado
 
-            _unitOfWork._context.Friendships.Add(amistad);
-            await _unitOfWork.SaveAsync();
-
-            _unitOfWork._context.UsuarioTieneAmistad.Add(new UsuarioTieneAmistad
+            // Crear la relación: sender es el requestor y receiver es el que recibe la solicitud
+            var senderRelation = new UsuarioTieneAmistad()
             {
                 UsuarioId = senderId,
                 AmistadId = amistad.AmistadId,
-                usuario = sender,
-                amistad = amistad
-            });
+                esQuienMandaSolicitud = true
+            };
 
-            _unitOfWork._context.UsuarioTieneAmistad.Add(new UsuarioTieneAmistad
+            var receiverRelation = new UsuarioTieneAmistad()
             {
                 UsuarioId = receiverId,
                 AmistadId = amistad.AmistadId,
-                usuario = receiver,
-                amistad = amistad
-            });
+                esQuienMandaSolicitud = false
+            };
 
-            return await _unitOfWork.SaveAsync();
+            _context.UsuarioTieneAmistad.AddRange(senderRelation, receiverRelation);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
-        public async Task<bool> AcceptFriendRequest(int amistadId)
+        // Acepta una solicitud de amistad
+        // receiverId se obtiene del token (usuario autenticado) para mayor seguridad
+        public async Task<bool> AcceptFriendRequest(int amistadId, int receiverId)
         {
-            var amistad = await _unitOfWork._friendRequestRepository.GetByIdAsync(amistadId);
-            if (amistad == null) return false;
+            var amistad = await _context.Friendships
+                .Include(a => a.AmistadUsuario)
+                .FirstOrDefaultAsync(a => a.AmistadId == amistadId && !a.IsAccepted);
+
+            if (amistad == null)
+                return false;
+
+            // Verificar que el usuario que acepta es el receptor (no el requestor)
+            var receiverRecord = amistad.AmistadUsuario
+                .FirstOrDefault(ua => ua.UsuarioId == receiverId && ua.esQuienMandaSolicitud == false);
+
+            if (receiverRecord == null)
+                return false;
 
             amistad.IsAccepted = true;
-            _unitOfWork._friendRequestRepository.Update(amistad);
+            await _context.SaveChangesAsync();
 
-            return await _unitOfWork.SaveAsync();
+            return true;
         }
 
-        public async Task<bool> RejectFriendRequest(int amistadId)
+        // Rechaza (o cancela) una solicitud de amistad
+        public async Task<bool> RejectFriendRequest(int amistadId, int receiverId)
         {
-            var amistad = await _unitOfWork._friendRequestRepository.GetByIdAsync(amistadId);
-            if (amistad == null) return false;
+            var amistad = await _context.Friendships
+                .Include(a => a.AmistadUsuario)
+                .FirstOrDefaultAsync(a => a.AmistadId == amistadId && !a.IsAccepted);
 
-            _unitOfWork._friendRequestRepository.Delete(amistad);
+            if (amistad == null)
+                return false;
 
-            return await _unitOfWork.SaveAsync();
+            var receiverRecord = amistad.AmistadUsuario
+                .FirstOrDefault(ua => ua.UsuarioId == receiverId && ua.esQuienMandaSolicitud == false);
+
+            if (receiverRecord == null)
+                return false;
+
+            // Eliminar la solicitud y las relaciones asociadas
+            _context.UsuarioTieneAmistad.RemoveRange(amistad.AmistadUsuario);
+            _context.Friendships.Remove(amistad);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
+        // Obtiene la lista de amigos (amistades aceptadas) del usuario
         public async Task<List<Usuario>> GetFriendsList(int usuarioId)
         {
-            return await _unitOfWork._context.UsuarioTieneAmistad
-                .Include(uta => uta.amistad)
-                .Include(uta => uta.usuario)
-                .Where(uta => uta.amistad.IsAccepted && uta.amistad.AmistadUsuario.Any(au => au.UsuarioId == usuarioId))
-                .Select(uta => uta.usuario)
+            var friendships = await _context.Friendships
+                .Include(a => a.AmistadUsuario)
+                    .ThenInclude(ua => ua.usuario)
+                .Where(a => a.IsAccepted && a.AmistadUsuario.Any(ua => ua.UsuarioId == usuarioId))
                 .ToListAsync();
+
+            List<Usuario> friends = new List<Usuario>();
+            foreach (var amistad in friendships)
+            {
+                // Se extrae el usuario que NO es el usuario logueado
+                var friendRelation = amistad.AmistadUsuario.FirstOrDefault(ua => ua.UsuarioId != usuarioId);
+                if (friendRelation != null && friendRelation.usuario != null)
+                    friends.Add(friendRelation.usuario);
+            }
+            return friends;
         }
 
+        // Obtiene las solicitudes de amistad pendientes en las que el usuario es receptor
         public async Task<List<Amistad>> GetPendingFriendRequests(int usuarioId)
         {
-            return await _unitOfWork._context.UsuarioTieneAmistad
-                .Include(uta => uta.amistad)
-                .Include(uta => uta.usuario)
-                .Where(uta => uta.UsuarioId == usuarioId && !uta.amistad.IsAccepted)
-                .Select(uta => uta.amistad)
+            var pendingRequests = await _context.Friendships
+                .Include(a => a.AmistadUsuario)
+                .Where(a => !a.IsAccepted &&
+                       a.AmistadUsuario.Any(ua => ua.UsuarioId == usuarioId && ua.esQuienMandaSolicitud == false))
                 .ToListAsync();
+
+            return pendingRequests;
         }
     }
 }

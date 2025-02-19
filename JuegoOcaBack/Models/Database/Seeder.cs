@@ -84,7 +84,8 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioId = usuario1.UsuarioId,
                 AmistadId = amistad1.AmistadId,
                 usuario = usuario1,
-                amistad = amistad1
+                amistad = amistad1,
+                esQuienMandaSolicitud = true
             };
 
             UsuarioTieneAmistad uta2 = new UsuarioTieneAmistad()
@@ -92,7 +93,8 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioId = usuario2.UsuarioId,
                 AmistadId = amistad1.AmistadId,
                 usuario = usuario2,
-                amistad = amistad1
+                amistad = amistad1,
+                esQuienMandaSolicitud = false
             };
 
             // Amistad entre usuario 3 y 4
@@ -108,7 +110,8 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioId = usuario3.UsuarioId,
                 AmistadId = amistad2.AmistadId,
                 usuario = usuario3,
-                amistad = amistad2
+                amistad = amistad2,
+                esQuienMandaSolicitud = true
             };
 
             UsuarioTieneAmistad uta4 = new UsuarioTieneAmistad()
@@ -116,7 +119,8 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioId = usuario4.UsuarioId,
                 AmistadId = amistad2.AmistadId,
                 usuario = usuario4,
-                amistad = amistad2
+                amistad = amistad2,
+                esQuienMandaSolicitud = false
             };
 
             amistad1.AmistadUsuario.Add(uta1);
