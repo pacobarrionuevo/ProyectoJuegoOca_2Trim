@@ -42,7 +42,7 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioEmail = "salguero@gmail.com",
                 UsuarioContrasena = PasswordHelper.Hash("salguero33"),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("salguero33"),
-                UsuarioFotoPerfil = "prueba",
+                UsuarioFotoPerfil = "Perfil_Deffault.png",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
                 UsuarioEstado = "Desconectado"
             };
@@ -54,7 +54,7 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioEmail = "laura@gmail.com",
                 UsuarioContrasena = PasswordHelper.Hash("laura33"),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("laura33"),
-                UsuarioFotoPerfil = "prueba",
+                UsuarioFotoPerfil = "Perfil_Deffault.png",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
                 UsuarioEstado = "Desconectado"
             };
@@ -66,7 +66,7 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioEmail = "carlos@gmail.com",
                 UsuarioContrasena = PasswordHelper.Hash("carlos33"),
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("carlos33"),
-                UsuarioFotoPerfil = "prueba",
+                UsuarioFotoPerfil = "Perfil_Deffault.png",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
                 UsuarioEstado = "Desconectado"
             };

@@ -153,7 +153,7 @@ throw new Error('Method not implemented.');
   }
   
   aceptarSolicitud(solicitud: any) {
-    console.log('Solicitud recibida:', solicitud); // Debug
+    console.log('Solicitud recibida:', solicitud); 
   
     if (!solicitud) {
       console.error('Error: La solicitud es null o undefined');
@@ -175,7 +175,7 @@ throw new Error('Method not implemented.');
   }
   
   rechazarSolicitud(solicitud: any) {
-    console.log('Solicitud recibida para rechazar:', solicitud); // Debug
+    console.log('Solicitud recibida para rechazar:', solicitud);
   
     if (!solicitud) {
       console.error('Error: La solicitud es null o undefined');
@@ -199,7 +199,6 @@ throw new Error('Method not implemented.');
   cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
       this.amigos = amigos.map(amigo => ({
-        // Si la propiedad viene en PascalCase, se usa esa; si no, se usa la camelCase
         UsuarioId: amigo.UsuarioId || amigo.usuarioId,
         UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),

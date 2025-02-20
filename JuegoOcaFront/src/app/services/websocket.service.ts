@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import { environment } from '../../environments/environment';
+
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 @Injectable({
@@ -63,7 +63,6 @@ export class WebsocketService {
     localStorage.setItem(this.tokenKey, token);
 
     this.rxjsSocket = webSocket({
-      // Aquí es donde agregamos el token a la URL
       url: `wss://localhost:7077/ws/connect?token=${token}`,
   
       openObserver: {

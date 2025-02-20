@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using JuegoOcaBack.WebSocketAdvanced; 
+using JuegoOcaBack.WebSocketAdvanced;
 
-namespace TuNamespace.Controllers
+namespace JuegoOcaBack.Controllers
 {
     [Route("ws")]
     [ApiController]

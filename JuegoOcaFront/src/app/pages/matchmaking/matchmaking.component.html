@@ -1,13 +1,13 @@
 <div class="botones">
-    <button class="boton-juego">
+    <button class="boton-juego" (click)="jugarConAmigos()">
         <img [src]="NinosJugandoALaOca" alt="Tablero del Juego de la Oca">
         <span>Jugar con amigos</span>
     </button>
-    <button class="boton-juego">
+    <button class="boton-juego" (click)="jugarConBot()">
         <img [src]="ROB" alt="Tablero del Juego de la Oca">
         <span>Jugar con Bot</span>
     </button>
-    <button class="boton-juego">
+    <button class="boton-juego" (click)="jugarAleatorio()">
         <img [src]="tablero" alt="Tablero del Juego de la Oca">
         <span>Jugar aleatorio</span>
     </button>
