@@ -78,4 +78,3 @@ export class FriendService {
 function throwError(arg0: () => Error): Observable<any> {
   throw new Error('Function not implemented.');
 }
-
