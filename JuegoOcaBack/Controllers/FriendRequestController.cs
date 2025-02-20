@@ -31,8 +31,12 @@ namespace JuegoOcaBack.Controllers
 
             var result = await _friendRequestService.SendFriendRequest(senderId, receiverId);
 
-            return result ? Ok() : StatusCode(500, "Error al enviar la solicitud.");
+            if (result.Success)
+                return Ok(result);
+            else
+                return StatusCode(500, "Error al enviar la solicitud.");
         }
+
 
 
         [HttpPost("accept")]

@@ -112,8 +112,9 @@ throw new Error('Method not implemented.');
 
   enviarSolicitud(receiverId: number): void {
     this.friendService.sendFriendRequest(receiverId).subscribe({
-      next: () => {
+      next: (result) => {
         console.log(`Solicitud de amistad enviada a ${receiverId}`);
+        console.log(`El usuario que envió la solicitud es: ${result.senderName}`);
         this.obtenerSolicitudesPendientes();
       },
       error: (error) => {
@@ -122,11 +123,33 @@ throw new Error('Method not implemented.');
     });
   }
   
+  
   obtenerSolicitudesPendientes() {
     this.friendService.getPendingRequests().subscribe({
-      next: (solicitudes) => this.solicitudesPendientes = solicitudes,
+      next: (solicitudes: any[]) => {
+        console.log('Solicitudes pendientes recibidas:', solicitudes);
+        // Mapeamos cada objeto de amistad a nuestra interfaz SolicitudAmistad.
+        // Se asume que this.usuarioId es el ID del usuario autenticado, de modo que se
+        // busca en cada amistad el usuario contrario (por ejemplo, el que envió la solicitud)
+        this.solicitudesPendientes = solicitudes.map(amistadObj => {
+          // Buscar en el array amistadUsuario el que NO sea el usuario actual.
+          const otro = amistadObj.amistadUsuario.find(ua => ua.usuarioId !== this.usuarioId);
+          return {
+            amistadId: amistadObj.amistadId,
+            usuarioId: otro ? otro.usuarioId : 0,
+            usuarioApodo: otro ? this.getUsuarioApodoById(otro.usuarioId) : 'Usuario desconocido',
+            usuarioFotoPerfil: otro && otro.usuario ? otro.usuario.UsuarioFotoPerfil : null
+          } as SolicitudAmistad;
+        });
+      },
       error: (error) => console.error('Error obteniendo solicitudes:', error)
     });
+  }
+  
+
+  getUsuarioApodoById(userId: number): string {
+    const usuario = this.usuarios.find(u => u.UsuarioId === userId);
+    return usuario ? usuario.UsuarioApodo : 'te ha equivocao compi 😂';
   }
   
   aceptarSolicitud(solicitud: any) {
@@ -151,25 +174,39 @@ throw new Error('Method not implemented.');
     });
   }
   
+  rechazarSolicitud(solicitud: any) {
+    console.log('Solicitud recibida para rechazar:', solicitud); // Debug
   
+    if (!solicitud) {
+      console.error('Error: La solicitud es null o undefined');
+      return;
+    }
   
-  rechazarSolicitud(amistadId: number) {
+    if (!solicitud.amistadId) {
+      console.error('Error: amistadId no está definido en la solicitud:', solicitud);
+      return;
+    }
+  
+    const amistadId = solicitud.amistadId;
+    console.log('Enviando rechazo para amistadId:', amistadId);
+  
     this.friendService.rechazarSolicitud(amistadId).subscribe({
-      next: () => this.obtenerSolicitudesPendientes(),
-      error: (error) => console.error('Error rechazando solicitud:', error)
+      next: (res) => console.log('Solicitud rechazada:', res),
+      error: (err) => console.error('Error al rechazar solicitud:', err)
     });
   }
   
   cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
       this.amigos = amigos.map(amigo => ({
-        UsuarioId: amigo.usuarioId,
-        UsuarioApodo: amigo.usuarioApodo,
-        UsuarioFotoPerfil: this.validarUrlImagen(amigo.usuarioFotoPerfil),
-        UsuarioEstado: amigo.usuarioEstado
+        // Si la propiedad viene en PascalCase, se usa esa; si no, se usa la camelCase
+        UsuarioId: amigo.UsuarioId || amigo.usuarioId,
+        UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
+        UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
+        UsuarioEstado: amigo.UsuarioEstado || amigo.usuarioEstado
       }));
       this.amigosFiltrados = [...this.amigos];
     });
-
-}
+  }
+  
 }

@@ -17,11 +17,18 @@ namespace JuegoOcaBack.Services
         }
 
         // Envía una solicitud de amistad
-        public async Task<bool> SendFriendRequest(int senderId, int receiverId)
+        public class FriendRequestResult
+        {
+            public bool Success { get; set; }
+            public int AmistadId { get; set; }
+            public string SenderName { get; set; }
+        }
+
+        public async Task<FriendRequestResult> SendFriendRequest(int senderId, int receiverId)
         {
             // Evitar solicitud a uno mismo
             if (senderId == receiverId)
-                return false;
+                return new FriendRequestResult { Success = false };
 
             // Verificar que no exista ya una solicitud pendiente o amistad entre estos usuarios
             var exists = await _context.Friendships
@@ -32,7 +39,7 @@ namespace JuegoOcaBack.Services
                     a.AmistadUsuario.Any(ua => ua.UsuarioId == receiverId)
                 );
             if (exists)
-                return false;
+                return new FriendRequestResult { Success = false };
 
             // Crear la solicitud en estado pendiente
             var amistad = new Amistad() { IsAccepted = false };
@@ -57,8 +64,17 @@ namespace JuegoOcaBack.Services
             _context.UsuarioTieneAmistad.AddRange(senderRelation, receiverRelation);
             await _context.SaveChangesAsync();
 
-            return true;
+            // Recuperar el nombre del sender
+            var sender = await _context.Usuarios.FindAsync(senderId);
+
+            return new FriendRequestResult
+            {
+                Success = true,
+                AmistadId = amistad.AmistadId,
+                SenderName = sender?.UsuarioApodo
+            };
         }
+
 
         // Acepta una solicitud de amistad
         // receiverId se obtiene del token (usuario autenticado) para mayor seguridad

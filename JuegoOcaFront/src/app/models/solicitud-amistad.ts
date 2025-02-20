@@ -1,4 +1,8 @@
 export interface SolicitudAmistad {
-    amistad: { AmistadId: number };
-    usuario: { UsuarioId: number; UsuarioApodo: string; UsuarioFotoPerfil?: string };
-}
+    amistadId: number;
+    // Este será el usuario de interés; por ejemplo, el que envió la solicitud (si lo deseas) o el receptor
+    usuarioId: number;
+    usuarioApodo: string;
+    usuarioFotoPerfil?: string;
+  }
+  

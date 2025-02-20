@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { SolicitudAmistad } from '../models/solicitud-amistad';
 import { User } from '../models/User';
+import { SendFriendRequest } from '../models/send-friend-request';
 
 @Injectable({
   providedIn: 'root'
@@ -28,13 +29,14 @@ export class FriendService {
   }
 
   // Método para enviar solicitud de amistad
-  sendFriendRequest(receiverId: number): Observable<any> {
+  sendFriendRequest(receiverId: number): Observable<SendFriendRequest> {
     const params = new HttpParams().set('receiverId', receiverId.toString());
-    return this.http.post(`${this.apiUrl}/send`, {}, {
+    return this.http.post<SendFriendRequest>(`${this.apiUrl}/send`, {}, {
       headers: this.getHeader(),
       params: params
     });
   }
+  
 
   // Método para aceptar una solicitud de amistad
   aceptarSolicitud(amistadId: number | null): Observable<any> {
