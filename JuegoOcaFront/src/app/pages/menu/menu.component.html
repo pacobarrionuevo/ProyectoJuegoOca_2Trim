@@ -39,12 +39,13 @@
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
         <img *ngIf="amigo.UsuarioFotoPerfil" [src]="getFotoPerfilUrl(amigo.UsuarioFotoPerfil)" alt="Foto de perfil" width="100"> 
         <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
-        <p *ngIf="amigo.UsuarioEstado === 'Conectado'" class="estado-conectado">Conectado</p>
-        <p *ngIf="amigo.UsuarioEstado !== 'Conectado'" class="estado-desconectado">Desconectado</p>
+        <p *ngIf="amigo.UsuarioEstado === 'Conectado'" class="estado-conectado">🟢 Conectado</p>
+        <p *ngIf="amigo.UsuarioEstado !== 'Conectado'" class="estado-desconectado">🔴 Desconectado</p>
         <button [routerLink]="'/perfil'">Ver perfil</button>&nbsp;
         <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
     </div>
-</div>
+  </div>
+
 
   <br>
 

@@ -59,11 +59,6 @@ export class WebsocketService {
     console.error('Error:', error);
   }
 
-  private onDisconnected() {
-    console.log('WebSocket connection closed');
-    this.disconnected.next();
-  }
-
   connectRxjs(token: string) {
     this.rxjsSocket = webSocket({
       url: `wss://localhost:7077/ws/connect?token=${token}`,
@@ -87,9 +82,17 @@ export class WebsocketService {
 
   disconnectRxjs() {
     if (this.rxjsSocket) {
-      this.rxjsSocket.complete();
+        this.rxjsSocket.unsubscribe(); // Cerramos la suscripción
+        this.rxjsSocket.complete(); // Finalizamos la conexión
+        this.onDisconnected(); // Llamamos el evento de desconexión
     }
   }
+
+  private onDisconnected() {
+      console.log("Desconectado del WebSocket");
+      this.disconnected.next(true); // Emitimos el evento para actualizar el estado
+  }
+
 
   private reconnectIfNeeded() {
     const storedToken = localStorage.getItem(this.tokenKey);

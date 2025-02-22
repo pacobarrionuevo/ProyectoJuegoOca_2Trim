@@ -34,7 +34,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             _serviceProvider = serviceProvider;
         }
 
-        public async Task HandleAsync(WebSocket webSocket)
+        public async Task<WebSocketHandler> HandleAsync(WebSocket webSocket)
         {
             // Crear un nuevo WebSocketHandler y agregarlo a la lista
             WebSocketHandler handler = await AddWebsocketAsync(webSocket);
@@ -44,6 +44,9 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
             // Esperar a que el WebSocketHandler termine de manejar la conexión
             await handler.HandleAsync();
+
+            // Retornar el handler para que pueda ser utilizado en la llamada
+            return handler;
         }
 
         private async Task<WebSocketHandler> AddWebsocketAsync(WebSocket webSocket)
@@ -96,6 +99,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
+        // comprobar funcionamiento
         private async Task OnDisconnectedAsync(WebSocketHandler disconnectedHandler)
         {
             // Eliminar el WebSocketHandler de la lista
@@ -109,6 +113,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
             using (var scope = _serviceProvider.CreateScope())
             {
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
+                var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
+
+                // Obtener el usuario y actualizar su estado a "Desconectado"
+                Usuario usuario = await wsMethods.GetUserById(disconnectedHandler.Id);
+                if (usuario != null)
+                {
+                    usuario.UsuarioEstado = "Desconectado";
+                    await wsMethods.UpdateUserAsync(usuario);
+                }
+
                 var amigos = await unitOfWork._friendRequestRepository.GetFriendsList(disconnectedHandler.Id);
 
                 foreach (WebSocketHandler handler in _handlers)
@@ -124,6 +138,45 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
             }
         }
+
+        public async Task RemoveHandlerAsync(WebSocketHandler disconnectedHandler)
+        {
+            await _semaphore.WaitAsync();
+            disconnectedHandler.Disconnected -= OnDisconnectedAsync;
+            disconnectedHandler.MessageReceived -= OnMessageReceivedAsync;
+            _handlers.Remove(disconnectedHandler);
+            _semaphore.Release();
+
+            // Notificar a los amigos que el usuario se ha desconectado
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
+                var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
+
+                Usuario usuario = await wsMethods.GetUserById(disconnectedHandler.Id);
+                if (usuario != null)
+                {
+                    usuario.UsuarioEstado = "Desconectado";
+                    await wsMethods.UpdateUserAsync(usuario);
+                }
+
+                var amigos = await unitOfWork._friendRequestRepository.GetFriendsList(disconnectedHandler.Id);
+
+                foreach (WebSocketHandler handler in _handlers)
+                {
+                    if (amigos.Any(a => a.UsuarioId == handler.Id))
+                    {
+                        await handler.SendAsync(JsonSerializer.Serialize(new
+                        {
+                            Type = "friendDisconnected",
+                            FriendId = disconnectedHandler.Id
+                        }));
+                    }
+                }
+            }
+        }
+
+
 
         private async Task OnMessageReceivedAsync(WebSocketHandler userHandler, string message)
         {

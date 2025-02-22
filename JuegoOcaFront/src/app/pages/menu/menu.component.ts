@@ -32,6 +32,7 @@ throw new Error('Method not implemented.');
   amigosFiltrados: User[] = [];
   busquedaAmigos: string = '';
   
+  usuariosConectados: Set<string> = new Set();
   solicitudesPendientes: SolicitudAmistad[] = [];
 
   usuarioApodo: string = ''; 
@@ -56,11 +57,25 @@ throw new Error('Method not implemented.');
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
 
+    this.actualizarEstadoDeAmigos();
+
     this.webSocketService.messageReceived.subscribe((message: any) => {
       console.log("Mensaje recibido de WebSocket:", message);
       if (message.FriendId) {
         this.actualizarEstadoAmigo(message.FriendId, message.Estado);
       }
+    });
+
+    // Detectar cuando el usuario se conecta
+    this.webSocketService.connected.subscribe(() => {
+      console.log('Conexión establecida, actualizando amigos...');
+      this.actualizarEstadoDeAmigos();
+    });
+
+    // Detectar cuando el usuario se desconecta
+    this.webSocketService.disconnected.subscribe(() => {
+      console.log('Desconectado del WebSocket, estableciendo amigos como desconectados...');
+      this.marcarTodosDesconectados();
     });
   }
 
@@ -234,5 +249,30 @@ throw new Error('Method not implemented.');
       this.amigosFiltrados = [...this.amigos];
     });
   }
+  
+  // Comentar
+  actualizarEstadoDeAmigos() {
+    this.friendService.getFriendsList().subscribe(amigos => {
+      this.amigos = amigos.map(amigo => ({
+        UsuarioId: amigo.UsuarioId || amigo.usuarioId,
+        UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
+        UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
+        UsuarioEstado: this.obtenerEstadoAmigo(amigo.UsuarioId || amigo.usuarioId) // Obtener estado real
+      }));
+  
+      this.amigosFiltrados = [...this.amigos];
+    });
+  }
+
+  private obtenerEstadoAmigo(usuarioId: string): string {
+    return this.usuariosConectados.has(usuarioId) ? 'Conectado' : 'Desconectado';
+  }
+
+  marcarTodosDesconectados() {
+    this.usuariosConectados.clear();
+    this.amigos.forEach(amigo => amigo.UsuarioEstado = 'Desconectado');
+  }
+  
+  
   
 }
