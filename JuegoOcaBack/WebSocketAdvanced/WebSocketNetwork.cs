@@ -16,7 +16,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private readonly List<WebSocketHandler> _handlers = new List<WebSocketHandler>();
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private readonly IServiceProvider _serviceProvider;
-
+        private readonly List<WebSocketHandler> _waitingUsers = new List<WebSocketHandler>();
         public WebSocketNetwork(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
@@ -107,75 +107,67 @@ namespace JuegoOcaBack.WebSocketAdvanced
             try
             {
                 var messageObject = JsonSerializer.Deserialize<MatchmakingMessageDTO>(message);
-                if (messageObject.Type == "inviteFriend")
+                if (messageObject.Type == "playRandom")
                 {
-                    int friendId = messageObject.FriendId;
-                    var friendHandler = _handlers.FirstOrDefault(h => h.Id == friendId);
-                    if (friendHandler != null && friendHandler.IsOpen)
+                    // Buscar un oponente aleatorio
+                    _waitingUsers.Add(userHandler);
+
+                    if (_waitingUsers.Count >= 2)
                     {
-                        var inviteMessage = new
-                        {
-                            Type = "friendInvitation",
-                            FromUserId = userHandler.Id,
-                            FromUserNickname = "Nombre del anfitrión"
-                        };
-                        await friendHandler.SendAsync(JsonSerializer.Serialize(inviteMessage));
-                    }
-                    else
-                    {
-                        await userHandler.SendAsync(JsonSerializer.Serialize(new
-                        {
-                            Type = "error",
-                            Message = "El amigo no está conectado."
-                        }));
-                    }
-                }
-                else if (messageObject.Type == "acceptInvitation")
-                {
-                    int hostId = messageObject.HostId;
-                    var hostHandler = _handlers.FirstOrDefault(h => h.Id == hostId);
-                    if (hostHandler != null && hostHandler.IsOpen)
-                    {
-                        await hostHandler.SendAsync(JsonSerializer.Serialize(new
-                        {
-                            Type = "invitationAccepted",
-                            FriendId = userHandler.Id
-                        }));
-                    }
-                }
-                else if (messageObject.Type == "playWithBot")
-                {
-                    var gameId = Guid.NewGuid().ToString();
-                    var botResponse = new
-                    {
-                        Type = "gameStarted",
-                        GameId = gameId,
-                        Opponent = "Bot"
-                    };
-                    await userHandler.SendAsync(JsonSerializer.Serialize(botResponse));
-                }
-                else if (messageObject.Type == "playRandom")
-                {
-                    var waitingUser = _handlers.FirstOrDefault(h => h.Id != userHandler.Id && h.IsOpen);
-                    if (waitingUser != null)
-                    {
+                        // Emparejar a los dos primeros usuarios en la lista
+                        var player1 = _waitingUsers[0];
+                        var player2 = _waitingUsers[1];
+
+                        // Notificar a ambos usuarios que la partida ha comenzado
                         var gameId = Guid.NewGuid().ToString();
                         var gameResponse = new
                         {
                             Type = "gameStarted",
                             GameId = gameId,
-                            Opponent = waitingUser.Id
+                            Opponent = player2.Id // ID del oponente
                         };
-                        await userHandler.SendAsync(JsonSerializer.Serialize(gameResponse));
-                        await waitingUser.SendAsync(JsonSerializer.Serialize(gameResponse));
+                        await player1.SendAsync(JsonSerializer.Serialize(gameResponse));
+
+                        var gameResponse2 = new
+                        {
+                            Type = "gameStarted",
+                            GameId = gameId,
+                            Opponent = player1.Id // ID del oponente
+                        };
+                        await player2.SendAsync(JsonSerializer.Serialize(gameResponse2));
+
+                        // Eliminar a los usuarios de la lista de espera
+                        _waitingUsers.Remove(player1);
+                        _waitingUsers.Remove(player2);
                     }
                     else
                     {
+                        // Notificar al usuario que está en espera
                         await userHandler.SendAsync(JsonSerializer.Serialize(new
                         {
                             Type = "waitingForOpponent"
                         }));
                     }
+                }
+                else if (messageObject.Type == "playWithBot")
+                {
+                    // Iniciar partida con un bot
+                    var gameId = Guid.NewGuid().ToString();
+                    var botResponse = new
+                    {
+                        Type = "botGameStarted",
+                        GameId = gameId
+                    };
+                    await userHandler.SendAsync(JsonSerializer.Serialize(botResponse));
+                }
+                else if (messageObject.Type == "cancelSearch")
+                {
+                    // Cancelar la búsqueda de oponente
+                    _waitingUsers.Remove(userHandler);
+                    await userHandler.SendAsync(JsonSerializer.Serialize(new
+                    {
+                        Type = "searchCancelled"
+                    }));
                 }
             }
             catch (Exception ex)
