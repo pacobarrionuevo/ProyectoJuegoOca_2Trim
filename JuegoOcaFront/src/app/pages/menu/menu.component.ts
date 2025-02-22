@@ -70,6 +70,33 @@ throw new Error('Method not implemented.');
       amigo.UsuarioEstado = estado;
     }
   }
+  invitarAPartida(friendId: number) {
+    if (!friendId) {
+      console.error('ID de amigo no válido.');
+      return;
+    }
+
+    // Verificar si el WebSocket está conectado
+    if (!this.webSocketService.isConnectedRxjs()) {
+      console.warn('WebSocket no está conectado. Reconectando...');
+      const token = this.authService.getUserDataFromToken(); // Obtener el token del usuario
+      if (token) {
+        this.webSocketService.connectRxjs(token); // Reconectar el WebSocket
+      } else {
+        console.error('No se pudo obtener el token del usuario.');
+        return;
+      }
+    }
+
+    // Enviar la invitación a través del WebSocket
+    const message = {
+      type: 'inviteFriend',
+      friendId: friendId
+    };
+    this.webSocketService.sendRxjs(JSON.stringify(message));
+
+    console.log(`Invitación enviada al amigo con ID: ${friendId}`);
+  }
 
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {

@@ -3,6 +3,10 @@ using System.Text.Json;
 using JuegoOcaBack.Models.Database;
 using JuegoOcaBack.Models.Database.Entidades;
 using JuegoOcaBack.Models.DTO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace JuegoOcaBack.WebSocketAdvanced
 {
@@ -98,21 +102,86 @@ namespace JuegoOcaBack.WebSocketAdvanced
             await Task.WhenAll(tasks);
         }
 
-        private Task OnMessageReceivedAsync(WebSocketHandler userHandler, string message)
+        private async Task OnMessageReceivedAsync(WebSocketHandler userHandler, string message)
         {
-            List<Task> tasks = new List<Task>();
-            WebSocketHandler[] handlers = _handlers.ToArray();
-
-            string messageToMe = $"Tú: {message}";
-            string messageToOthers = $"Usuario {userHandler.Id}: {message}";
-
-            foreach (WebSocketHandler handler in handlers)
+            try
             {
-                string messageToSend = handler.Id == userHandler.Id ? messageToMe : messageToOthers;
-                tasks.Add(handler.SendAsync(messageToSend));
+                var messageObject = JsonSerializer.Deserialize<MatchmakingMessageDTO>(message);
+                if (messageObject.Type == "inviteFriend")
+                {
+                    int friendId = messageObject.FriendId;
+                    var friendHandler = _handlers.FirstOrDefault(h => h.Id == friendId);
+                    if (friendHandler != null && friendHandler.IsOpen)
+                    {
+                        var inviteMessage = new
+                        {
+                            Type = "friendInvitation",
+                            FromUserId = userHandler.Id,
+                            FromUserNickname = "Nombre del anfitrión"
+                        };
+                        await friendHandler.SendAsync(JsonSerializer.Serialize(inviteMessage));
+                    }
+                    else
+                    {
+                        await userHandler.SendAsync(JsonSerializer.Serialize(new
+                        {
+                            Type = "error",
+                            Message = "El amigo no está conectado."
+                        }));
+                    }
+                }
+                else if (messageObject.Type == "acceptInvitation")
+                {
+                    int hostId = messageObject.HostId;
+                    var hostHandler = _handlers.FirstOrDefault(h => h.Id == hostId);
+                    if (hostHandler != null && hostHandler.IsOpen)
+                    {
+                        await hostHandler.SendAsync(JsonSerializer.Serialize(new
+                        {
+                            Type = "invitationAccepted",
+                            FriendId = userHandler.Id
+                        }));
+                    }
+                }
+                else if (messageObject.Type == "playWithBot")
+                {
+                    var gameId = Guid.NewGuid().ToString();
+                    var botResponse = new
+                    {
+                        Type = "gameStarted",
+                        GameId = gameId,
+                        Opponent = "Bot"
+                    };
+                    await userHandler.SendAsync(JsonSerializer.Serialize(botResponse));
+                }
+                else if (messageObject.Type == "playRandom")
+                {
+                    var waitingUser = _handlers.FirstOrDefault(h => h.Id != userHandler.Id && h.IsOpen);
+                    if (waitingUser != null)
+                    {
+                        var gameId = Guid.NewGuid().ToString();
+                        var gameResponse = new
+                        {
+                            Type = "gameStarted",
+                            GameId = gameId,
+                            Opponent = waitingUser.Id
+                        };
+                        await userHandler.SendAsync(JsonSerializer.Serialize(gameResponse));
+                        await waitingUser.SendAsync(JsonSerializer.Serialize(gameResponse));
+                    }
+                    else
+                    {
+                        await userHandler.SendAsync(JsonSerializer.Serialize(new
+                        {
+                            Type = "waitingForOpponent"
+                        }));
+                    }
+                }
             }
-
-            return Task.WhenAll(tasks);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al procesar el mensaje: {ex.Message}");
+            }
         }
     }
 }

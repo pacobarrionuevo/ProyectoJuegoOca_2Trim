@@ -14,23 +14,43 @@ export class MatchmakingComponent {
   tablero: string;
   ROB: string;
   NinosJugandoALaOca : string;
-  constructor(private imageService: ImageService, private websocketService: WebsocketService) {
+  estadoPartida: string = 'buscando';
+  amigoInvitado: any = null; // Información del amigo invitado
+  oponente: any = null;
+  constructor(private imageService: ImageService, private websocketService: WebsocketService, private router : Router) {
       this.tablero = this.imageService.getImageUrl('TableroJuego.png');
       this.ROB = this.imageService.getImageUrl('ROB.jpg')
       this.NinosJugandoALaOca = this.imageService.getImageUrl('NiñosJugandoALaOca.jpg')
     }
-    jugarConAmigos() {
-     
-      this.websocketService.sendRxjs(JSON.stringify({ type: 'inviteFriend' }));
+    ngOnInit(): void {
+      // Escuchar mensajes del WebSocket
+      this.websocketService.messageReceived.subscribe((message: any) => {
+        if (message.type === 'invitationAccepted') {
+          this.estadoPartida = 'partidaEnCurso';
+          this.oponente = { UsuarioApodo: message.friendNickname }; // Obtener el apodo del amigo
+        } else if (message.type === 'gameStarted') {
+          this.estadoPartida = 'partidaEnCurso';
+          this.oponente = { UsuarioApodo: message.opponentNickname }; // Obtener el apodo del oponente
+        } else if (message.type === 'botGameStarted') {
+          this.estadoPartida = 'partidaConBot';
+        }
+      });
     }
   
-    jugarConBot() {
-      
-      this.websocketService.sendRxjs(JSON.stringify({ type: 'playWithBot' }));
+    /**
+     * Cancelar la búsqueda de oponente.
+     */
+    cancelarBusqueda() {
+      this.websocketService.sendRxjs(JSON.stringify({ type: 'cancelSearch' }));
+      this.estadoPartida = 'inactivo';
+      this.router.navigate(['/menu']);
     }
   
-    jugarAleatorio() {
-      
-      this.websocketService.sendRxjs(JSON.stringify({ type: 'playRandom' }));
-    }
-}
+    /**
+     * Abandonar la partida actual.
+     */
+    abandonarPartida() {
+      this.websocketService.sendRxjs(JSON.stringify({ type: 'leaveGame' }));
+      this.estadoPartida = 'inactivo';
+      this.router.navigate(['/menu']);
+    }}
