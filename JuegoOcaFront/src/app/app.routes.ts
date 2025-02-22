@@ -5,6 +5,7 @@ import { RegisterComponent } from './pages/register/register.component';
 import { MenuComponent } from './pages/menu/menu.component';
 import { MatchmakingComponent } from './pages/matchmaking/matchmaking.component';
 import { PerfilComponent } from './pages/perfil/perfil.component';
+import { GameComponent } from './pages/game/game.component';
 
 export const routes: Routes = 
 [
@@ -29,6 +30,9 @@ export const routes: Routes =
     {
         path: 'perfil',
         component: PerfilComponent
+    },{ 
+        path: 'game', 
+        component: GameComponent 
     }
 ];
 

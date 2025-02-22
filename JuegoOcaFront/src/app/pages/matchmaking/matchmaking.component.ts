@@ -18,6 +18,7 @@ export class MatchmakingComponent {
   estadoPartida: string = 'buscando';
   amigoInvitado: any = null; // Información del amigo invitado
   oponente: any = null;
+  gameId: string | null = null;
   constructor(private imageService: ImageService, private webSocketService: WebsocketService, private router : Router) {
       this.tablero = this.imageService.getImageUrl('TableroJuego.png');
       this.ROB = this.imageService.getImageUrl('ROB.jpg')
@@ -26,15 +27,19 @@ export class MatchmakingComponent {
     ngOnInit(): void {
       // Escuchar mensajes del WebSocket
       this.webSocketService.messageReceived.subscribe((message: any) => {
-        if (message.Type === 'gameStarted') {
-          this.estadoPartida = 'partidaEnCurso';
-          this.oponente = { UsuarioApodo: `Usuario ${message.Opponent}` }; // Obtener el apodo del oponente
+        if (message.Type === 'gameReady') {
+          // La partida está lista
+          this.estadoPartida = 'partidaLista';
+          this.oponente = { UsuarioApodo: message.Opponent }; // Obtener el apodo del oponente
+          this.gameId = message.GameId; // Guardar el ID de la partida
+  
+          // Redirigir al usuario a game.component después de 3 segundos
+          setTimeout(() => {
+            this.router.navigate(['/game'], { state: { gameId: this.gameId } });
+          }, 3000);
         } else if (message.Type === 'waitingForOpponent') {
+          // Esperando a un oponente
           this.estadoPartida = 'buscando';
-        } else if (message.Type === 'searchCancelled') {
-          this.estadoPartida = 'inactivo';
-        } else if (message.Type === 'botGameStarted') {
-          this.estadoPartida = 'partidaConBot';
         }
       });
     }
@@ -54,7 +59,7 @@ export class MatchmakingComponent {
      * Jugar con un bot.
      */
     jugarConBot() {
-      this.estadoPartida = 'partidaConBot';
+      this.estadoPartida = 'buscando';
       const message = {
         type: 'playWithBot'
       };
@@ -81,17 +86,5 @@ export class MatchmakingComponent {
       };
       this.webSocketService.sendRxjs(JSON.stringify(message));
       this.estadoPartida = 'inactivo';
-    }
-  
-    /**
-     * Abandonar la partida actual.
-     */
-    abandonarPartida() {
-      const message = {
-        type: 'leaveGame'
-      };
-      this.webSocketService.sendRxjs(JSON.stringify(message));
-      this.estadoPartida = 'inactivo';
-      this.router.navigate(['/menu']);
     }
   }

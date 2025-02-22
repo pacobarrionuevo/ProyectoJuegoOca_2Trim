@@ -1,5 +1,5 @@
 <div class="matchmaking">
-    <h2>Emparejamiento</h2>
+    <h2>Sala de Espera</h2>
 
     <!-- Botones de opciones -->
     <div class="botones">
@@ -18,21 +18,16 @@
         <button [routerLink]="'/menu'" class="boton-volver">Volver al menú</button>
     </div>
 
-    <!-- Estado de la búsqueda o partida -->
+    <!-- Estado de la sala de espera -->
     <div *ngIf="estadoPartida !== 'inactivo'" class="estado-partida">
         <div *ngIf="estadoPartida === 'buscando'">
             <p>Buscando oponente...</p>
             <button (click)="cancelarBusqueda()">Cancelar búsqueda</button>
         </div>
 
-        <div *ngIf="estadoPartida === 'partidaEnCurso'">
-            <p>Partida en curso contra {{ oponente?.UsuarioApodo || 'un oponente' }}.</p>
-            <button (click)="abandonarPartida()">Abandonar partida</button>
-        </div>
-
-        <div *ngIf="estadoPartida === 'partidaConBot'">
-            <p>Jugando contra un bot.</p>
-            <button (click)="abandonarPartida()">Abandonar partida</button>
+        <div *ngIf="estadoPartida === 'partidaLista'">
+            <p>Partida lista contra {{ oponente?.UsuarioApodo || 'un oponente' }}.</p>
+            <p>Redirigiendo al juego...</p>
         </div>
     </div>
 </div>
