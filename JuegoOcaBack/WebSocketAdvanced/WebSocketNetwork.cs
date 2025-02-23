@@ -127,6 +127,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private async Task OnMessageReceivedAsync(WebSocketHandler userHandler, string message)
         {
+            Console.WriteLine($"Mensaje recibido: {message}");
             try
             {
                 var messageObject = JsonSerializer.Deserialize<MatchmakingMessageDTO>(message);
@@ -193,6 +194,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
                 else if (messageObject.Type == "inviteFriend")
                 {
+                    Console.WriteLine($"Invitación enviada a: {messageObject.FriendId}");
                     // Invitar a un amigo a jugar
                     int friendId = messageObject.FriendId;
                     var friendHandler = _handlers.FirstOrDefault(h => h.Id == friendId);

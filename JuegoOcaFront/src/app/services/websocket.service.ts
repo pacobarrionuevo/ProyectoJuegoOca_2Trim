@@ -27,6 +27,7 @@ export class WebsocketService {
   }
 
   private onMessageReceived(message: string) {
+    console.log('Mensaje recibido en el frontend:', message);
     try {
       const parsedMessage = JSON.parse(message);
       if (parsedMessage.Type === 'friendInvitation') {
