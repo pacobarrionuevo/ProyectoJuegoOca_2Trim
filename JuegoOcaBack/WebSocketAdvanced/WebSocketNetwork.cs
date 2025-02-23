@@ -173,7 +173,8 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         // Notificar al usuario que está en espera
                         await userHandler.SendAsync(JsonSerializer.Serialize(new
                         {
-                            Type = "waitingForOpponent"
+                            Type = "error",
+                            Message = "El amigo no está conectado. La invitación se enviará cuando se conecte."
                         }));
                     }
                 }
@@ -195,25 +196,43 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 else if (messageObject.Type == "inviteFriend")
                 {
                     Console.WriteLine($"Invitación enviada a: {messageObject.FriendId}");
-                    // Invitar a un amigo a jugar
                     int friendId = messageObject.FriendId;
                     var friendHandler = _handlers.FirstOrDefault(h => h.Id == friendId);
 
                     if (friendHandler != null && friendHandler.IsOpen)
                     {
-                        // Crear una sala de espera
-                        var roomId = Guid.NewGuid().ToString();
-                        _rooms[roomId] = new List<WebSocketHandler> { userHandler, friendHandler };
-
-                        // Notificar al amigo que ha sido invitado
-                        var inviteMessage = new
+                        // Obtener el nombre del usuario que envía la invitación
+                        using (var scope = _serviceProvider.CreateScope())
                         {
-                            Type = "friendInvitation",
-                            FromUserId = userHandler.Id,
-                            FromUserNickname = "Nombre del anfitrión",
-                            RoomId = roomId
-                        };
-                        await friendHandler.SendAsync(JsonSerializer.Serialize(inviteMessage));
+                            var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
+                            var usuario = await wsMethods.GetUserById(userHandler.Id);
+
+                            // Crear una sala de espera
+                            var roomId = Guid.NewGuid().ToString();
+                            _rooms[roomId] = new List<WebSocketHandler> { userHandler, friendHandler };
+
+                            // Notificar al amigo que ha sido invitado
+                            var inviteMessage = new
+                            {
+                                Type = "friendInvitation",
+                                FromUserId = userHandler.Id,
+                                FromUserNickname = usuario?.UsuarioApodo ?? "Usuario desconocido",
+                                RoomId = roomId
+                            };
+                            try
+                            {
+                                await friendHandler.SendAsync(JsonSerializer.Serialize(inviteMessage));
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error al enviar la invitación: {ex.Message}");
+                                await userHandler.SendAsync(JsonSerializer.Serialize(new
+                                {
+                                    Type = "error",
+                                    Message = "Error al enviar la invitación."
+                                }));
+                            }
+                        }
                     }
                     else
                     {
@@ -227,12 +246,11 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
                 else if (messageObject.Type == "acceptInvitation")
                 {
-                    // Aceptar una invitación de amigo
                     string roomId = messageObject.RoomId;
                     if (_rooms.ContainsKey(roomId))
                     {
                         var players = _rooms[roomId];
-                        if (players.Count == 2)
+                        if (players.Count == 2 && players.All(p => p.IsOpen))
                         {
                             // Notificar a ambos usuarios que la partida ha comenzado
                             var gameResponse = new
@@ -250,6 +268,15 @@ namespace JuegoOcaBack.WebSocketAdvanced
                                 Opponent = players[1].Id // ID del oponente
                             };
                             await players[0].SendAsync(JsonSerializer.Serialize(gameResponse2));
+                        }
+                        else
+                        {
+                            // Notificar al usuario que el oponente se ha desconectado
+                            await userHandler.SendAsync(JsonSerializer.Serialize(new
+                            {
+                                Type = "error",
+                                Message = "El oponente se ha desconectado."
+                            }));
                         }
                     }
                 }
