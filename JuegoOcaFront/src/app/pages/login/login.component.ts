@@ -19,8 +19,7 @@ export class LoginComponent {
   jwt: string | null = null; 
 
   constructor(
-    private authService: AuthService, 
-    private websocketService: WebsocketService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -34,9 +33,6 @@ export class LoginComponent {
 
     // Verifica los dos Storage para el token y conecta el WebSocket si hay sesión
     this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    if (this.jwt && !this.websocketService.isConnectedRxjs()) {
-      this.websocketService.connectRxjs(this.jwt);
-    }
   }
 
   async submit() {
@@ -50,11 +46,6 @@ export class LoginComponent {
       
       // Obtener el token después del login
       this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-
-      // Conectar WebSocket con el token
-      if (this.jwt) {
-        this.websocketService.connectRxjs(this.jwt);
-      }
 
       if (this.recuerdame) {
         localStorage.setItem('authData', JSON.stringify({

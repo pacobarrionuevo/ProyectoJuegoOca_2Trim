@@ -136,6 +136,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
+        // Se utiliza en el DisconnectedAsync
+        public WebSocketHandler GetHandlerById(int userId)
+        {
+            return _handlers.FirstOrDefault(h => h.Id == userId);
+        }
+
         public async Task RemoveHandlerAsync(WebSocketHandler disconnectedHandler)
         {
             await _semaphore.WaitAsync();

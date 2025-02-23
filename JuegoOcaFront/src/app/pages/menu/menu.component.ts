@@ -57,34 +57,37 @@ throw new Error('Method not implemented.');
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
 
-    this.actualizarEstadoDeAmigos();
+    this.webSocketService.connected.subscribe(() => {
+        console.log('🎉 Evento recibido: WebSocket conectado en el menú.');
+        this.cargarAmigos();
+    });
+
+    this.webSocketService.disconnected.subscribe(() => {
+        console.log('😢 Evento recibido: WebSocket desconectado en el menú.');
+        this.marcarTodosDesconectados();
+    });
 
     this.webSocketService.messageReceived.subscribe((message: any) => {
-      console.log("Mensaje recibido de WebSocket:", message);
-      if (message.FriendId) {
-        this.actualizarEstadoAmigo(message.FriendId, message.Estado);
-      }
+        console.log("📩 WebSocket - Mensaje recibido:", message);
+        if (message.Type === 'friendConnected' || message.Type === 'friendDisconnected') {
+            console.log(`🔄 Amigo ${message.FriendId} ha cambiado de estado a ${message.Type}`);
+            this.actualizarEstadoAmigo(message.FriendId, message.Type === 'friendConnected' ? 'Conectado' : 'Desconectado');
+        }
     });
+}
 
-    // Detectar cuando el usuario se conecta
-    this.webSocketService.connected.subscribe(() => {
-      console.log('Conexión establecida, actualizando amigos...');
-      this.actualizarEstadoDeAmigos();
-    });
-
-    // Detectar cuando el usuario se desconecta
-    this.webSocketService.disconnected.subscribe(() => {
-      console.log('Desconectado del WebSocket, estableciendo amigos como desconectados...');
-      this.marcarTodosDesconectados();
-    });
-  }
 
   actualizarEstadoAmigo(friendId: number, estado: string) {
     const amigo = this.amigos.find(a => a.UsuarioId === friendId);
     if (amigo) {
-      amigo.UsuarioEstado = estado;
+        console.log(`🟢 Actualizando estado de amigo ${friendId} a ${estado}`);
+        amigo.UsuarioEstado = estado;
+    } else {
+        console.warn(`⚠️ No se encontró el amigo con ID ${friendId}`);
     }
   }
+
+
   invitarAPartida(friendId: number) {
     if (!friendId) {
       console.error('ID de amigo no válido.');
@@ -113,6 +116,12 @@ throw new Error('Method not implemented.');
     console.log(`Invitación enviada al amigo con ID: ${friendId}`);
   }
 
+  buscarAmigos(): void {
+    this.amigosFiltrados = this.busquedaAmigos.trim()
+      ? this.amigos.filter(amigo => amigo.UsuarioApodo?.toLowerCase().includes(this.busquedaAmigos.toLowerCase()))
+      : [...this.amigos];
+  }
+
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
       this.usuarios = usuarios.map(usuario => ({
@@ -137,9 +146,11 @@ throw new Error('Method not implemented.');
   }
 
   logout() {
+    this.webSocketService.closeConnection();  // Cierra WebSocket
+    console.log("WEBSOCKET CERRADO AL CERRAR SESIÓN")
     this.authService.logout();
     this.router.navigate(['/login']); 
-  }
+}
 
   cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
@@ -240,14 +251,16 @@ throw new Error('Method not implemented.');
   
   cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
+      console.log("Lista de amigos recibida:", amigos);
       this.amigos = amigos.map(amigo => ({
         UsuarioId: amigo.UsuarioId || amigo.usuarioId,
         UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
         UsuarioEstado: amigo.UsuarioEstado || amigo.usuarioEstado
       }));
+      console.log("Amigos después de mapear:", this.amigos);
       this.amigosFiltrados = [...this.amigos];
-    });
+    });    
   }
   
   // Comentar
@@ -269,10 +282,10 @@ throw new Error('Method not implemented.');
   }
 
   marcarTodosDesconectados() {
+    console.log('🔴 Marcando todos los amigos como desconectados.');
+    console.log('📋 Usuarios conectados antes:', this.usuariosConectados);
     this.usuariosConectados.clear();
     this.amigos.forEach(amigo => amigo.UsuarioEstado = 'Desconectado');
+    console.log('📋 Usuarios conectados después:', this.usuariosConectados);
   }
-  
-  
-  
 }
