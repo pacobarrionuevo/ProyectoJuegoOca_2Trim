@@ -34,7 +34,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             _serviceProvider = serviceProvider;
         }
 
-        public async Task<WebSocketHandler> HandleAsync(WebSocket webSocket)
+        public async Task HandleAsync(WebSocket webSocket)
         {
             // Crear un nuevo WebSocketHandler y agregarlo a la lista
             WebSocketHandler handler = await AddWebsocketAsync(webSocket);
@@ -44,9 +44,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
             // Esperar a que el WebSocketHandler termine de manejar la conexión
             await handler.HandleAsync();
-
-            // Retornar el handler para que pueda ser utilizado en la llamada
-            return handler;
         }
 
         private async Task<WebSocketHandler> AddWebsocketAsync(WebSocket webSocket)

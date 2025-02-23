@@ -23,22 +23,12 @@ namespace JuegoOcaBack.Controllers
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                var handler = await _websocketNetwork.HandleAsync(webSocket);
-
-                handler.Disconnected += async (disconnectedHandler) =>
-                {
-                    await OnDisconnectedAsync(disconnectedHandler);
-                };
+                await _websocketNetwork.HandleAsync(webSocket);
             }
             else
             {
                 HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             }
-        }
-
-        private async Task OnDisconnectedAsync(WebSocketHandler disconnectedHandler)
-        {
-            await _websocketNetwork.RemoveHandlerAsync(disconnectedHandler);
         }
     }
 }
