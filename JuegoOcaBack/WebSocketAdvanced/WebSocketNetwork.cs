@@ -8,25 +8,17 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using JuegoOcaBack.Models.DTO;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace JuegoOcaBack.WebSocketAdvanced
 {
     public class WebSocketNetwork
     {
-        // Contador para asignar un ID único a cada WebSocketHandler
         private static int _idCounter = 0;
-
-        // Lista de WebSocketHandler (clase que gestiona cada WebSocket)
         private readonly List<WebSocketHandler> _handlers = new List<WebSocketHandler>();
-
-        // Lista de usuarios en espera para matchmaking aleatorio
         private readonly List<WebSocketHandler> _waitingUsers = new List<WebSocketHandler>();
-
-        // Diccionario para manejar salas de espera (key: roomId, value: lista de jugadores)
         private readonly Dictionary<string, List<WebSocketHandler>> _rooms = new Dictionary<string, List<WebSocketHandler>>();
-
-        // Semáforo para controlar el acceso a la lista de WebSocketHandler
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-
         private readonly IServiceProvider _serviceProvider;
 
         public WebSocketNetwork(IServiceProvider serviceProvider)
@@ -36,39 +28,32 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public async Task HandleAsync(WebSocket webSocket)
         {
-            // Crear un nuevo WebSocketHandler y agregarlo a la lista
             WebSocketHandler handler = await AddWebsocketAsync(webSocket);
-
-            // Notificar a los usuarios que un nuevo usuario se ha conectado
             await NotifyUserConnectedAsync(handler);
-
-            // Esperar a que el WebSocketHandler termine de manejar la conexión
             await handler.HandleAsync();
         }
 
         private async Task<WebSocketHandler> AddWebsocketAsync(WebSocket webSocket)
         {
-            // Esperar a que haya un hueco disponible
             await _semaphore.WaitAsync();
+            try
+            {
+                WebSocketHandler handler = new WebSocketHandler(_idCounter, webSocket);
+                handler.Disconnected += OnDisconnectedAsync;
+                handler.MessageReceived += OnMessageReceivedAsync;
+                _handlers.Add(handler);
 
-            // Crear un nuevo WebSocketHandler
-            WebSocketHandler handler = new WebSocketHandler(_idCounter, webSocket);
-            handler.Disconnected += OnDisconnectedAsync;
-            handler.MessageReceived += OnMessageReceivedAsync;
-            _handlers.Add(handler);
-
-            // Incrementar el contador para el siguiente
-            _idCounter++;
-
-            // Liberar el semáforo
-            _semaphore.Release();
-
-            return handler;
+                _idCounter++;
+                return handler;
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         private async Task NotifyUserConnectedAsync(WebSocketHandler WSHandler)
         {
-            // Notificar a los amigos que el usuario está conectado
             using (var scope = _serviceProvider.CreateScope())
             {
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
@@ -98,14 +83,19 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private async Task OnDisconnectedAsync(WebSocketHandler disconnectedHandler)
         {
-            // Eliminar el WebSocketHandler de la lista
             await _semaphore.WaitAsync();
-            disconnectedHandler.Disconnected -= OnDisconnectedAsync;
-            disconnectedHandler.MessageReceived -= OnMessageReceivedAsync;
-            _handlers.Remove(disconnectedHandler);
-            _semaphore.Release();
+            try
+            {
+                disconnectedHandler.Disconnected -= OnDisconnectedAsync;
+                disconnectedHandler.MessageReceived -= OnMessageReceivedAsync;
+                _handlers.Remove(disconnectedHandler);
+                _waitingUsers.Remove(disconnectedHandler);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
 
-            // Notificar a los amigos que el usuario se ha desconectado
             using (var scope = _serviceProvider.CreateScope())
             {
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
@@ -134,64 +124,79 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
                 if (messageObject.Type == "playRandom")
                 {
-                    // Buscar un oponente aleatorio
+                    Console.WriteLine($"Usuario {userHandler.Id} busca partida aleatoria.");
                     _waitingUsers.Add(userHandler);
 
                     if (_waitingUsers.Count >= 2)
                     {
-                        // Emparejar a los dos primeros usuarios en la lista
+                        Console.WriteLine($"Emparejando a {_waitingUsers[0].Id} y {_waitingUsers[1].Id}.");
                         var player1 = _waitingUsers[0];
                         var player2 = _waitingUsers[1];
 
-                        // Crear una sala de espera
-                        var roomId = Guid.NewGuid().ToString();
-                        _rooms[roomId] = new List<WebSocketHandler> { player1, player2 };
-
-                        // Notificar a ambos usuarios que la partida ha comenzado
-                        var gameResponse = new
+                        if (player1.IsOpen && player2.IsOpen)
                         {
-                            Type = "gameReady",
-                            GameId = roomId,
-                            Opponent = player2.Id // ID del oponente
-                        };
-                        await player1.SendAsync(JsonSerializer.Serialize(gameResponse));
+                            var roomId = Guid.NewGuid().ToString();
+                            _rooms[roomId] = new List<WebSocketHandler> { player1, player2 };
 
-                        var gameResponse2 = new
+                            Console.WriteLine($"Sala creada con ID: {roomId}. Jugadores: {player1.Id}, {player2.Id}");
+
+                            await player1.SendAsync(JsonSerializer.Serialize(new
+                            {
+                                Type = "gameReady",
+                                GameId = roomId,
+                                Opponent = player2.Id
+                            }));
+
+                            await player2.SendAsync(JsonSerializer.Serialize(new
+                            {
+                                Type = "gameReady",
+                                GameId = roomId,
+                                Opponent = player1.Id
+                            }));
+
+                            _waitingUsers.Remove(player1);
+                            _waitingUsers.Remove(player2);
+                        }
+                        else
                         {
-                            Type = "gameReady",
-                            GameId = roomId,
-                            Opponent = player1.Id // ID del oponente
-                        };
-                        await player2.SendAsync(JsonSerializer.Serialize(gameResponse2));
+                            if (!player1.IsOpen)
+                            {
+                                Console.WriteLine($"Jugador {player1.Id} no está conectado. Eliminando de la lista de espera.");
+                                _waitingUsers.Remove(player1);
+                            }
 
-                        // Eliminar a los usuarios de la lista de espera
-                        _waitingUsers.Remove(player1);
-                        _waitingUsers.Remove(player2);
+                            if (!player2.IsOpen)
+                            {
+                                Console.WriteLine($"Jugador {player2.Id} no está conectado. Eliminando de la lista de espera.");
+                                _waitingUsers.Remove(player2);
+                            }
+
+                            await userHandler.SendAsync(JsonSerializer.Serialize(new
+                            {
+                                Type = "waitingForOpponent"
+                            }));
+                        }
                     }
                     else
                     {
-                        // Notificar al usuario que está en espera
+                        Console.WriteLine($"Usuario {userHandler.Id} en espera de oponente.");
                         await userHandler.SendAsync(JsonSerializer.Serialize(new
                         {
-                            Type = "error",
-                            Message = "El amigo no está conectado. La invitación se enviará cuando se conecte."
+                            Type = "waitingForOpponent"
                         }));
                     }
                 }
                 else if (messageObject.Type == "playWithBot")
                 {
-                    // Iniciar partida con un bot
                     var roomId = Guid.NewGuid().ToString();
                     _rooms[roomId] = new List<WebSocketHandler> { userHandler };
 
-                    // Notificar al usuario que la partida ha comenzado
-                    var botResponse = new
+                    await userHandler.SendAsync(JsonSerializer.Serialize(new
                     {
                         Type = "gameReady",
                         GameId = roomId,
-                        Opponent = "Bot" // Indicar que el oponente es un bot
-                    };
-                    await userHandler.SendAsync(JsonSerializer.Serialize(botResponse));
+                        Opponent = "Bot"
+                    }));
                 }
                 else if (messageObject.Type == "inviteFriend")
                 {
@@ -201,42 +206,19 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
                     if (friendHandler != null && friendHandler.IsOpen)
                     {
-                        // Obtener el nombre del usuario que envía la invitación
-                        using (var scope = _serviceProvider.CreateScope())
+                        var roomId = Guid.NewGuid().ToString();
+                        _rooms[roomId] = new List<WebSocketHandler> { userHandler, friendHandler };
+
+                        await friendHandler.SendAsync(JsonSerializer.Serialize(new
                         {
-                            var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
-                            var usuario = await wsMethods.GetUserById(userHandler.Id);
-
-                            // Crear una sala de espera
-                            var roomId = Guid.NewGuid().ToString();
-                            _rooms[roomId] = new List<WebSocketHandler> { userHandler, friendHandler };
-
-                            // Notificar al amigo que ha sido invitado
-                            var inviteMessage = new
-                            {
-                                Type = "friendInvitation",
-                                FromUserId = userHandler.Id,
-                                FromUserNickname = usuario?.UsuarioApodo ?? "Usuario desconocido",
-                                RoomId = roomId
-                            };
-                            try
-                            {
-                                await friendHandler.SendAsync(JsonSerializer.Serialize(inviteMessage));
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error al enviar la invitación: {ex.Message}");
-                                await userHandler.SendAsync(JsonSerializer.Serialize(new
-                                {
-                                    Type = "error",
-                                    Message = "Error al enviar la invitación."
-                                }));
-                            }
-                        }
+                            Type = "friendInvitation",
+                            FromUserId = userHandler.Id,
+                            FromUserNickname = "Nombre del anfitrión",
+                            RoomId = roomId
+                        }));
                     }
                     else
                     {
-                        // Notificar al usuario que el amigo no está conectado
                         await userHandler.SendAsync(JsonSerializer.Serialize(new
                         {
                             Type = "error",
@@ -252,30 +234,18 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         var players = _rooms[roomId];
                         if (players.Count == 2 && players.All(p => p.IsOpen))
                         {
-                            // Notificar a ambos usuarios que la partida ha comenzado
-                            var gameResponse = new
+                            await players[1].SendAsync(JsonSerializer.Serialize(new
                             {
                                 Type = "gameReady",
                                 GameId = roomId,
-                                Opponent = players[0].Id // ID del oponente
-                            };
-                            await players[1].SendAsync(JsonSerializer.Serialize(gameResponse));
+                                Opponent = players[0].Id
+                            }));
 
-                            var gameResponse2 = new
+                            await players[0].SendAsync(JsonSerializer.Serialize(new
                             {
                                 Type = "gameReady",
                                 GameId = roomId,
-                                Opponent = players[1].Id // ID del oponente
-                            };
-                            await players[0].SendAsync(JsonSerializer.Serialize(gameResponse2));
-                        }
-                        else
-                        {
-                            // Notificar al usuario que el oponente se ha desconectado
-                            await userHandler.SendAsync(JsonSerializer.Serialize(new
-                            {
-                                Type = "error",
-                                Message = "El oponente se ha desconectado."
+                                Opponent = players[1].Id
                             }));
                         }
                     }

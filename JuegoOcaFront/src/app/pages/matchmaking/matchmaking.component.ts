@@ -38,7 +38,7 @@ export class MatchmakingComponent {
             this.router.navigate(['/game'], { state: { gameId: this.gameId } });
           }, 3000);
         } else if (message.Type === 'waitingForOpponent') {
-          // Esperando a un oponente
+          console.log(`Usuarios conectados: ${message.ConnectedUsers}`);
           this.estadoPartida = 'buscando';
         }
       });
