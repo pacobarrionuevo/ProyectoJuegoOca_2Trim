@@ -1,6 +1,8 @@
 ﻿namespace JuegoOcaBack.Models.DTO
 {
-    public class WaitListMessage
-    {
-    }
+    public record WaitlistMessage(
+    string type,
+    int playersInQueue,
+    int totalPlayers
+);
 }

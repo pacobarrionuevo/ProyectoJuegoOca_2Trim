@@ -1,71 +1,54 @@
-import { Component } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { ImageService } from '../../services/image.service';
+import { Component, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { WebsocketService } from '../../services/websocket.service';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-matchmaking',
-  standalone: true,
-  imports: [RouterLink, CommonModule],
-  templateUrl: './matchmaking.component.html',
-  styleUrl: './matchmaking.component.css'
+  template: `
+    <div class="status">
+      <p *ngIf="estado === 'buscando'">
+        Buscando oponente... Jugadores en cola: {{ jugadoresEnCola }}
+      </p>
+      <button (click)="cancelarBusqueda()" *ngIf="estado === 'buscando'">
+        Cancelar
+      </button>
+    </div>
+  `,
+  styleUrls: ['./matchmaking.component.css']
 })
-export class MatchmakingComponent {
-  tablero: string;
-  ROB: string;
-  NinosJugandoALaOca: string;
-  estadoPartida: string = 'inactivo';
-  oponente: any = null;
-  gameId: string | null = null;
+export class MatchmakingComponent implements OnDestroy {
+  estado: 'inactivo' | 'buscando' | 'enPartida' = 'inactivo';
+  jugadoresEnCola = 0;
 
   constructor(
-    private imageService: ImageService,
-    private webSocketService: WebsocketService,
+    private wsService: WebsocketService,
     private router: Router
   ) {
-    this.tablero = this.imageService.getImageUrl('TableroJuego.png');
-    this.ROB = this.imageService.getImageUrl('ROB.jpg');
-    this.NinosJugandoALaOca = this.imageService.getImageUrl('NiñosJugandoALaOca.jpg');
-  }
-
-  ngOnInit(): void {
-    this.webSocketService.messageReceived.subscribe((message: any) => {
-      if (message.Type === 'gameReady') {
-        this.estadoPartida = 'partidaLista';
-        this.oponente = { UsuarioApodo: message.Opponent };
-        this.gameId = message.GameId;
-
+    this.wsService.messageReceived.subscribe((msg: any) => {
+      if (msg.type === 'gameReady') {
+        this.estado = 'enPartida';
         setTimeout(() => {
-          this.router.navigate(['/game'], { state: { gameId: this.gameId } });
+          this.router.navigate(['/game'], { 
+            state: { gameId: msg.gameId, opponentId: msg.opponentId }
+          });
         }, 3000);
-      } else if (message.Type === 'waitingForOpponent') {
-        this.estadoPartida = 'buscando';
+      } else if (msg.type === 'waitingStatus') {
+        this.jugadoresEnCola = msg.playersInQueue;
       }
     });
   }
 
-  jugarConAmigos() {
-    this.estadoPartida = 'buscando';
-    const message = { type: 'inviteFriend' };
-    this.webSocketService.sendRxjs(JSON.stringify(message));
-  }
-
-  jugarConBot() {
-    this.estadoPartida = 'buscando';
-    const message = { type: 'playWithBot' };
-    this.webSocketService.sendRxjs(JSON.stringify(message));
-  }
-
-  jugarAleatorio() {
-    this.estadoPartida = 'buscando';
-    const message = { type: 'playRandom' };
-    this.webSocketService.sendRxjs(JSON.stringify(message));
+  buscarPartida() {
+    this.estado = 'buscando';
+    this.wsService.sendRxjs(JSON.stringify({ type: 'playRandom' }));
   }
 
   cancelarBusqueda() {
-    const message = { type: 'cancelSearch' };
-    this.webSocketService.sendRxjs(JSON.stringify(message));
-    this.estadoPartida = 'inactivo';
+    this.estado = 'inactivo';
+    this.wsService.sendRxjs(JSON.stringify({ type: 'cancelSearch' }));
+  }
+
+  ngOnDestroy() {
+    this.cancelarBusqueda();
   }
 }

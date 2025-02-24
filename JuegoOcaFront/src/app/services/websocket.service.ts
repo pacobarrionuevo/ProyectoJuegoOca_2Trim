@@ -51,7 +51,11 @@ export class WebsocketService {
   private handleMessage(message: string): void {
     try {
       const parsedMessage = JSON.parse(message);
-      this.messageReceived.next(parsedMessage);
+      
+      // Convertir propiedades a camelCase si es necesario
+      const normalizedMessage = this.normalizeKeys(parsedMessage);
+      
+      this.messageReceived.next(normalizedMessage);
     } catch (error) {
       console.error('Error al parsear el mensaje:', error);
     }
@@ -60,6 +64,15 @@ export class WebsocketService {
   private handleError(error: any): void {
     console.error('Error en WebSocket:', error);
     this.disconnected.next();
+  }
+  private normalizeKeys(obj: any): any {
+    if (typeof obj !== 'object' || obj === null) return obj;
+    
+    return Object.keys(obj).reduce((acc: any, key) => {
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      acc[camelKey] = this.normalizeKeys(obj[key]);
+      return acc;
+    }, {});
   }
 
   private reconnectIfNeeded(): void {

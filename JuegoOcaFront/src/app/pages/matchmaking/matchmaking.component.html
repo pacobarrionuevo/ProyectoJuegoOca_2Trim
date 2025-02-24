@@ -1,33 +1,37 @@
-<div class="matchmaking">
-    <h2>Sala de Espera</h2>
-
-    <!-- Botones de opciones -->
-    <div class="botones">
-        <button class="boton-juego" (click)="jugarConAmigos()">
-            <img [src]="NinosJugandoALaOca" alt="Tablero del Juego de la Oca">
-            <span>Jugar con amigos</span>
-        </button>
-        <button class="boton-juego" (click)="jugarConBot()">
-            <img [src]="ROB" alt="Tablero del Juego de la Oca">
-            <span>Jugar con Bot</span>
-        </button>
-        <button class="boton-juego" (click)="jugarAleatorio()">
-            <img [src]="tablero" alt="Tablero del Juego de la Oca">
-            <span>Jugar aleatorio</span>
-        </button>
-        <button [routerLink]="'/menu'" class="boton-volver">Volver al menú</button>
-    </div>
-
-    <!-- Estado de la sala de espera -->
-    <div *ngIf="estadoPartida !== 'inactivo'" class="estado-partida">
-        <div *ngIf="estadoPartida === 'buscando'">
-            <p>Buscando oponente...</p>
-            <button (click)="cancelarBusqueda()">Cancelar búsqueda</button>
+<div class="matchmaking-container">
+    <h2>Modos de Juego</h2>
+    
+    <div class="botones-juego">
+      <button class="juego-option" (click)="buscarPartida('random')" [disabled]="estado !== 'inactivo'">
+        <img [src]="tablero" alt="Juego Aleatorio">
+        <span>Partida Rápida</span>
+        <div *ngIf="estado === 'buscando'" class="loading-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
         </div>
-
-        <div *ngIf="estadoPartida === 'partidaLista'">
-            <p>Partida lista contra {{ oponente?.UsuarioApodo || 'un oponente' }}.</p>
-            <p>Redirigiendo al juego...</p>
-        </div>
+      </button>
+  
+      <button class="juego-option" (click)="buscarPartida('bot')" [disabled]="estado !== 'inactivo'">
+        <img [src]="ROB" alt="Juego contra Bot">
+        <span>Vs Bot</span>
+      </button>
+  
+      <button class="juego-option" (click)="buscarPartida('amigos')" [disabled]="estado !== 'inactivo'">
+        <img [src]="NinosJugandoALaOca" alt="Juego con Amigos">
+        <span>Invitar Amigos</span>
+      </button>
     </div>
-</div>
+  
+    <div class="estado-partida">
+      <div *ngIf="estado === 'buscando'" class="buscando-oponente">
+        <p>Buscando oponente... Jugadores en cola: {{ jugadoresEnCola }}</p>
+        <button (click)="cancelarBusqueda()">Cancelar</button>
+      </div>
+  
+      <div *ngIf="estado === 'enPartida'" class="partida-lista">
+        <p>¡Partida encontrada contra el jugador {{ oponenteId }}!</p>
+        <p>Redirigiendo al tablero...</p>
+      </div>
+    </div>
+  </div>

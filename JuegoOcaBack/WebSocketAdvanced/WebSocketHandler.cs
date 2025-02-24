@@ -8,6 +8,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private const int BufferSize = 4096;
         private readonly WebSocket _webSocket;
         private readonly byte[] _buffer;
+        public MatchmakingMessage LastMessage { get; private set; } 
 
         public int Id { get; init; }
         public bool IsOpen => _webSocket.State == WebSocketState.Open;
