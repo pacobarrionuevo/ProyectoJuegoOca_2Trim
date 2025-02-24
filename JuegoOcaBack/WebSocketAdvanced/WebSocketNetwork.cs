@@ -1,12 +1,12 @@
-﻿using JuegoOcaBack.Models.Database.Entidades;
-using JuegoOcaBack.Models.Database;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using JuegoOcaBack.Models.Database.Entidades;
+using JuegoOcaBack.Models.Database;
 using JuegoOcaBack.Models.DTO;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,8 +16,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
     {
         private static int _idCounter = 0;
         private readonly List<WebSocketHandler> _handlers = new List<WebSocketHandler>();
-        private readonly List<WebSocketHandler> _waitingUsers = new List<WebSocketHandler>();
-        private readonly Dictionary<string, List<WebSocketHandler>> _rooms = new Dictionary<string, List<WebSocketHandler>>();
+        private readonly List<WebSocketHandler> _waitingPlayers = new List<WebSocketHandler>();
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private readonly IServiceProvider _serviceProvider;
 
@@ -42,7 +41,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 handler.Disconnected += OnDisconnectedAsync;
                 handler.MessageReceived += OnMessageReceivedAsync;
                 _handlers.Add(handler);
-
                 _idCounter++;
                 return handler;
             }
@@ -52,20 +50,20 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
-        private async Task NotifyUserConnectedAsync(WebSocketHandler WSHandler)
+        private async Task NotifyUserConnectedAsync(WebSocketHandler newHandler)
         {
             using (var scope = _serviceProvider.CreateScope())
             {
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
                 var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
-                Usuario usuario = await wsMethods.GetUserById(WSHandler.Id);
+                Usuario usuario = await wsMethods.GetUserById(newHandler.Id);
                 if (usuario != null)
                 {
                     usuario.UsuarioEstado = "Conectado";
                     await wsMethods.UpdateUserAsync(usuario);
                 }
 
-                var amigos = await unitOfWork._friendRequestRepository.GetFriendsList(WSHandler.Id);
+                var amigos = await unitOfWork._friendRequestRepository.GetFriendsList(newHandler.Id);
 
                 foreach (WebSocketHandler handler in _handlers)
                 {
@@ -74,7 +72,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         await handler.SendAsync(JsonSerializer.Serialize(new
                         {
                             Type = "friendConnected",
-                            FriendId = WSHandler.Id
+                            FriendId = newHandler.Id
                         }));
                     }
                 }
@@ -89,7 +87,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 disconnectedHandler.Disconnected -= OnDisconnectedAsync;
                 disconnectedHandler.MessageReceived -= OnMessageReceivedAsync;
                 _handlers.Remove(disconnectedHandler);
-                _waitingUsers.Remove(disconnectedHandler);
+                _waitingPlayers.Remove(disconnectedHandler);
             }
             finally
             {
@@ -125,19 +123,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 if (messageObject.Type == "playRandom")
                 {
                     Console.WriteLine($"Usuario {userHandler.Id} busca partida aleatoria.");
-                    _waitingUsers.Add(userHandler);
+                    _waitingPlayers.Add(userHandler);
 
-                    if (_waitingUsers.Count >= 2)
+                    if (_waitingPlayers.Count >= 2)
                     {
-                        Console.WriteLine($"Emparejando a {_waitingUsers[0].Id} y {_waitingUsers[1].Id}.");
-                        var player1 = _waitingUsers[0];
-                        var player2 = _waitingUsers[1];
+                        var player1 = _waitingPlayers[0];
+                        var player2 = _waitingPlayers[1];
 
                         if (player1.IsOpen && player2.IsOpen)
                         {
                             var roomId = Guid.NewGuid().ToString();
-                            _rooms[roomId] = new List<WebSocketHandler> { player1, player2 };
-
                             Console.WriteLine($"Sala creada con ID: {roomId}. Jugadores: {player1.Id}, {player2.Id}");
 
                             await player1.SendAsync(JsonSerializer.Serialize(new
@@ -154,27 +149,22 @@ namespace JuegoOcaBack.WebSocketAdvanced
                                 Opponent = player1.Id
                             }));
 
-                            _waitingUsers.Remove(player1);
-                            _waitingUsers.Remove(player2);
+                            _waitingPlayers.Remove(player1);
+                            _waitingPlayers.Remove(player2);
                         }
                         else
                         {
                             if (!player1.IsOpen)
                             {
-                                Console.WriteLine($"Jugador {player1.Id} no está conectado. Eliminando de la lista de espera.");
-                                _waitingUsers.Remove(player1);
+                                _waitingPlayers.Remove(player1);
+                                Console.WriteLine($"Jugador {player1.Id} no está conectado. Eliminado de la lista de espera.");
                             }
 
                             if (!player2.IsOpen)
                             {
-                                Console.WriteLine($"Jugador {player2.Id} no está conectado. Eliminando de la lista de espera.");
-                                _waitingUsers.Remove(player2);
+                                _waitingPlayers.Remove(player2);
+                                Console.WriteLine($"Jugador {player2.Id} no está conectado. Eliminado de la lista de espera.");
                             }
-
-                            await userHandler.SendAsync(JsonSerializer.Serialize(new
-                            {
-                                Type = "waitingForOpponent"
-                            }));
                         }
                     }
                     else
@@ -182,72 +172,9 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         Console.WriteLine($"Usuario {userHandler.Id} en espera de oponente.");
                         await userHandler.SendAsync(JsonSerializer.Serialize(new
                         {
-                            Type = "waitingForOpponent"
+                            Type = "waitingForOpponent",
+                            ConnectedUsers = _handlers.Count
                         }));
-                    }
-                }
-                else if (messageObject.Type == "playWithBot")
-                {
-                    var roomId = Guid.NewGuid().ToString();
-                    _rooms[roomId] = new List<WebSocketHandler> { userHandler };
-
-                    await userHandler.SendAsync(JsonSerializer.Serialize(new
-                    {
-                        Type = "gameReady",
-                        GameId = roomId,
-                        Opponent = "Bot"
-                    }));
-                }
-                else if (messageObject.Type == "inviteFriend")
-                {
-                    Console.WriteLine($"Invitación enviada a: {messageObject.FriendId}");
-                    int friendId = messageObject.FriendId;
-                    var friendHandler = _handlers.FirstOrDefault(h => h.Id == friendId);
-
-                    if (friendHandler != null && friendHandler.IsOpen)
-                    {
-                        var roomId = Guid.NewGuid().ToString();
-                        _rooms[roomId] = new List<WebSocketHandler> { userHandler, friendHandler };
-
-                        await friendHandler.SendAsync(JsonSerializer.Serialize(new
-                        {
-                            Type = "friendInvitation",
-                            FromUserId = userHandler.Id,
-                            FromUserNickname = "Nombre del anfitrión",
-                            RoomId = roomId
-                        }));
-                    }
-                    else
-                    {
-                        await userHandler.SendAsync(JsonSerializer.Serialize(new
-                        {
-                            Type = "error",
-                            Message = "El amigo no está conectado."
-                        }));
-                    }
-                }
-                else if (messageObject.Type == "acceptInvitation")
-                {
-                    string roomId = messageObject.RoomId;
-                    if (_rooms.ContainsKey(roomId))
-                    {
-                        var players = _rooms[roomId];
-                        if (players.Count == 2 && players.All(p => p.IsOpen))
-                        {
-                            await players[1].SendAsync(JsonSerializer.Serialize(new
-                            {
-                                Type = "gameReady",
-                                GameId = roomId,
-                                Opponent = players[0].Id
-                            }));
-
-                            await players[0].SendAsync(JsonSerializer.Serialize(new
-                            {
-                                Type = "gameReady",
-                                GameId = roomId,
-                                Opponent = players[1].Id
-                            }));
-                        }
                     }
                 }
             }

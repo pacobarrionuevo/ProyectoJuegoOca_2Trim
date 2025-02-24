@@ -14,77 +14,58 @@ import { CommonModule } from '@angular/common';
 export class MatchmakingComponent {
   tablero: string;
   ROB: string;
-  NinosJugandoALaOca : string;
-  estadoPartida: string = 'buscando';
-  amigoInvitado: any = null; // Información del amigo invitado
+  NinosJugandoALaOca: string;
+  estadoPartida: string = 'inactivo';
   oponente: any = null;
   gameId: string | null = null;
-  constructor(private imageService: ImageService, private webSocketService: WebsocketService, private router : Router) {
-      this.tablero = this.imageService.getImageUrl('TableroJuego.png');
-      this.ROB = this.imageService.getImageUrl('ROB.jpg')
-      this.NinosJugandoALaOca = this.imageService.getImageUrl('NiñosJugandoALaOca.jpg')
-    }
-    ngOnInit(): void {
-      // Escuchar mensajes del WebSocket
-      this.webSocketService.messageReceived.subscribe((message: any) => {
-        if (message.Type === 'gameReady') {
-          // La partida está lista
-          this.estadoPartida = 'partidaLista';
-          this.oponente = { UsuarioApodo: message.Opponent }; // Obtener el apodo del oponente
-          this.gameId = message.GameId; // Guardar el ID de la partida
-  
-          // Redirigir al usuario a game.component después de 3 segundos
-          setTimeout(() => {
-            this.router.navigate(['/game'], { state: { gameId: this.gameId } });
-          }, 3000);
-        } else if (message.Type === 'waitingForOpponent') {
-          console.log(`Usuarios conectados: ${message.ConnectedUsers}`);
-          this.estadoPartida = 'buscando';
-        }
-      });
-    }
-  
-    /**
-     * Jugar con amigos.
-     */
-    jugarConAmigos() {
-      this.estadoPartida = 'buscando';
-      const message = {
-        type: 'inviteFriend'
-      };
-      this.webSocketService.sendRxjs(JSON.stringify(message));
-    }
-  
-    /**
-     * Jugar con un bot.
-     */
-    jugarConBot() {
-      this.estadoPartida = 'buscando';
-      const message = {
-        type: 'playWithBot'
-      };
-      this.webSocketService.sendRxjs(JSON.stringify(message));
-    }
-  
-    /**
-     * Buscar un oponente aleatorio.
-     */
-    jugarAleatorio() {
-      this.estadoPartida = 'buscando';
-      const message = {
-        type: 'playRandom'
-      };
-      this.webSocketService.sendRxjs(JSON.stringify(message));
-    }
-  
-    /**
-     * Cancelar la búsqueda de oponente.
-     */
-    cancelarBusqueda() {
-      const message = {
-        type: 'cancelSearch'
-      };
-      this.webSocketService.sendRxjs(JSON.stringify(message));
-      this.estadoPartida = 'inactivo';
-    }
+
+  constructor(
+    private imageService: ImageService,
+    private webSocketService: WebsocketService,
+    private router: Router
+  ) {
+    this.tablero = this.imageService.getImageUrl('TableroJuego.png');
+    this.ROB = this.imageService.getImageUrl('ROB.jpg');
+    this.NinosJugandoALaOca = this.imageService.getImageUrl('NiñosJugandoALaOca.jpg');
   }
+
+  ngOnInit(): void {
+    this.webSocketService.messageReceived.subscribe((message: any) => {
+      if (message.Type === 'gameReady') {
+        this.estadoPartida = 'partidaLista';
+        this.oponente = { UsuarioApodo: message.Opponent };
+        this.gameId = message.GameId;
+
+        setTimeout(() => {
+          this.router.navigate(['/game'], { state: { gameId: this.gameId } });
+        }, 3000);
+      } else if (message.Type === 'waitingForOpponent') {
+        this.estadoPartida = 'buscando';
+      }
+    });
+  }
+
+  jugarConAmigos() {
+    this.estadoPartida = 'buscando';
+    const message = { type: 'inviteFriend' };
+    this.webSocketService.sendRxjs(JSON.stringify(message));
+  }
+
+  jugarConBot() {
+    this.estadoPartida = 'buscando';
+    const message = { type: 'playWithBot' };
+    this.webSocketService.sendRxjs(JSON.stringify(message));
+  }
+
+  jugarAleatorio() {
+    this.estadoPartida = 'buscando';
+    const message = { type: 'playRandom' };
+    this.webSocketService.sendRxjs(JSON.stringify(message));
+  }
+
+  cancelarBusqueda() {
+    const message = { type: 'cancelSearch' };
+    this.webSocketService.sendRxjs(JSON.stringify(message));
+    this.estadoPartida = 'inactivo';
+  }
+}

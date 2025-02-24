@@ -13,8 +13,9 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
-            
-            if (context.WebSockets.IsWebSocketRequest) {
+
+            if (context.WebSockets.IsWebSocketRequest)
+            {
 
                 //coger token de la url y meterlo en la cabecera
 
@@ -26,10 +27,10 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
                 using WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 await _webSocketNetwork.HandleAsync(webSocket);
-                
+
                 return;
-            }         
-            
+            }
+
             else
             {
                 await next(context);
