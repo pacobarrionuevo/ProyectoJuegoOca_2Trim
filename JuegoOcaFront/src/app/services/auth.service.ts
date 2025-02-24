@@ -4,7 +4,6 @@ import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { AuthRequest } from '../models/auth-request';
 import { AuthResponse } from '../models/auth-response';
 import { environment } from '../../environments/environment';
-import { WebsocketService } from './websocket.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +12,7 @@ export class AuthService {
   private URL = `${environment.apiUrl}`; 
   private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
 
-  constructor(private http: HttpClient, private websocketService: WebsocketService,) {}
+  constructor(private http: HttpClient) {}
 
   private hasToken(): boolean {
     return !!localStorage.getItem('accessToken') || !!sessionStorage.getItem('accessToken');
