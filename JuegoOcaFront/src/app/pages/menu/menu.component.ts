@@ -52,47 +52,64 @@ throw new Error('Method not implemented.');
   }
 
   ngOnInit(): void {
+    console.log('MenuComponent: ngOnInit() llamado');
+
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      console.log('Token:', token);
+      this.cargarInfoUsuario();
+      this.webSocketService.connectRxjs(token); // Conectar el WebSocket si hay token
+    } else {
+      console.error('No hay token disponible. Redirigiendo al login...');
+      this.router.navigate(['/login']); // Redirigir al login si no hay token
+    }
+    
     this.obtenerUsuarios();
-    this.cargarInfoUsuario(); 
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
 
+    // no se está llamando porque no se están recibiendo estos mensajes desde el websocket.service.ts
+    this.webSocketService.messageReceived.subscribe((message: any) => {
+      console.log("Mensaje recibido de WebSocket:", message);
+      if (message.FriendId) {
+        console.log(`MenuComponent: Actualizando estado del amigo ${message.FriendId} a ${message.Estado}`);
+        this.actualizarEstadoAmigo(message.FriendId, message.Estado);
+      }
+    });
+
+    // Suscribirse a los eventos de conexión/desconexión
     this.webSocketService.connected.subscribe(() => {
-        console.log('🎉 Evento recibido: WebSocket conectado en el menú.');
-        this.cargarAmigos();
+      console.log('WebSocket conectado');
     });
 
     this.webSocketService.disconnected.subscribe(() => {
-        console.log('😢 Evento recibido: WebSocket desconectado en el menú.');
-        this.marcarTodosDesconectados();
+      console.log('WebSocket desconectado');
     });
+  }
 
-    this.webSocketService.messageReceived.subscribe((message: any) => {
-        console.log("📩 WebSocket - Mensaje recibido:", message);
-        if (message.Type === 'friendConnected' || message.Type === 'friendDisconnected') {
-            console.log(`🔄 Amigo ${message.FriendId} ha cambiado de estado a ${message.Type}`);
-            this.actualizarEstadoAmigo(message.FriendId, message.Type === 'friendConnected' ? 'Conectado' : 'Desconectado');
-        }
-    });
-}
-
-
+  // No se está haciendo, pero se tiene que actualizar individualmente la lógica de cada amigo de la lista,
+  // porque no es dependiente de los demás
   actualizarEstadoAmigo(friendId: number, estado: string) {
+    console.log(`MenuComponent: actualizarEstadoAmigo() llamado con friendId=${friendId}, estado=${estado}`);
     const amigo = this.amigos.find(a => a.UsuarioId === friendId);
     if (amigo) {
-        console.log(`🟢 Actualizando estado de amigo ${friendId} a ${estado}`);
-        amigo.UsuarioEstado = estado;
+      console.log(`MenuComponent: Amigo encontrado, actualizando estado a de ${amigo.UsuarioEstado} a ${estado}`);
+      amigo.UsuarioEstado = estado;
     } else {
-        console.warn(`⚠️ No se encontró el amigo con ID ${friendId}`);
+      console.warn(`MenuComponent: No se encontró el amigo con ID ${friendId}`);
     }
   }
 
-
+  // ==================================================
+  // =============== MÉTODO DE SALGUERO ===============
+  // ==================================================
   invitarAPartida(friendId: number) {
     if (!friendId) {
       console.error('ID de amigo no válido.');
       return;
     }
+
+    // Salguero comenta esto bien cabron
 
     // Verificar si el WebSocket está conectado
     if (!this.webSocketService.isConnectedRxjs()) {
@@ -116,12 +133,12 @@ throw new Error('Method not implemented.');
     console.log(`Invitación enviada al amigo con ID: ${friendId}`);
   }
 
-  buscarAmigos(): void {
-    this.amigosFiltrados = this.busquedaAmigos.trim()
-      ? this.amigos.filter(amigo => amigo.UsuarioApodo?.toLowerCase().includes(this.busquedaAmigos.toLowerCase()))
-      : [...this.amigos];
-  }
+  // ==================================================
+  // =================== NO TOCAR =====================
+  // ==================================================
 
+
+  // Obtiene los usuarios registrados en la BBDD --> hacer que no se muestre al que tenga la sesión iniciada
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
       this.usuarios = usuarios.map(usuario => ({
@@ -133,10 +150,12 @@ throw new Error('Method not implemented.');
     });
   }
   
+  // La foto por defecto no se hace : )
   validarUrlImagen(fotoPerfil: string | null): string {
     return fotoPerfil ? `${environment.apiUrl}/fotos/${fotoPerfil}` : this.perfil_default;
   }
 
+  // Los amigos se buscan sin problema
   buscarUsuarios(): void {
     this.usuariosFiltrados = this.terminoBusqueda.trim() 
       ? this.usuarios.filter(usuario => 
@@ -145,24 +164,31 @@ throw new Error('Method not implemented.');
       : [...this.usuarios];
   }
 
+  // La sesión se cierra bien
+  // Hacer que se cierren los websockets también
   logout() {
-    this.webSocketService.closeConnection();  // Cierra WebSocket
-    console.log("WEBSOCKET CERRADO AL CERRAR SESIÓN")
     this.authService.logout();
+    this.webSocketService.clearToken();
+    this.webSocketService.disconnectRxjs();
+    sessionStorage.removeItem('auth_token');
     this.router.navigate(['/login']); 
-}
+  }
 
+  // La info se carga bien sin problema a no ser que tengas una foto por defecto
   cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
-      this.usuarioApodo = userInfo.name; 
-      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture); 
-      this.usuarioId = userInfo.id; 
+      this.usuarioApodo = userInfo.name;
+      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture);
+      this.usuarioId = userInfo.id;
     } else {
-      console.error('No se pudo obtener la información del usuario.');
+      console.error('No se pudo obtener la información del usuario. ¿El token está disponible?');
+      this.router.navigate(['/login']); // Redirigir al login si no hay token
     }
   }
 
+  // La solicitud se manda bien y sin problemas
+  // --> Hacer mediante websockets D:
   enviarSolicitud(receiverId: number): void {
     this.friendService.sendFriendRequest(receiverId).subscribe({
       next: (result) => {
@@ -176,7 +202,7 @@ throw new Error('Method not implemented.');
     });
   }
   
-  
+  // Las carga correctamente --> ¿Websockets?
   obtenerSolicitudesPendientes() {
     this.friendService.getPendingRequests().subscribe({
       next: (solicitudes: any[]) => {
@@ -199,12 +225,13 @@ throw new Error('Method not implemented.');
     });
   }
   
-
+  // Necesario para obtener bien las solicitudes
   getUsuarioApodoById(userId: number): string {
     const usuario = this.usuarios.find(u => u.UsuarioId === userId);
     return usuario ? usuario.UsuarioApodo : 'te ha equivocao compi 😂';
   }
   
+  // Se acepta todo guay
   aceptarSolicitud(solicitud: any) {
     console.log('Solicitud recibida:', solicitud); 
   
@@ -227,6 +254,7 @@ throw new Error('Method not implemented.');
     });
   }
   
+  // Se rechaza todo guay
   rechazarSolicitud(solicitud: any) {
     console.log('Solicitud recibida para rechazar:', solicitud);
   
@@ -249,43 +277,35 @@ throw new Error('Method not implemented.');
     });
   }
   
+  // Cargan bien
   cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
-      console.log("Lista de amigos recibida:", amigos);
       this.amigos = amigos.map(amigo => ({
         UsuarioId: amigo.UsuarioId || amigo.usuarioId,
         UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
         UsuarioEstado: amigo.UsuarioEstado || amigo.usuarioEstado
       }));
-      console.log("Amigos después de mapear:", this.amigos);
       this.amigosFiltrados = [...this.amigos];
-    });    
+    });
   }
   
-  // Comentar
+  /// No entiendo para qué sirve esto
   actualizarEstadoDeAmigos() {
     this.friendService.getFriendsList().subscribe(amigos => {
       this.amigos = amigos.map(amigo => ({
         UsuarioId: amigo.UsuarioId || amigo.usuarioId,
         UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
-        UsuarioEstado: this.obtenerEstadoAmigo(amigo.UsuarioId || amigo.usuarioId) // Obtener estado real
+        UsuarioEstado: this.obtenerEstadoAmigo(amigo.UsuarioId || amigo.usuarioId)
       }));
   
       this.amigosFiltrados = [...this.amigos];
     });
   }
 
+  // Bueno, esto se puede quedar
   private obtenerEstadoAmigo(usuarioId: string): string {
     return this.usuariosConectados.has(usuarioId) ? 'Conectado' : 'Desconectado';
-  }
-
-  marcarTodosDesconectados() {
-    console.log('🔴 Marcando todos los amigos como desconectados.');
-    console.log('📋 Usuarios conectados antes:', this.usuariosConectados);
-    this.usuariosConectados.clear();
-    this.amigos.forEach(amigo => amigo.UsuarioEstado = 'Desconectado');
-    console.log('📋 Usuarios conectados después:', this.usuariosConectados);
-  }
+  }  
 }

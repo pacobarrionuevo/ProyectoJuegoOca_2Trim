@@ -1,120 +1,152 @@
 import { Injectable } from '@angular/core';
-import { Subject, BehaviorSubject  } from 'rxjs';
+import { Subject } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WebsocketService {
-  private socket: WebSocket | null = null;
-  private socket$: WebSocketSubject<string> | null = null;
-  private isManuallyDisconnected = false;
-  public isConnectedSubject = new BehaviorSubject<boolean>(false); 
-
   connected = new Subject<void>();
   messageReceived = new Subject<any>();
   disconnected = new Subject<void>();
+  rxjsSocket: WebSocketSubject<string>;
 
   private tokenKey = 'websocket_token';
 
-  constructor() {  }
+  constructor() {
+    this.reconnectIfNeeded();
+  }
 
   private onConnected() {
-    console.log('✅ Evento: WebSocket conectado');
-    this.isConnectedSubject.next(true);
+    console.log('WebSocketService: Socket connected');
     this.connected.next();
-}
+  }
 
+  isConnectedRxjs() {
+    const isConnected = this.rxjsSocket && !this.rxjsSocket.closed;
+    console.log(`WebSocketService: isConnectedRxjs() -> ${isConnected}`);
+    return isConnected;
+  }
 
   private onMessageReceived(message: string) {
     try {
+      console.log('WebSocketService: Mensaje recibido:', message);
       const parsedMessage = JSON.parse(message);
-      this.messageReceived.next(parsedMessage);
+      if (parsedMessage.Type === 'friendInvitation') {
+          const accept = confirm(`${parsedMessage.FromUserNickname} te ha invitado a jugar. ¿Aceptas?`);
+          if (accept) {
+              const response = {
+                  type: 'acceptInvitation',
+                  hostId: parsedMessage.FromUserId
+              };
+              this.sendRxjs(JSON.stringify(response));
+          }
+        
+      } else if (parsedMessage.Type === 'gameStarted') {
+        this.messageReceived.next({
+          type: 'gameStarted',
+          gameId: parsedMessage.GameId,
+          opponent: parsedMessage.Opponent
+        });
+      } else if (parsedMessage.Type === 'waitingForOpponent') {
+        this.messageReceived.next({
+          type: 'waitingForOpponent'
+        });
+      } else if (parsedMessage.Type === 'friendConnected' || parsedMessage.Type === 'friendDisconnected') {
+        console.log(`WebSocketService: Evento de amigo ${parsedMessage.Type} recibido para el ID: ${parsedMessage.FriendId}`);
+        this.messageReceived.next(parsedMessage);
+      } else {
+        console.log('WebSocketService: Mensaje recibido no manejado:', parsedMessage);
+      }
     } catch (error) {
-      console.error('Error al parsear mensaje:', error);
+      console.error('Error al parsear el mensaje:', error);
     }
   }
 
   private onError(error: any) {
-    console.error('Error en WebSocket:', error);
+    console.error('WebSocketService: Error en la conexión WebSocket:', error);
+    // Intentar reconectar después de un error solo si hay un token almacenado
+    /*
+    const storedToken = sessionStorage.getItem(this.tokenKey);
+    if (storedToken) {
+      console.log('WebSocketService: Intentando reconectar en 3 segundos...');
+      setTimeout(() => this.reconnectIfNeeded(), 3000); // Reintentar después de 3 segundos
+    }
+    */
   }
 
-  private onDisconnected() {
-    console.log('🔴 Evento: WebSocket desconectado');
-    this.isConnectedSubject.next(false);
-    this.disconnected.next();
-
-    if (!this.isManuallyDisconnected) {
-        console.log('🔁 Intentando reconectar en 3 segundos...');
-    }
-}
-
-
   connectRxjs(token: string) {
-    if (this.socket$ && !this.socket$.closed) {
-        console.log('❌ Ya hay una conexión WebSocket activa.');
-        return; // Evita conexiones múltiples
+    console.log('WebSocketService: Conectando WebSocket con token:', token);
+  
+    // Verificar que el token sea una cadena válida
+    if (typeof token !== 'string') {
+      console.error('WebSocketService: El token no es una cadena válida:', token);
+      return;
     }
-
-    console.log('🔌 Conectando a WebSocket con token:', token);
-
-    this.isManuallyDisconnected = false; 
-    this.socket$ = webSocket({
-        url: `wss://localhost:7077/ws/connect?token=${token}`,
-        openObserver: { next: () => {
-            console.log('✅ WebSocket conectado.');
-            this.onConnected();
-        }},
-        serializer: (value: string) => value,
-        deserializer: (event: MessageEvent) => event.data
+  
+    // Almacenar el token para reconexiones futuras
+    sessionStorage.setItem(this.tokenKey, token);
+  
+    // Cerrar la conexión existente si hay una
+    if (this.rxjsSocket && !this.rxjsSocket.closed) {
+      console.log('WebSocketService: Cerrando conexión WebSocket existente...');
+      this.disconnectRxjs(); // Cerrar la conexión anterior
+    }
+  
+    // Crear una nueva conexión WebSocket
+    this.rxjsSocket = webSocket({
+      url: `wss://localhost:7077/ws/connect?token=${token}`,
+      openObserver: { next: () => this.onConnected() },
+      serializer: (value: string) => value,
+      deserializer: (event: MessageEvent) => event.data
     });
-
-    this.socket$.subscribe({
-        next: (message: string) => {
-            console.log('📩 Mensaje recibido:', message);
-            this.onMessageReceived(message);
-        },
-        error: (error) => {
-            console.error('❗ Error en WebSocket:', error);
-            this.onError(error);
-        },
-        complete: () => {
-            console.log('🔴 WebSocket desconectado.');
-            this.onDisconnected();
-        }
+  
+    // Suscribirse a los mensajes del WebSocket
+    this.rxjsSocket.subscribe({
+      next: (message: string) => this.onMessageReceived(message),
+      error: (error) => this.onError(error),
+      complete: () => this.onDisconnected()
     });
-
-    window.addEventListener('beforeunload', () => {
-        console.log('🚪 Cerrando WebSocket antes de salir de la página.');
-        this.disconnectRxjs();
-    });
-}
-
-
-  isConnectedRxjs(): boolean {
-    return this.isConnectedSubject.value;
   }
 
   sendRxjs(message: string) {
-    if (this.socket$ && !this.socket$.closed) {
-      this.socket$.next(message);
+    if (this.rxjsSocket && !this.rxjsSocket.closed) {
+      console.log('WebSocketService: Enviando mensaje:', message);
+      this.rxjsSocket.next(message);
+    } else {
+      console.error('WebSocketService: No se puede enviar el mensaje, WebSocket no está conectado');
     }
   }
 
-  disconnectRxjs(): void {
-    if (this.socket$ && !this.socket$.closed) {
-      this.isManuallyDisconnected = true;
-      this.socket$.complete(); // Cerrar WebSocket correctamente
-      this.isConnectedSubject.next(false);
+  disconnectRxjs() {
+    if (this.rxjsSocket) {
+      console.log('WebSocketService: Desconectando WebSocket...');
+      this.onDisconnected(); // Llamar el evento de desconexión
+      this.rxjsSocket.complete(); // Finalizar la conexión      
+
+      this.rxjsSocket.unsubscribe(); // Cerrar la suscripción
     }
   }
 
+  private onDisconnected() {
+    console.log('WebSocketService: Desconectado del WebSocket');
+    this.disconnected.next(true);
+  }
 
-  closeConnection() {
-    if (this.socket) {
-      console.log("🚪 Cerrando WebSocket...");
-      this.socket.close();
-      this.socket = null;
+  private reconnectIfNeeded() {
+    const storedToken = sessionStorage.getItem(this.tokenKey);
+    if (storedToken) {
+      console.log('WebSocketService: Reconectando WebSocket con token almacenado');
+      this.connectRxjs(storedToken); // Intentar reconectar
+    } else {
+      console.log('WebSocketService: No hay token almacenado, no se puede reconectar');
     }
+  }
+
+  // Método para eliminar el token almacenado (por ejemplo, al cerrar sesión)
+  clearToken() {
+    sessionStorage.removeItem(this.tokenKey);
+    console.log('WebSocketService: Token eliminado');
   }
 }

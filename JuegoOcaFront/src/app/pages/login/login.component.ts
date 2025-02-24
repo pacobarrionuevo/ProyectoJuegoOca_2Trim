@@ -47,6 +47,15 @@ export class LoginComponent {
       // Obtener el token después del login
       this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
 
+      // Conectar el WebSocket con el token
+      /*
+      if (this.jwt) {
+        this.webSocketService.connectRxjs(this.jwt); // Conectar el WebSocket
+      } else {
+        console.error('No se pudo obtener el token después del login.');
+      }
+      */
+
       if (this.recuerdame) {
         localStorage.setItem('authData', JSON.stringify({
           emailoapodo: this.emailoapodo,
@@ -57,6 +66,7 @@ export class LoginComponent {
         localStorage.removeItem('authData');
       }
 
+      
       this.router.navigate(['/menu']);
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
