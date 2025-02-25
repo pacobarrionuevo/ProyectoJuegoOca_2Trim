@@ -65,11 +65,41 @@ namespace JuegoOcaBack.WebSocketAdvanced
             // Esta parte del código se encarga de 
             Interlocked.Increment(ref _activeConnections);
             OnActiveConnectionsChanged?.Invoke(_activeConnections);
-
             var handler = await CreateHandlerAsync(webSocket);
-            await UpdateUserStatusAsync(handler, "Conectado");
-            await NotifyFriendsAsync(handler, true);
-            await handler.HandleAsync();
+            try
+            {
+                // Actualizar estado primero
+                await UpdateUserStatusAsync(handler, "Conectado");
+                await NotifyFriendsAsync(handler, true);
+
+                // Iniciar heartbeat
+                _ = StartHeartbeat(handler); // Nueva función
+
+                await handler.HandleAsync();
+            }
+            finally
+            {
+                // Garantizar actualización al desconectar
+                await UpdateUserStatusAsync(handler, "Desconectado");
+                await NotifyFriendsAsync(handler, false);
+                await CleanupDisconnectedPlayer(handler);
+            }
+        }
+        private async Task StartHeartbeat(WebSocketHandler handler)
+        {
+            while (handler.IsOpen)
+            {
+                try
+                {
+                    await handler.SendAsync("ping");
+                    await Task.Delay(30000); // Cada 30 segundos
+                }
+                catch
+                {
+                    await CleanupDisconnectedPlayer(handler);
+                    break;
+                }
+            }
         }
 
         private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket)
@@ -98,17 +128,24 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private async Task CleanupDisconnectedPlayer(WebSocketHandler handler)
         {
+            await _semaphore.WaitAsync();
             await _connectedSemaphore.WaitAsync();
             await _waitingSemaphore.WaitAsync();
             try
             {
-                _connectedPlayers.Remove(handler);
-                _waitingPlayers.Remove(handler);
+                // Eliminar de todas las listas
+                _connectedPlayers.RemoveAll(p => p.Id == handler.Id);
+                _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
+                _handlers.RemoveAll(p => p.Id == handler.Id);
+                // Notificar cambio de estado
+                await UpdateUserStatusAsync(handler, "Desconectado");
+                await NotifyFriendsAsync(handler, false);
+                Interlocked.Decrement(ref _activeConnections);
+                OnActiveConnectionsChanged?.Invoke(_activeConnections);
             }
             finally
             {
-                _connectedSemaphore.Release();
-                _waitingSemaphore.Release();
+                _semaphore.Release();
             }
         }
 
@@ -138,10 +175,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
                     _waitingSemaphore.Release();
                 }
+                else if (message == "pong")
+                {
+                    handler.LastActivity = DateTime.UtcNow; // Nueva propiedad en WebSocketHandler
+                    return;
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error procesando mensaje: {ex.Message}");
+                await CleanupDisconnectedPlayer(handler);
             }
         }
         private async Task ProcessInvitation(WebSocketHandler inviter, int friendId)
@@ -302,17 +345,29 @@ namespace JuegoOcaBack.WebSocketAdvanced
         {
             using var scope = _serviceProvider.CreateScope();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
-            var friends = await unitOfWork._friendRequestRepository.GetFriendsList(handler.Id);
-
-            var message = JsonSerializer.Serialize(new
+            try
             {
-                type = isConnected ? "friendConnected" : "friendDisconnected",
-                friendId = handler.Id
-            });
+                var friends = await unitOfWork._friendRequestRepository.GetFriendsList(handler.Id);
+                var message = new
+                {
+                    type = isConnected ? "friendConnected" : "friendDisconnected",
+                    friendId = handler.Id
+                };
 
-            foreach (var friend in _connectedPlayers.Where(p => friends.Any(f => f.UsuarioId == p.Id)))
+                var serialized = JsonSerializer.Serialize(message);
+
+                foreach (var friend in friends)
+                {
+                    var friendHandler = _connectedPlayers.FirstOrDefault(p => p.Id == friend.UsuarioId);
+                    if (friendHandler?.IsOpen == true)
+                    {
+                        await friendHandler.SendAsync(serialized);
+                    }
+                }
+            }
+            catch (Exception ex)
             {
-                await friend.SendAsync(message);
+                Console.WriteLine($"Error notificando amigos: {ex.Message}");
             }
         }
 

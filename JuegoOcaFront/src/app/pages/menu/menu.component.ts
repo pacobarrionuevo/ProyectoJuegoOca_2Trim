@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { WebsocketService } from '../../services/websocket.service';
 import { FormsModule } from '@angular/forms';
@@ -45,7 +45,8 @@ export class MenuComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private imageService: ImageService,
-    private friendService: FriendService
+    private friendService: FriendService,
+    private cdr: ChangeDetectorRef
   ) {
     this.perfil_default = this.imageService.getImageUrl('Perfil_Deffault.png');
   }
@@ -107,8 +108,19 @@ export class MenuComponent implements OnInit {
       this.webSocketService.activeConnections.subscribe((count) => {
         this.activeConnections = count;
         console.log(`Conexiones activas: ${count}`);
-      })
-    );
+      }),
+      this.webSocketService.messageReceived.subscribe((message: any) => {
+        console.log("Mensaje WebSocket recibido:", message);
+        
+        if (message.type === 'friendConnected' || message.type === 'friendDisconnected') {
+            const estado = message.type === 'friendConnected' ? 'Conectado' : 'Desconectado';
+            this.actualizarEstadoAmigo(message.friendId, estado);
+        }
+        
+        if (message.type === 'activeConnections') {
+            this.activeConnections = message.count;
+        }
+  }))
   }
   ngOnDestroy(): void {
     // Limpieza de subscriptions
@@ -129,16 +141,17 @@ export class MenuComponent implements OnInit {
     
     console.error('Intento de auto-invitación bloqueado');
   }
-  actualizarEstadoAmigo(friendId: number, estado: string) {
-    console.log(`MenuComponent: actualizarEstadoAmigo() llamado con friendId=${friendId}, estado=${estado}`);
-    const amigo = this.amigos.find(a => a.UsuarioId === friendId);
-    if (amigo) {
-      console.log(`MenuComponent: Amigo encontrado, actualizando estado a de ${amigo.UsuarioEstado} a ${estado}`);
-      amigo.UsuarioEstado = estado;
-    } else {
-      console.warn(`MenuComponent: No se encontró el amigo con ID ${friendId}`);
-    }
-  }
+  actualizarEstadoAmigo(friendId: number, estado: string): void {
+    this.amigos = this.amigos.map(amigo => {
+        if (amigo.UsuarioId === friendId) {
+            return { ...amigo, UsuarioEstado: estado };
+        }
+        return amigo;
+    });
+    
+    // Forzar actualización de la vista
+    this.cdr.detectChanges(); 
+}
 
   invitarAPartida(friendId: number): void {
     if (!friendId || friendId === this.usuarioId) {
@@ -295,13 +308,21 @@ export class MenuComponent implements OnInit {
   // Cargan bien
   cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
+      // Mapeo de amigos con la lógica original
       this.amigos = amigos.map(amigo => ({
         UsuarioId: amigo.UsuarioId || amigo.usuarioId,
         UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
-        UsuarioEstado: amigo.UsuarioEstado || amigo.usuarioEstado
+        UsuarioEstado: amigo.UsuarioEstado || amigo.usuarioEstado || 'Desconectado' // Estado inicial conservador
       }));
+  
+      // Copia los amigos a la lista filtrada
       this.amigosFiltrados = [...this.amigos];
+  
+      // Solicitar estados actualizados al servidor WebSocket
+      this.webSocketService.sendRxjs(JSON.stringify({
+        type: 'requestStatusUpdate'
+      }));
     });
   }
 
