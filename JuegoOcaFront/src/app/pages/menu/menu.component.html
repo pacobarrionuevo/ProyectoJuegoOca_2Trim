@@ -53,12 +53,7 @@
         <p *ngIf="amigo.UsuarioEstado === 'Conectado'" class="estado-conectado">🟢 Conectado 🟢</p>
         <p *ngIf="amigo.UsuarioEstado !== 'Conectado'" class="estado-desconectado">🔴 Desconectado 🔴</p>
         <button [routerLink]="'/perfil'">Ver perfil</button>&nbsp;
-        <div *ngFor="let amigo of amigosFiltrados">
-          <button (click)="invitarAPartida(amigo.UsuarioId)" 
-                  [disabled]="amigo.UsuarioId === usuarioId || amigo.UsuarioEstado !== 'Conectado'">
-            Invitar a partida
-          </button>
-        </div>
+        <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
     </div>
   </div>
 

@@ -151,7 +151,8 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 await inviter.SendAsync(JsonSerializer.Serialize(new
                 {
                     type = "invalidInvitation",
-                    message = "No puedes invitarte a ti mismo"
+                    message = "No puedes invitarte a ti mismo",
+                    code = 400
                 }));
                 return;
             }
