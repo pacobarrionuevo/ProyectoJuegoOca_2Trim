@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { GameService } from '../../services/game.service';
 
 @Component({
   selector: 'app-game',
@@ -7,18 +7,25 @@ import { Router } from '@angular/router';
   styleUrls: ['./game.component.css']
 })
 export class GameComponent implements OnInit {
-  gameId: string | null = null;
+  players: any[] = [];
+  currentPlayer: any;
+  diceResult: number | null = null;
 
-  constructor(private router: Router) {}
+  constructor(private gameService: GameService) {}
 
   ngOnInit(): void {
-    // Obtener el gameId del estado de la navegación
-    const state = this.router.getCurrentNavigation()?.extras.state;
-    if (state && state['gameId']) {
-      this.gameId = state['gameId'];
-      console.log('Partida iniciada con ID:', this.gameId);
-    } else {
-      console.error('No se encontró el ID de la partida.');
-    }
+    // Suscribirse a las actualizaciones del estado del juego
+    this.gameService.gameStateUpdated.subscribe((state: any) => {
+      this.players = state.players;
+      this.currentPlayer = state.currentPlayer;
+      this.diceResult = state.diceResult;
+    });
+
+    // Iniciar la partida (ejemplo)
+    this.gameService.startGame('12345'); // Reemplaza '12345' con el ID real de la partida
+  }
+
+  rollDice(): void {
+    this.gameService.rollDice();
   }
 }
