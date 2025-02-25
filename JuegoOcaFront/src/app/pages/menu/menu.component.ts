@@ -27,12 +27,15 @@ export class MenuComponent implements OnInit {
   amigosFiltrados: User[] = [];
   busquedaAmigos: string = '';
 
+  usuariosConectados: Set<string> = new Set();
   solicitudesPendientes: SolicitudAmistad[] = [];
 
   usuarioApodo: string = '';
   usuarioFotoPerfil: string = '';
   usuarioId: number | null = null;
   perfil_default: string;
+
+  activeConnections: number = 0;
 
   constructor(
     private webSocketService: WebsocketService,
@@ -46,22 +49,60 @@ export class MenuComponent implements OnInit {
   }
 
   ngOnInit(): void {
+
+    console.log('MenuComponent: ngOnInit() llamado');
+
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      console.log('Token:', token);
+      this.cargarInfoUsuario();
+      this.webSocketService.connectRxjs(token); // Conectar el WebSocket si hay token
+    } else {
+      console.error('No hay token disponible. Redirigiendo al login...');
+      this.router.navigate(['/login']); // Redirigir al login si no hay token
+    }
+    
     this.obtenerUsuarios();
     this.cargarInfoUsuario();
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
 
+    this.obtenerUsuarios();
+    this.cargarAmigos();
+    this.obtenerSolicitudesPendientes();
+
+    // no se está llamando porque no se están recibiendo estos mensajes desde el websocket.service.ts
     this.webSocketService.messageReceived.subscribe((message: any) => {
+      console.log("Mensaje recibido de WebSocket:", message);
       if (message.FriendId) {
+        console.log(`MenuComponent: Actualizando estado del amigo ${message.FriendId} a ${message.Estado}`);
         this.actualizarEstadoAmigo(message.FriendId, message.Estado);
       }
     });
+
+    // Suscribirse a los eventos de conexión/desconexión
+    this.webSocketService.connected.subscribe(() => {
+      console.log('WebSocket conectado');
+    });
+
+    this.webSocketService.disconnected.subscribe(() => {
+      console.log('WebSocket desconectado');
+    });
+
+    this.webSocketService.activeConnections.subscribe((count) => {
+      this.activeConnections = count;
+      console.log(`Número de conexiones activas: ${count}`);
+    });
   }
 
-  actualizarEstadoAmigo(friendId: number, estado: string): void {
+  actualizarEstadoAmigo(friendId: number, estado: string) {
+    console.log(`MenuComponent: actualizarEstadoAmigo() llamado con friendId=${friendId}, estado=${estado}`);
     const amigo = this.amigos.find(a => a.UsuarioId === friendId);
     if (amigo) {
+      console.log(`MenuComponent: Amigo encontrado, actualizando estado a de ${amigo.UsuarioEstado} a ${estado}`);
       amigo.UsuarioEstado = estado;
+    } else {
+      console.warn(`MenuComponent: No se encontró el amigo con ID ${friendId}`);
     }
   }
 
@@ -92,7 +133,7 @@ export class MenuComponent implements OnInit {
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
       this.usuarios = usuarios.map(usuario => ({
-        UsuarioId: usuario.usuarioId,
+        UsuarioId: usuario.usuarioId, 
         UsuarioApodo: usuario.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(usuario.usuarioFotoPerfil)
       }));
@@ -105,15 +146,19 @@ export class MenuComponent implements OnInit {
   }
 
   buscarUsuarios(): void {
-    this.usuariosFiltrados = this.terminoBusqueda.trim()
-      ? this.usuarios.filter(usuario =>
-          usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase()))
+    this.usuariosFiltrados = this.terminoBusqueda.trim() 
+      ? this.usuarios.filter(usuario => 
+          usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
+        ) 
       : [...this.usuarios];
   }
 
-  logout(): void {
+  logout() {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.webSocketService.clearToken();
+    this.webSocketService.disconnectRxjs();
+    sessionStorage.removeItem('auth_token');
+    this.router.navigate(['/login']); 
   }
 
   cargarInfoUsuario(): void {
@@ -123,24 +168,36 @@ export class MenuComponent implements OnInit {
       this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture);
       this.usuarioId = userInfo.id;
     } else {
-      console.error('No se pudo obtener la información del usuario.');
+      console.error('No se pudo obtener la información del usuario. ¿El token está disponible?');
+      this.router.navigate(['/login']); // Redirigir al login si no hay token
     }
   }
 
+  // La solicitud se manda bien y sin problemas
+  // --> Hacer mediante websockets D:
   enviarSolicitud(receiverId: number): void {
     this.friendService.sendFriendRequest(receiverId).subscribe({
-      next: () => {
+      next: (result) => {
         console.log(`Solicitud de amistad enviada a ${receiverId}`);
+        console.log(`El usuario que envió la solicitud es: ${result.senderName}`);
         this.obtenerSolicitudesPendientes();
       },
-      error: (error) => console.error('Error al enviar la solicitud:', error)
+      error: (error) => {
+        console.error('Error al enviar la solicitud:', error);
+      }
     });
   }
 
-  obtenerSolicitudesPendientes(): void {
+  // Las carga correctamente --> ¿Websockets?
+  obtenerSolicitudesPendientes() {
     this.friendService.getPendingRequests().subscribe({
       next: (solicitudes: any[]) => {
+        console.log('Solicitudes pendientes recibidas:', solicitudes);
+        // Mapeamos cada objeto de amistad a nuestra interfaz SolicitudAmistad.
+        // Se asume que this.usuarioId es el ID del usuario autenticado, de modo que se
+        // busca en cada amistad el usuario contrario (por ejemplo, el que envió la solicitud)
         this.solicitudesPendientes = solicitudes.map(amistadObj => {
+          // Buscar en el array amistadUsuario el que NO sea el usuario actual.
           const otro = amistadObj.amistadUsuario.find(ua => ua.usuarioId !== this.usuarioId);
           return {
             amistadId: amistadObj.amistadId,
@@ -154,51 +211,86 @@ export class MenuComponent implements OnInit {
     });
   }
 
+  // Necesario para obtener bien las solicitudes
   getUsuarioApodoById(userId: number): string {
     const usuario = this.usuarios.find(u => u.UsuarioId === userId);
-    return usuario ? usuario.UsuarioApodo : 'Usuario desconocido';
+    return usuario ? usuario.UsuarioApodo : 'te ha equivocao compi 😂';
   }
 
-  aceptarSolicitud(solicitud: SolicitudAmistad): void {
-    if (!solicitud?.amistadId) {
-      console.error('Solicitud no válida:', solicitud);
+  // Se acepta todo guay
+  aceptarSolicitud(solicitud: any) {
+    console.log('Solicitud recibida:', solicitud); 
+  
+    if (!solicitud) {
+      console.error('Error: La solicitud es null o undefined');
       return;
     }
-
-    this.friendService.aceptarSolicitud(solicitud.amistadId).subscribe({
-      next: () => {
-        console.log('Solicitud aceptada');
-        this.obtenerSolicitudesPendientes();
-        this.cargarAmigos();
-      },
-      error: (err) => console.error('Error al aceptar solicitud:', err)
+  
+    if (!solicitud.amistadId) {
+      console.error('Error: amistadId no está definido en la solicitud:', solicitud);
+      return;
+    }
+  
+    const amistadId = solicitud.amistadId;
+    console.log('Enviando amistadId:', amistadId);
+  
+    this.friendService.aceptarSolicitud(amistadId).subscribe({
+      next: (res) => console.log('Solicitud aceptada:', res),
+      error: (err) => console.error('Error al aceptar solicitud:', err),
     });
   }
 
-  rechazarSolicitud(solicitud: SolicitudAmistad): void {
-    if (!solicitud?.amistadId) {
-      console.error('Solicitud no válida:', solicitud);
+  // Se rechaza todo guay
+  rechazarSolicitud(solicitud: any) {
+    console.log('Solicitud recibida para rechazar:', solicitud);
+  
+    if (!solicitud) {
+      console.error('Error: La solicitud es null o undefined');
       return;
     }
-
-    this.friendService.rechazarSolicitud(solicitud.amistadId).subscribe({
-      next: () => {
-        console.log('Solicitud rechazada');
-        this.obtenerSolicitudesPendientes();
-      },
+  
+    if (!solicitud.amistadId) {
+      console.error('Error: amistadId no está definido en la solicitud:', solicitud);
+      return;
+    }
+  
+    const amistadId = solicitud.amistadId;
+    console.log('Enviando rechazo para amistadId:', amistadId);
+  
+    this.friendService.rechazarSolicitud(amistadId).subscribe({
+      next: (res) => console.log('Solicitud rechazada:', res),
       error: (err) => console.error('Error al rechazar solicitud:', err)
     });
   }
 
+  // Cargan bien
   cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
       this.amigos = amigos.map(amigo => ({
-        UsuarioId: amigo.usuarioId,
-        UsuarioApodo: amigo.usuarioApodo,
-        UsuarioFotoPerfil: this.validarUrlImagen(amigo.usuarioFotoPerfil),
-        UsuarioEstado: amigo.usuarioEstado
+        UsuarioId: amigo.UsuarioId || amigo.usuarioId,
+        UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
+        UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
+        UsuarioEstado: amigo.UsuarioEstado || amigo.usuarioEstado
       }));
       this.amigosFiltrados = [...this.amigos];
     });
   }
+
+  actualizarEstadoDeAmigos() {
+    this.friendService.getFriendsList().subscribe(amigos => {
+      this.amigos = amigos.map(amigo => ({
+        UsuarioId: amigo.UsuarioId || amigo.usuarioId,
+        UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
+        UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
+        UsuarioEstado: this.obtenerEstadoAmigo(amigo.UsuarioId || amigo.usuarioId)
+      }));
+  
+      this.amigosFiltrados = [...this.amigos];
+    });
+  }
+
+  // Bueno, esto se puede quedar
+  private obtenerEstadoAmigo(usuarioId: string): string {
+    return this.usuariosConectados.has(usuarioId) ? 'Conectado' : 'Desconectado';
+  } 
 }
