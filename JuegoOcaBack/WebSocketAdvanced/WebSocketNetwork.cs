@@ -146,6 +146,15 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         private async Task ProcessInvitation(WebSocketHandler inviter, int friendId)
         {
+            if (inviter.Id == friendId)
+            {
+                await inviter.SendAsync(JsonSerializer.Serialize(new
+                {
+                    type = "invalidInvitation",
+                    message = "No puedes invitarte a ti mismo"
+                }));
+                return;
+            }
             var friend = _connectedPlayers.FirstOrDefault(p => p.Id == friendId);
 
             if (friend == null || !friend.IsOpen)
