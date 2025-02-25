@@ -4,7 +4,7 @@ import { WebsocketService } from '../../services/websocket.service';
 import { CommonModule } from '@angular/common';
 import { ImageService } from '../../services/image.service';
 import { RouterModule } from '@angular/router';
-
+import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-matchmaking',
   standalone: true,

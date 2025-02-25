@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { ImageService } from '../../services/image.service';
 import { SolicitudAmistad } from '../../models/solicitud-amistad';
 import { FriendService } from '../../services/friend.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-menu',
@@ -36,8 +37,9 @@ export class MenuComponent implements OnInit {
   perfil_default: string;
 
   activeConnections: number = 0;
-
+  private wsSubscriptions: Subscription[] = [];
   constructor(
+    
     private webSocketService: WebsocketService,
     private apiService: ApiService,
     private authService: AuthService,
@@ -49,51 +51,77 @@ export class MenuComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
     console.log('MenuComponent: ngOnInit() llamado');
 
+    // 1. Conexión inicial WebSocket
     const token = localStorage.getItem('accessToken');
     if (token) {
       console.log('Token:', token);
       this.cargarInfoUsuario();
-      this.webSocketService.connectRxjs(token); // Conectar el WebSocket si hay token
+      this.webSocketService.connectRxjs(token);
     } else {
       console.error('No hay token disponible. Redirigiendo al login...');
-      this.router.navigate(['/login']); // Redirigir al login si no hay token
+      this.router.navigate(['/login']);
     }
-    
-    this.obtenerUsuarios();
-    this.cargarInfoUsuario();
-    this.cargarAmigos();
-    this.obtenerSolicitudesPendientes();
 
+    // 2. Carga de datos (sin duplicados)
     this.obtenerUsuarios();
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
 
-    // no se está llamando porque no se están recibiendo estos mensajes desde el websocket.service.ts
-    this.webSocketService.messageReceived.subscribe((message: any) => {
-      console.log("Mensaje recibido de WebSocket:", message);
-      if (message.FriendId) {
-        console.log(`MenuComponent: Actualizando estado del amigo ${message.FriendId} a ${message.Estado}`);
-        this.actualizarEstadoAmigo(message.FriendId, message.Estado);
-      }
-    });
-
-    // Suscribirse a los eventos de conexión/desconexión
-    this.webSocketService.connected.subscribe(() => {
-      console.log('WebSocket conectado');
-    });
-
-    this.webSocketService.disconnected.subscribe(() => {
-      console.log('WebSocket desconectado');
-    });
-
-    this.webSocketService.activeConnections.subscribe((count) => {
-      this.activeConnections = count;
-      console.log(`Número de conexiones activas: ${count}`);
-    });
+    // 3. Configurar listeners WebSocket
+    this.setupWebSocketListeners();
   }
+
+  private setupWebSocketListeners(): void {
+    // Listener para mensajes generales
+    this.wsSubscriptions.push(
+      this.webSocketService.messageReceived.subscribe((message: any) => {
+        console.log("Mensaje recibido de WebSocket:", message);
+        
+        // Mantenemos tu lógica original de mensajes
+        if (message.FriendId) {
+          console.log(`Actualizando estado del amigo ${message.FriendId} a ${message.Estado}`);
+          this.actualizarEstadoAmigo(message.FriendId, message.Estado);
+        }
+        
+        // Agregamos manejo de invitaciones
+        if (message.type === 'invitationReceived') {
+          this.handleInvitation(message);
+        }
+      })
+    );
+
+    // Listeners de conexión/desconexión (se mantienen igual)
+    this.wsSubscriptions.push(
+      this.webSocketService.connected.subscribe(() => {
+        console.log('WebSocket conectado');
+      }),
+      
+      this.webSocketService.disconnected.subscribe(() => {
+        console.log('WebSocket desconectado');
+      }),
+      
+      this.webSocketService.activeConnections.subscribe((count) => {
+        this.activeConnections = count;
+        console.log(`Conexiones activas: ${count}`);
+      })
+    );
+  }
+  ngOnDestroy(): void {
+    // Limpieza de subscriptions
+    this.wsSubscriptions.forEach(sub => sub.unsubscribe());
+  }
+  private handleInvitation(message: any): void {
+    const aceptar = confirm(`${message.inviterName} te ha invitado a una partida. ¿Aceptas?`);
+    if (aceptar) {
+      this.webSocketService.sendRxjs(JSON.stringify({
+        type: 'acceptInvitation',
+        inviterId: message.inviterId
+      }));
+    }
+  }
+
 
   actualizarEstadoAmigo(friendId: number, estado: string) {
     console.log(`MenuComponent: actualizarEstadoAmigo() llamado con friendId=${friendId}, estado=${estado}`);
