@@ -40,6 +40,10 @@ export class MatchmakingComponent implements OnDestroy {
         this.handleGameReady(msg);
       } else if (msg.type === 'waitingStatus') {
         this.handleWaitingStatus(msg);
+      } else if (msg.type === 'invitationReceived') {
+        this.handleInvitationReceived(msg);
+      } else if (msg.type === 'invitationAccepted') {
+        this.handleInvitationAccepted(msg);
       }
     });
   }
@@ -49,12 +53,12 @@ export class MatchmakingComponent implements OnDestroy {
     this.estado = 'enPartida';
     this.gameId = msg.gameId;
     this.oponenteId = msg.opponentId;
-    
+
     setTimeout(() => {
-      this.router.navigate(['/game'], { 
-        state: { 
+      this.router.navigate(['/game'], {
+        state: {
           gameId: this.gameId,
-          opponentId: this.oponenteId 
+          opponentId: this.oponenteId
         }
       });
     }, 3000);
@@ -63,6 +67,35 @@ export class MatchmakingComponent implements OnDestroy {
   // Actualizar estado de la cola
   private handleWaitingStatus(msg: any): void {
     this.jugadoresEnCola = msg.playersInQueue;
+  }
+
+  // Manejar invitación recibida
+  private handleInvitationReceived(msg: any): void {
+    const inviterId = msg.inviterId;
+    const inviterName = msg.inviterName;
+
+    if (confirm(`${inviterName} te ha invitado a una partida. ¿Aceptas?`)) {
+      this.wsService.sendRxjs(JSON.stringify({
+        type: 'acceptInvitation',
+        inviterId: inviterId
+      }));
+    }
+  }
+
+  // Manejar invitación aceptada
+  private handleInvitationAccepted(msg: any): void {
+    this.estado = 'enPartida';
+    this.gameId = msg.gameId;
+    this.oponenteId = msg.opponentId;
+
+    setTimeout(() => {
+      this.router.navigate(['/game'], {
+        state: {
+          gameId: this.gameId,
+          opponentId: this.oponenteId
+        }
+      });
+    }, 3000);
   }
 
   // Iniciar búsqueda de partida

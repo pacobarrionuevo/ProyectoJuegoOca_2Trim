@@ -92,6 +92,14 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
                     _waitingSemaphore.Release();
                 }
+                else if (msg?.type == "inviteFriend")
+                {
+                    await ProcessInvitation(handler, msg.friendId?? 0);
+                }
+                else if (msg?.type == "acceptInvitation")
+                {
+                    await CreateGameRoom(handler, msg.inviterId ?? 0);
+                }
             }
             catch (Exception ex)
             {
@@ -136,6 +144,60 @@ namespace JuegoOcaBack.WebSocketAdvanced
             {
                 _waitingSemaphore.Release();
             }
+        }
+
+        private async Task ProcessInvitation(WebSocketHandler inviter, int friendId)
+        {
+            var friend = _connectedPlayers.FirstOrDefault(p => p.Id == friendId);
+            if (friend == null || !friend.IsOpen)
+            {
+                await inviter.SendAsync(JsonSerializer.Serialize(new
+                {
+                    type = "friendNotAvailable",
+                    message = "El amigo no está disponible."
+                }));
+                return;
+            }
+
+            // Enviar invitación al amigo
+            await friend.SendAsync(JsonSerializer.Serialize(new
+            {
+                type = "invitationReceived",
+                inviterId = inviter.Id,
+                inviterName = "Nombre del Invitador" // Puedes obtenerlo de la base de datos
+            }));
+        }
+
+        private async Task CreateGameRoom(WebSocketHandler acceptor, int inviterId)
+        {
+            var inviter = _connectedPlayers.FirstOrDefault(p => p.Id == inviterId);
+            if (inviter == null || !inviter.IsOpen)
+            {
+                await acceptor.SendAsync(JsonSerializer.Serialize(new
+                {
+                    type = "inviterNotAvailable",
+                    message = "El invitador ya no está disponible."
+                }));
+                return;
+            }
+
+            // Crear sala de juego
+            var roomId = Guid.NewGuid().ToString();
+
+            // Notificar a ambos jugadores
+            await inviter.SendAsync(JsonSerializer.Serialize(new
+            {
+                type = "invitationAccepted",
+                gameId = roomId,
+                opponentId = acceptor.Id
+            }));
+
+            await acceptor.SendAsync(JsonSerializer.Serialize(new
+            {
+                type = "invitationAccepted",
+                gameId = roomId,
+                opponentId = inviter.Id
+            }));
         }
 
         private async Task CreateMatch(WebSocketHandler p1, WebSocketHandler p2)
@@ -202,7 +264,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
     }
 
     // Records con propiedades en camelCase
-    public record MatchmakingMessage(string type);
+    public record MatchmakingMessage(string type, int? friendId = null, int? inviterId = null);
     public record GameReadyMessage(string type, string gameId, int opponentId);
     public record WaitlistMessage(string type, int playersInQueue, int totalPlayers);
 }
