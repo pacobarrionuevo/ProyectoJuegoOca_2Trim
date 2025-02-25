@@ -26,8 +26,6 @@ export class MenuComponent implements OnInit {
   amigos: User[] = [];
   amigosFiltrados: User[] = [];
   busquedaAmigos: string = '';
-  
-  usuariosConectados: Set<string> = new Set();
 
   solicitudesPendientes: SolicitudAmistad[] = [];
 
@@ -35,8 +33,6 @@ export class MenuComponent implements OnInit {
   usuarioFotoPerfil: string = '';
   usuarioId: number | null = null;
   perfil_default: string;
-  
-  activeConnections: number = 0;
 
   constructor(
     private webSocketService: WebsocketService,
@@ -50,18 +46,6 @@ export class MenuComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('MenuComponent: ngOnInit() llamado');
-
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      console.log('Token:', token);
-      this.cargarInfoUsuario();
-      this.webSocketService.connectRxjs(token); // Conectar el WebSocket si hay token
-    } else {
-      console.error('No hay token disponible. Redirigiendo al login...');
-      this.router.navigate(['/login']); // Redirigir al login si no hay token
-    }
-    
     this.obtenerUsuarios();
     this.cargarInfoUsuario();
     this.cargarAmigos();
@@ -79,12 +63,8 @@ export class MenuComponent implements OnInit {
             inviterId: message.inviterId
           }));
         }
-      console.log("Mensaje recibido de WebSocket:", message);
-      if (message.FriendId) {
-        console.log(`MenuComponent: Actualizando estado del amigo ${message.FriendId} a ${message.Estado}`);
-        this.actualizarEstadoAmigo(message.FriendId, message.Estado);
       }
-    }});
+    });
   }
 
   invitarAPartida(friendId: number): void {
@@ -106,12 +86,6 @@ export class MenuComponent implements OnInit {
     }));
   }
 
-  // ==================================================
-  // =================== NO TOCAR =====================
-  // ==================================================
-
-
-  // Obtiene los usuarios registrados en la BBDD --> hacer que no se muestre al que tenga la sesión iniciada
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
       this.usuarios = usuarios.map(usuario => ({
@@ -122,14 +96,11 @@ export class MenuComponent implements OnInit {
       this.usuariosFiltrados = [...this.usuarios];
     });
   }
-  
-  // La foto por defecto no se hace : )
 
   validarUrlImagen(fotoPerfil: string | null): string {
     return fotoPerfil ? `${environment.apiUrl}/fotos/${fotoPerfil}` : this.perfil_default;
   }
 
-  // Los amigos se buscan sin problema
   buscarUsuarios(): void {
     this.usuariosFiltrados = this.terminoBusqueda.trim()
       ? this.usuarios.filter(usuario =>
@@ -139,31 +110,20 @@ export class MenuComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.webSocketService.clearToken();
-    this.webSocketService.disconnectRxjs();
-    sessionStorage.removeItem('auth_token');
-    this.router.navigate(['/login']); 
     this.router.navigate(['/login']);
   }
 
-  // La info se carga bien sin problema a no ser que tengas una foto por defecto
   cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
       this.usuarioApodo = userInfo.name;
       this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture);
       this.usuarioId = userInfo.id;
-      this.usuarioApodo = userInfo.name;
-      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture);
-      this.usuarioId = userInfo.id;
     } else {
-      console.error('No se pudo obtener la información del usuario. ¿El token está disponible?');
-      this.router.navigate(['/login']); // Redirigir al login si no hay token
+      console.error('No se pudo obtener la información del usuario.');
     }
   }
 
-  // La solicitud se manda bien y sin problemas
-  // --> Hacer mediante websockets D:
   enviarSolicitud(receiverId: number): void {
     this.friendService.sendFriendRequest(receiverId).subscribe({
       next: () => {
@@ -173,8 +133,6 @@ export class MenuComponent implements OnInit {
       error: (error) => console.error('Error al enviar la solicitud:', error)
     });
   }
-  
-  // Las carga correctamente --> ¿Websockets?
 
   obtenerSolicitudesPendientes(): void {
     this.friendService.getPendingRequests().subscribe({
@@ -192,8 +150,6 @@ export class MenuComponent implements OnInit {
       error: (error) => console.error('Error obteniendo solicitudes:', error)
     });
   }
-  
-  // Necesario para obtener bien las solicitudes
 
   getUsuarioApodoById(userId: number): string {
     const usuario = this.usuarios.find(u => u.UsuarioId === userId);
@@ -230,8 +186,6 @@ export class MenuComponent implements OnInit {
       error: (err) => console.error('Error al rechazar solicitud:', err)
     });
   }
-  
-  // Cargan bien
 
   cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
@@ -244,21 +198,4 @@ export class MenuComponent implements OnInit {
       this.amigosFiltrados = [...this.amigos];
     });
   }
-  
-  /// No entiendo para qué sirve esto
-  actualizarEstadoAmigo(friendId: number, estado: string) {
-    console.log(`MenuComponent: actualizarEstadoAmigo() llamado con friendId=${friendId}, estado=${estado}`);
-    const amigo = this.amigos.find(a => a.UsuarioId === friendId);
-    if (amigo) {
-      console.log(`MenuComponent: Amigo encontrado, actualizando estado a de ${amigo.UsuarioEstado} a ${estado}`);
-      amigo.UsuarioEstado = estado;
-    } else {
-      console.warn(`MenuComponent: No se encontró el amigo con ID ${friendId}`);
-    }
-  }
-
-  // Bueno, esto se puede quedar
-  private obtenerEstadoAmigo(usuarioId: string): string {
-    return this.usuariosConectados.has(usuarioId) ? 'Conectado' : 'Desconectado';
-  }  
 }

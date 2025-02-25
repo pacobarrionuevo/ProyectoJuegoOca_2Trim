@@ -21,50 +21,13 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private readonly SemaphoreSlim _waitingSemaphore = new SemaphoreSlim(1, 1);
         private readonly IServiceProvider _serviceProvider;
 
-        // Contador de conexiones activas
-        private static int _activeConnections = 0;
-
-        // Evento para notificar cambios en el número de conexiones
-        public event Action<int> OnActiveConnectionsChanged;
-
         public WebSocketNetwork(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            OnActiveConnectionsChanged += count => NotifyActiveConnectionsChanged(count);
         }
-
-        private async void NotifyActiveConnectionsChanged(int count)
-        {
-            var message = new
-            {
-                Type = "activeConnections",
-                Count = count
-            };
-
-            var handlersSnapshot = _handlers.ToList();
-            foreach (var handler in handlersSnapshot)
-            {
-                if (handler.IsOpen)
-                {
-                    await handler.SendAsync(JsonSerializer.Serialize(message));
-                }
-            }
-        }
-
 
         public async Task HandleAsync(WebSocket webSocket)
         {
-            // Incrementar el contador de conexiones activas
-            Interlocked.Increment(ref _activeConnections);
-            OnActiveConnectionsChanged?.Invoke(_activeConnections);
-
-            // Crear un nuevo WebSocketHandler y agregarlo a la lista
-            WebSocketHandler handler = await AddWebsocketAsync(webSocket);
-
-            // Notificar a los usuarios que un nuevo usuario se ha conectado
-            await NotifyUserConnectedAsync(handler);
-
-            // Esperar a que el WebSocketHandler termine de manejar la conexión
             var handler = await CreateHandlerAsync(webSocket);
             await UpdateUserStatusAsync(handler, "Conectado");
             await NotifyFriendsAsync(handler, true);
@@ -111,97 +74,8 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
-        // comprobar funcionamiento
-        private async Task OnDisconnectedAsync(WebSocketHandler disconnectedHandler)
         private async Task OnMessageReceivedHandler(WebSocketHandler handler, string message)
         {
-            // Decrementar el contador de conexiones activas
-            Interlocked.Decrement(ref _activeConnections);
-            OnActiveConnectionsChanged?.Invoke(_activeConnections);
-
-            // Eliminar el WebSocketHandler de la lista
-            await _semaphore.WaitAsync();
-            disconnectedHandler.Disconnected -= OnDisconnectedAsync;
-            disconnectedHandler.MessageReceived -= OnMessageReceivedAsync;
-            _handlers.Remove(disconnectedHandler);
-            _semaphore.Release();
-
-            // Notificar a los amigos que el usuario se ha desconectado
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
-                var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
-
-                // Obtener el usuario y actualizar su estado a "Desconectado"
-                Usuario usuario = await wsMethods.GetUserById(disconnectedHandler.Id);
-                if (usuario != null)
-                {
-                    usuario.UsuarioEstado = "Desconectado";
-                    await wsMethods.UpdateUserAsync(usuario);
-                }
-
-                var amigos = await unitOfWork._friendRequestRepository.GetFriendsList(disconnectedHandler.Id);
-
-                foreach (WebSocketHandler handler in _handlers)
-                {
-                    if (amigos.Any(a => a.UsuarioId == handler.Id))
-                    {
-                        await handler.SendAsync(JsonSerializer.Serialize(new
-                        {
-                            Type = "friendDisconnected",
-                            FriendId = disconnectedHandler.Id
-                        }));
-                    }
-                }
-            }
-        }
-
-        // Se utiliza en el DisconnectedAsync
-        public WebSocketHandler GetHandlerById(int userId)
-        {
-            return _handlers.FirstOrDefault(h => h.Id == userId);
-        }
-
-        // Método para obtener el número de conexiones activas
-        public int GetActiveConnections()
-        {
-            return _activeConnections;
-        }
-
-        public async Task RemoveHandlerAsync(WebSocketHandler disconnectedHandler)
-        {
-            await _semaphore.WaitAsync();
-            disconnectedHandler.Disconnected -= OnDisconnectedAsync;
-            disconnectedHandler.MessageReceived -= OnMessageReceivedAsync;
-            _handlers.Remove(disconnectedHandler);
-            _semaphore.Release();
-
-            // Notificar a los amigos que el usuario se ha desconectado
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
-                var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
-
-                Usuario usuario = await wsMethods.GetUserById(disconnectedHandler.Id);
-                if (usuario != null)
-                {
-                    usuario.UsuarioEstado = "Desconectado";
-                    await wsMethods.UpdateUserAsync(usuario);
-                }
-
-                var amigos = await unitOfWork._friendRequestRepository.GetFriendsList(disconnectedHandler.Id);
-
-                foreach (WebSocketHandler handler in _handlers)
-                {
-                    if (amigos.Any(a => a.UsuarioId == handler.Id))
-                    {
-                        await handler.SendAsync(JsonSerializer.Serialize(new
-                        {
-                            Type = "friendDisconnected",
-                            FriendId = disconnectedHandler.Id
-                        }));
-                    }
-                }
             Console.WriteLine($"Mensaje recibido de {handler.Id}: {message}");
 
             try
@@ -232,8 +106,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 Console.WriteLine($"Error procesando mensaje: {ex.Message}");
             }
         }
-
-
 
         private async Task ProcessMatchmaking(WebSocketHandler handler)
         {

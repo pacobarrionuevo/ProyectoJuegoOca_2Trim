@@ -12,28 +12,18 @@
     </div>
   </div>
 
-  <div class="elementosMenu">
-    <p class="titulo"><i>SERVIDORES</i></p>
-    <p>Jugadores conectados: {{ activeConnections }}</p>
-    <p>Partidas en juego: 0</p>
-    <p>Jugador en partida: 0</p>
-  </div>
-
   <br>
-
-  
 
   <div class="elementosMenu">
     <p class="titulo">Solicitudes de Amistad</p>
-    <div *ngFor="let solicitud of solicitudesPendientes" class="solicitud-container">
-      <span>{{ solicitud.usuarioApodo }} quiere ser tu amigo</span>&nbsp;
-      <div class="botones-solicitud">
-        <button class="perfilButton" (click)="aceptarSolicitud(solicitud)"><b>Aceptar</b></button>
-        <button class="cerrar-sesion-btn" (click)="rechazarSolicitud(solicitud)"><b>Rechazar</b></button>
-      </div>
+    <div *ngFor="let solicitud of solicitudesPendientes">
+      <span>{{ solicitud.usuarioApodo }}</span>
+      <button (click)="aceptarSolicitud(solicitud)">Aceptar</button>
+      <button (click)="rechazarSolicitud(solicitud)">Rechazar</button>
+
     </div>
+    
   </div>
-  
 
   <br>
 
@@ -46,17 +36,14 @@
   <div class="elementosMenu">
     <p class="titulo">Amigos</p>
     <input type="text" class="lista" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
-
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
-      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
         <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
-        <p *ngIf="amigo.UsuarioEstado === 'Conectado'" class="estado-conectado">🟢 Conectado 🟢</p>
-        <p *ngIf="amigo.UsuarioEstado !== 'Conectado'" class="estado-desconectado">🔴 Desconectado 🔴</p>
+        <p *ngIf="amigo.UsuarioEstado === 'Conectado'" class="estado-conectado">Conectado</p>
+        <p *ngIf="amigo.UsuarioEstado !== 'Conectado'" class="estado-desconectado">Desconectado</p>
         <button [routerLink]="'/perfil'">Ver perfil</button>&nbsp;
         <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
     </div>
-  </div>
-
+</div>
 
   <br>
 

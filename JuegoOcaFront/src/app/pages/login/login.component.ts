@@ -19,7 +19,8 @@ export class LoginComponent {
   jwt: string | null = null; 
 
   constructor(
-    private authService: AuthService,
+    private authService: AuthService, 
+    private websocketService: WebsocketService,
     private router: Router
   ) {}
 
@@ -33,6 +34,9 @@ export class LoginComponent {
 
     // Verifica los dos Storage para el token y conecta el WebSocket si hay sesión
     this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    if (this.jwt && !this.websocketService.isConnectedRxjs()) {
+      this.websocketService.connectRxjs(this.jwt);
+    }
   }
 
   async submit() {
@@ -47,14 +51,10 @@ export class LoginComponent {
       // Obtener el token después del login
       this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
 
-      // Conectar el WebSocket con el token
-      /*
+      // Conectar WebSocket con el token
       if (this.jwt) {
-        this.webSocketService.connectRxjs(this.jwt); // Conectar el WebSocket
-      } else {
-        console.error('No se pudo obtener el token después del login.');
+        this.websocketService.connectRxjs(this.jwt);
       }
-      */
 
       if (this.recuerdame) {
         localStorage.setItem('authData', JSON.stringify({
@@ -66,7 +66,6 @@ export class LoginComponent {
         localStorage.removeItem('authData');
       }
 
-      
       this.router.navigate(['/menu']);
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
