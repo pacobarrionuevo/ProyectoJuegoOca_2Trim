@@ -129,6 +129,14 @@ input[type="text"]:focus-visible {
   color: whitesmoke;
 }
 
+.solicitud-container {
+  display: flex;
+  border: 2px solid rgb(125, 123, 119);
+  background-color: white;
+  padding: 1%;
+  border-radius: 10px;
+}
+
 
 @media (max-width: 768px) {
   .menu-grid {

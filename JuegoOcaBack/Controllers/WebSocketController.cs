@@ -30,5 +30,15 @@ namespace JuegoOcaBack.Controllers
                 HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             }
         }
+
+        [HttpGet("disconnect")]
+        public async Task DisconnectAsync(int userId)
+        {
+            var handler = _websocketNetwork.GetHandlerById(userId);
+            if (handler != null)
+            {
+                await _websocketNetwork.RemoveHandlerAsync(handler);
+            }
+        }
     }
 }

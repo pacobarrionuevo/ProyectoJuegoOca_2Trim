@@ -11,14 +11,23 @@ export class WebsocketService {
   disconnected = new Subject<void>();
   rxjsSocket: WebSocketSubject<string>;
 
+  activeConnections = new Subject<number>();
+
   private tokenKey = 'websocket_token';
 
   constructor() {
     this.reconnectIfNeeded();
   }
 
-  isConnectedRxjs(): boolean {
-    return this.rxjsSocket && !this.rxjsSocket.closed;
+  private onConnected() {
+    console.log('WebSocketService: Socket connected');
+    this.connected.next();
+  }
+
+  isConnectedRxjs() {
+    const isConnected = this.rxjsSocket && !this.rxjsSocket.closed;
+    console.log(`WebSocketService: isConnectedRxjs() -> ${isConnected}`);
+    return isConnected;
   }
 
   connectRxjs(token: string): void {
@@ -28,7 +37,8 @@ export class WebsocketService {
       serializer: (value: string) => value,
       deserializer: (event: MessageEvent) => event.data
     });
-
+  
+    // Suscribirse a los mensajes del WebSocket
     this.rxjsSocket.subscribe({
       next: (message: string) => this.handleMessage(message),
       error: (error) => this.handleError(error),
@@ -38,16 +48,24 @@ export class WebsocketService {
 
   sendRxjs(message: string): void {
     if (this.rxjsSocket && !this.rxjsSocket.closed) {
+      console.log('WebSocketService: Enviando mensaje:', message);
       this.rxjsSocket.next(message);
+    } else {
+      console.error('WebSocketService: No se puede enviar el mensaje, WebSocket no está conectado');
     }
   }
 
   disconnectRxjs(): void {
     if (this.rxjsSocket) {
-      this.rxjsSocket.complete();
+      console.log('WebSocketService: Desconectando WebSocket...');
+      this.disconnected(); // Llamar el evento de desconexión
+      this.rxjsSocket.complete(); // Finalizar la conexión      
+
+      this.rxjsSocket.unsubscribe(); // Cerrar la suscripción
     }
   }
 
+  
   private handleMessage(message: string): void {
     try {
       const parsedMessage = JSON.parse(message);
@@ -78,7 +96,16 @@ export class WebsocketService {
   private reconnectIfNeeded(): void {
     const storedToken = localStorage.getItem(this.tokenKey);
     if (storedToken) {
-      this.connectRxjs(storedToken);
+      console.log('WebSocketService: Reconectando WebSocket con token almacenado');
+      this.connectRxjs(storedToken); // Intentar reconectar
+    } else {
+      console.log('WebSocketService: No hay token almacenado, no se puede reconectar');
     }
+  }
+
+  // Método para eliminar el token almacenado (por ejemplo, al cerrar sesión)
+  clearToken() {
+    sessionStorage.removeItem(this.tokenKey);
+    console.log('WebSocketService: Token eliminado');
   }
 }
