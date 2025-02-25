@@ -1,0 +1,73 @@
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.board {
+  position: relative;
+  width: 800px; /* Ajusta el tamaño del tablero */
+  height: 600px; /* Ajusta el tamaño del tablero */
+}
+
+.cell {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border: 1px solid #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+}
+
+.cell-number {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+}
+
+.players {
+  display: flex;
+  gap: 2px;
+}
+
+.player {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  color: white;
+}
+
+.controls {
+  margin-top: 20px;
+}
+
+.dice-result {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Estilos para casillas especiales */
+.cell-oca {
+  background-color: #ffcc00; /* Amarillo para las ocas */
+}
+
+.cell-puente {
+  background-color: #00ccff; /* Azul claro para los puentes */
+}
+
+.cell-posada {
+  background-color: #ff6666; /* Rojo claro para las posadas */
+}
+
+.cell-muerte {
+  background-color: #333; /* Gris oscuro para la muerte */
+}

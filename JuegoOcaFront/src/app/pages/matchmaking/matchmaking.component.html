@@ -12,8 +12,8 @@
         </div>
       </button>
   
-      <button class="juego-option" (click)="buscarPartida('bot')" [disabled]="estado !== 'inactivo'">
-        <img [src]="ROB" alt="Juego contra Bot">
+      <button class="juego-option">
+        <img [src]="ROB" alt="Juego contra Bot" [routerLink]="'/game'">
         <span>Vs Bot</span>
       </button>
   
