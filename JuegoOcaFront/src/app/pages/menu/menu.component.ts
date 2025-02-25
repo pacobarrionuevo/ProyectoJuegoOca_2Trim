@@ -51,25 +51,23 @@ export class MenuComponent implements OnInit {
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
 
-    // Escuchar invitaciones
     this.webSocketService.messageReceived.subscribe((message: any) => {
-      if (message.type === 'invitationReceived') {
-        const aceptar = confirm(
-          `${message.inviterName} te ha invitado a una partida. ¿Aceptas?`
-        );
-        if (aceptar) {
-          this.webSocketService.sendRxjs(JSON.stringify({
-            type: 'acceptInvitation',
-            inviterId: message.inviterId
-          }));
-        }
+      if (message.FriendId) {
+        this.actualizarEstadoAmigo(message.FriendId, message.Estado);
       }
     });
   }
 
+  actualizarEstadoAmigo(friendId: number, estado: string): void {
+    const amigo = this.amigos.find(a => a.UsuarioId === friendId);
+    if (amigo) {
+      amigo.UsuarioEstado = estado;
+    }
+  }
+
   invitarAPartida(friendId: number): void {
-    if (friendId === this.usuarioId) {
-      alert('¡No puedes invitarte a ti mismo!');
+    if (!friendId) {
+      console.error('ID de amigo no válido.');
       return;
     }
 
@@ -77,13 +75,18 @@ export class MenuComponent implements OnInit {
       const token = this.authService.getUserDataFromToken();
       if (token) {
         this.webSocketService.connectRxjs(token);
+      } else {
+        console.error('No se pudo obtener el token del usuario.');
+        return;
       }
     }
 
-    this.webSocketService.sendRxjs(JSON.stringify({
+    const message = {
       type: 'inviteFriend',
       friendId: friendId
-    }));
+    };
+    this.webSocketService.sendRxjs(JSON.stringify(message));
+    console.log(`Invitación enviada al amigo con ID: ${friendId}`);
   }
 
   obtenerUsuarios(): void {

@@ -99,7 +99,7 @@ await InitDatabaseAsync(app.Services);
 // Empezamos a atender a las peticiones de nuestro servidor 
 await app.RunAsync();
 
-//Metodo de Jose para iniciar la base de datos
+//M?todo de Jose para iniciar la base de datos
 static async Task InitDatabaseAsync(IServiceProvider serviceProvider)
 {
     using IServiceScope scope = serviceProvider.CreateScope();
