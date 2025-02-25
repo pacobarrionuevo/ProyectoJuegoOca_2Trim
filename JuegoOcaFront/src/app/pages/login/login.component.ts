@@ -20,7 +20,6 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService, 
-    private websocketService: WebsocketService,
     private router: Router
   ) {}
 
@@ -30,12 +29,6 @@ export class LoginComponent {
       this.emailoapodo = savedAuthData.emailoapodo || '';
       this.contrasena = savedAuthData.contrasena || '';
       this.recuerdame = savedAuthData.recuerdame || false;
-    }
-
-    // Verifica los dos Storage para el token y conecta el WebSocket si hay sesión
-    this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    if (this.jwt && !this.websocketService.isConnectedRxjs()) {
-      this.websocketService.connectRxjs(this.jwt);
     }
   }
 
@@ -47,14 +40,6 @@ export class LoginComponent {
 
     try {
       await this.authService.login(authData, this.recuerdame).toPromise();
-      
-      // Obtener el token después del login
-      this.jwt = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-
-      // Conectar WebSocket con el token
-      if (this.jwt) {
-        this.websocketService.connectRxjs(this.jwt);
-      }
 
       if (this.recuerdame) {
         localStorage.setItem('authData', JSON.stringify({
