@@ -29,13 +29,43 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private readonly IServiceProvider _serviceProvider;
 
+        // Contador de conexiones activas
+        private static int _activeConnections = 0;
+
+        // Evento para notificar cambios en el número de conexiones
+        public event Action<int> OnActiveConnectionsChanged;
+
         public WebSocketNetwork(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
+            OnActiveConnectionsChanged += count => NotifyActiveConnectionsChanged(count);
         }
+
+        private async void NotifyActiveConnectionsChanged(int count)
+        {
+            var message = new
+            {
+                Type = "activeConnections",
+                Count = count
+            };
+
+            var handlersSnapshot = _handlers.ToList();
+            foreach (var handler in handlersSnapshot)
+            {
+                if (handler.IsOpen)
+                {
+                    await handler.SendAsync(JsonSerializer.Serialize(message));
+                }
+            }
+        }
+
 
         public async Task HandleAsync(WebSocket webSocket)
         {
+            // Incrementar el contador de conexiones activas
+            Interlocked.Increment(ref _activeConnections);
+            OnActiveConnectionsChanged?.Invoke(_activeConnections);
+
             // Crear un nuevo WebSocketHandler y agregarlo a la lista
             WebSocketHandler handler = await AddWebsocketAsync(webSocket);
 
@@ -99,6 +129,10 @@ namespace JuegoOcaBack.WebSocketAdvanced
         // comprobar funcionamiento
         private async Task OnDisconnectedAsync(WebSocketHandler disconnectedHandler)
         {
+            // Decrementar el contador de conexiones activas
+            Interlocked.Decrement(ref _activeConnections);
+            OnActiveConnectionsChanged?.Invoke(_activeConnections);
+
             // Eliminar el WebSocketHandler de la lista
             await _semaphore.WaitAsync();
             disconnectedHandler.Disconnected -= OnDisconnectedAsync;
@@ -140,6 +174,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
         public WebSocketHandler GetHandlerById(int userId)
         {
             return _handlers.FirstOrDefault(h => h.Id == userId);
+        }
+
+        // Método para obtener el número de conexiones activas
+        public int GetActiveConnections()
+        {
+            return _activeConnections;
         }
 
         public async Task RemoveHandlerAsync(WebSocketHandler disconnectedHandler)

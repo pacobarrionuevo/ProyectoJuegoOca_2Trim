@@ -12,6 +12,8 @@ export class WebsocketService {
   disconnected = new Subject<void>();
   rxjsSocket: WebSocketSubject<string>;
 
+  activeConnections = new Subject<number>();
+
   private tokenKey = 'websocket_token';
 
   constructor() {
@@ -30,6 +32,7 @@ export class WebsocketService {
   }
 
   private onMessageReceived(message: string) {
+    console.log("Dentro de onMessageReceived");
     try {
       console.log('WebSocketService: Mensaje recibido:', message);
       const parsedMessage = JSON.parse(message);
@@ -43,19 +46,28 @@ export class WebsocketService {
               this.sendRxjs(JSON.stringify(response));
           }
         
+      } else if (parsedMessage.Type === 'activeConnections') {
+        console.log(`WebSocketService: Recibido activeConnections. Count recibido: ${parsedMessage.Count}`);
+        
+        // Actualizar el número de conexiones activas
+        this.activeConnections.next(parsedMessage.Count);
+
       } else if (parsedMessage.Type === 'gameStarted') {
         this.messageReceived.next({
           type: 'gameStarted',
           gameId: parsedMessage.GameId,
           opponent: parsedMessage.Opponent
         });
+
       } else if (parsedMessage.Type === 'waitingForOpponent') {
         this.messageReceived.next({
           type: 'waitingForOpponent'
         });
+
       } else if (parsedMessage.Type === 'friendConnected' || parsedMessage.Type === 'friendDisconnected') {
         console.log(`WebSocketService: Evento de amigo ${parsedMessage.Type} recibido para el ID: ${parsedMessage.FriendId}`);
         this.messageReceived.next(parsedMessage);
+
       } else {
         console.log('WebSocketService: Mensaje recibido no manejado:', parsedMessage);
       }

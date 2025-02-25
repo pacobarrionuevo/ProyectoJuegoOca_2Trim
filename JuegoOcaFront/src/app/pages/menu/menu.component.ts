@@ -38,7 +38,9 @@ throw new Error('Method not implemented.');
   usuarioApodo: string = ''; 
   usuarioFotoPerfil: string = '';
   usuarioId: number | null = null;
-  perfil_default: string; 
+  perfil_default: string;
+  
+  activeConnections: number = 0;
 
   constructor(
     private webSocketService: WebsocketService, 
@@ -84,6 +86,11 @@ throw new Error('Method not implemented.');
 
     this.webSocketService.disconnected.subscribe(() => {
       console.log('WebSocket desconectado');
+    });
+
+    this.webSocketService.activeConnections.subscribe((count) => {
+      this.activeConnections = count;
+      console.log(`Número de conexiones activas: ${count}`);
     });
   }
 
