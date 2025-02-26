@@ -1,27 +1,27 @@
 <div class="game-container">
-    <!-- Tablero -->
-    <div class="board">
-      <div *ngFor="let cell of cells" class="cell" 
-           [class.cell-oca]="cell.type === 'Oca'"
-           [class.cell-puente]="cell.type === 'Puente'"
-           [class.cell-posada]="cell.type === 'Posada'"
-           [class.cell-muerte]="cell.type === 'Muerte'"
-           [style.left.px]="getCellPosition(cell.number).x"
-           [style.top.px]="getCellPosition(cell.number).y">
-        <div class="cell-number">{{ cell.number }}</div>
-        <div class="players">
-          <span *ngFor="let player of getPlayersInCell(cell.number)" class="player" [style.background-color]="player.color">
-            {{ player.name }}
-          </span>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Controles del juego -->
-    <div class="controls">
-      <button (click)="rollDice()" [disabled]="!isCurrentPlayer">Lanzar Dado</button>
-      <div *ngIf="diceResult !== null" class="dice-result">
-        Resultado del dado: {{ diceResult }}
+  <!-- Tablero -->
+  <div class="board">
+    <div *ngFor="let cell of cells" class="cell" 
+         [class.cell-oca]="cell.type === 'Oca'"
+         [class.cell-puente]="cell.type === 'Puente'"
+         [class.cell-posada]="cell.type === 'Posada'"
+         [class.cell-muerte]="cell.type === 'Muerte'"
+         [style.left.px]="getCellPosition(cell.number).x"
+         [style.top.px]="getCellPosition(cell.number).y">
+      <div class="cell-number">{{ cell.number }}</div>
+      <div class="players">
+        <span *ngFor="let player of getPlayersInCell(cell.number)" class="player" [style.background-color]="player.color">
+          {{ player.name }}
+        </span>
       </div>
     </div>
   </div>
+
+  <!-- Controles del juego -->
+  <div class="controls">
+    <button (click)="rollDice()" [disabled]="!isCurrentPlayer">Lanzar Dado</button>
+    <div *ngIf="diceResult !== null" class="dice-result">
+      Resultado del dado: {{ diceResult }}
+    </div>
+  </div>
+</div>

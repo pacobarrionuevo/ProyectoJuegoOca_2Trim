@@ -61,14 +61,64 @@ export class GameComponent implements OnInit {
   }
 
   /**
-   * Calcula la posición (x, y) de una celda en el tablero.
+   * Calcula la posición (x, y) de una celda en el tablero en espiral invertida.
    */
   getCellPosition(cellNumber: number): { x: number, y: number } {
-    // Lógica para calcular la posición de la celda en el tablero
-    // Esto es un ejemplo básico, ajusta según la disposición en espiral del juego de la Oca
-    const row = Math.floor((cellNumber - 1) / 9);
-    const col = (cellNumber - 1) % 9;
-    return { x: col * 60, y: row * 60 }; // Ajusta el espaciado según sea necesario
+    // Tamaño de cada celda (ancho y alto)
+    const cellSize = 60; // Ajusta el tamaño de las celdas según sea necesario
+
+    // Número de casillas por lado del tablero
+    const boardSize = 9; // Tablero de 9x9 (centrado en la casilla 63)
+
+    // Coordenadas del centro del tablero
+    const centerX = (boardSize * cellSize) / 2;
+    const centerY = (boardSize * cellSize) / 2;
+
+    // Calcular la posición en espiral invertida
+    const spiralPosition = this.calculateInverseSpiralPosition(cellNumber, boardSize);
+
+    // Calcular las coordenadas (x, y) basadas en la posición en espiral
+    const x = centerX + spiralPosition.x * cellSize;
+    const y = centerY + spiralPosition.y * cellSize;
+
+    return { x, y };
+  }
+
+  /**
+   * Calcula la posición en espiral invertida para una celda dada.
+   */
+  calculateInverseSpiralPosition(cellNumber: number, boardSize: number): { x: number, y: number } {
+    // Invertir el número de la celda para comenzar desde el centro
+    const invertedCellNumber = 64 - cellNumber; // 63 -> 1, 62 -> 2, ..., 1 -> 63
+
+    // Lógica para calcular la posición en espiral
+    let x = 0;
+    let y = 0;
+    let direction = 0; // 0: derecha, 1: abajo, 2: izquierda, 3: arriba
+    let steps = 1; // Número de pasos en la dirección actual
+    let stepCount = 0; // Contador de pasos en la dirección actual
+    let stepSize = 1; // Tamaño del paso actual
+
+    for (let i = 1; i < invertedCellNumber; i++) {
+      // Mover en la dirección actual
+      if (direction === 0) x++;
+      else if (direction === 1) y++;
+      else if (direction === 2) x--;
+      else if (direction === 3) y--;
+
+      stepCount++;
+
+      // Cambiar de dirección si se alcanza el número de pasos
+      if (stepCount === stepSize) {
+        stepCount = 0;
+        direction = (direction + 1) % 4; // Cambiar de dirección
+
+        // Aumentar el tamaño del paso cada dos direcciones
+        if (direction === 0 || direction === 2) stepSize++;
+      }
+    }
+
+    return { x, y };
   }
 
   /**

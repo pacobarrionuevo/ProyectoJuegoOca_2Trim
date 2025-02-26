@@ -8,7 +8,7 @@
 .board {
   position: relative;
   width: 800px; /* Ajusta el tamaño del tablero */
-  height: 600px; /* Ajusta el tamaño del tablero */
+  height: 800px; /* Ajusta el tamaño del tablero */
 }
 
 .cell {
