@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 })
 export class GameService {
   private players: any[] = []; // Lista de jugadores
-  private currentPlayer: any; // Jugador actual
+  private currentPlayer: any = null; // Jugador actual
   private gameId: string | null = null; // ID de la partida
   private diceResult: number | null = null; // Resultado del dado
 
@@ -54,9 +54,14 @@ export class GameService {
    * Lanza los dados y mueve al jugador.
    */
   rollDice(): void {
+    if (!this.currentPlayer) {
+      console.error('No hay un jugador actual definido.');
+      return;
+    }
+  
     this.diceResult = Math.floor(Math.random() * 6) + 1; // Lanzar un dado de 6 caras
     console.log('Resultado del dado:', this.diceResult);
-
+  
     // Enviar el movimiento al servidor
     const moveMessage = {
       type: 'movePlayer',
@@ -65,6 +70,9 @@ export class GameService {
       diceResult: this.diceResult
     };
     this.websocketService.sendRxjs(JSON.stringify(moveMessage));
+  
+    // Notificar a los suscriptores que el estado del juego ha cambiado
+    this.notifyGameStateUpdate();
   }
 
   /**
@@ -74,15 +82,20 @@ export class GameService {
     console.log('Mensaje recibido en GameService:', message);
 
     if (message.type === 'gameUpdate') {
-      // Actualizar el estado del juego
-      this.players = message.players;
-      this.currentPlayer = message.currentPlayer;
-      this.notifyGameStateUpdate();
+        this.players = message.players;
+        this.currentPlayer = message.currentPlayer;
+        this.notifyGameStateUpdate();
+    } else if (message.type === 'botMove') {
+        // Actualizar la posición del bot en el cliente
+        const bot = this.players.find(player => player.id === message.playerId);
+        if (bot) {
+            bot.position = message.newPosition;
+        }
+        this.notifyGameStateUpdate();
     } else if (message.type === 'gameOver') {
-      // Manejar el fin del juego
-      this.handleGameOver(message.results);
+        this.handleGameOver(message.results);
     }
-  }
+}
 
   /**
    * Notifica a los suscriptores que el estado del juego ha cambiado.
@@ -101,5 +114,6 @@ export class GameService {
   private handleGameOver(results: any): void {
     console.log('Juego terminado. Resultados:', results);
     // Aquí puedes mostrar un modal con los resultados
-  }
+    alert(`El juego ha terminado. El ganador es: ${results.winnerId}`);
+}
 }

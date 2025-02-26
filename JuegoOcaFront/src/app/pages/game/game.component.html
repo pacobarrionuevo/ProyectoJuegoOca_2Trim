@@ -11,9 +11,9 @@
       <div class="cell-number">{{ cell.number }}</div>
       <div class="players">
         <span *ngFor="let player of getPlayersInCell(cell.number)" class="player" [style.background-color]="player.color">
-          {{ player.name }}
+            {{ player.name }}
         </span>
-      </div>
+    </div>
     </div>
   </div>
 

@@ -27,6 +27,18 @@ namespace JuegoOcaBack.Controllers
         public IActionResult MoverJugador([FromBody] MovePlayerRequest request)
         {
             int newPosition = _gameService.MovePlayer(request.PlayerId, request.Dices);
+
+            var gameUpdateMessage = new
+            {
+                type = "gameUpdate",
+                players = _gameService.ObtainPlayers(),
+                currentPlayer = _gameService.CurrentPlayer,
+                diceResult = request.Dices
+            };
+            // Enviar el mensaje a través del WebSocket
+
+            _gameService.NextTurn();
+
             return Ok(new { NewPosition = newPosition });
         }
 

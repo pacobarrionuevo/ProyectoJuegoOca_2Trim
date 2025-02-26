@@ -8,6 +8,7 @@ namespace JuegoOcaBack.Services
     {
         private Board _board;
         private List<PlayerDTO> _players;
+        private int _currentPlayerIndex = 0;
 
         public GameService()
         {
@@ -15,9 +16,16 @@ namespace JuegoOcaBack.Services
             _players = new List<PlayerDTO>();
         }
 
+        public PlayerDTO CurrentPlayer => _players[_currentPlayerIndex];
+
         public void AddPlayer(string name)
         {
             _players.Add(new PlayerDTO { Id = _players.Count + 1, Name = name, Position = 0 });
+        }
+
+        public void AddBot()
+        {
+            _players.Add(new PlayerDTO { Id = _players.Count + 1, Name = "Bot", Position = 0 });
         }
 
         public int MovePlayer(int playerId, int dices)
@@ -30,6 +38,12 @@ namespace JuegoOcaBack.Services
             if (newPosition >= 63) // Ganó el juego
             {
                 player.Position = 63;
+                var gameOverMessage = new
+                {
+                    type = "gameOver",
+                    winnerId = player.Id
+                };
+                // Enviar el mensaje a través del WebSocket
                 return 63;
             }
 
@@ -41,6 +55,32 @@ namespace JuegoOcaBack.Services
 
             player.Position = newPosition;
             return newPosition;
+        }
+
+        public void NextTurn()
+        {
+            _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
+        }
+
+        public void BotMove()
+        {
+            var bot = _players.FirstOrDefault(p => p.Name == "Bot");
+            if (bot != null)
+            {
+                int diceResult = new Random().Next(1, 7);
+                int newPosition = MovePlayer(bot.Id, diceResult);
+
+                var moveMessage = new
+                {
+                    type = "gameUpdate",
+                    players = _players,
+                    currentPlayer = CurrentPlayer,
+                    diceResult = diceResult
+                };
+                // Enviar el mensaje a través del WebSocket
+
+                NextTurn();
+            }
         }
 
         public List<PlayerDTO> ObtainPlayers()

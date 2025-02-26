@@ -71,3 +71,19 @@
 .cell-muerte {
   background-color: #333; /* Gris oscuro para la muerte */
 }
+
+.players {
+  display: flex;
+  gap: 2px;
+}
+
+.player {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  color: white;
+}

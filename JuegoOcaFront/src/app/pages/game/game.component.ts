@@ -22,12 +22,26 @@ export class GameComponent implements OnInit {
     // Inicializar el tablero
     this.initializeBoard();
 
-    // Suscribirse a las actualizaciones del estado del juego
+    // Inicializar jugadores (usuario y bot)
+    this.players = [
+      { id: 1, name: 'Jugador 1', position: 0, color: '#ff0000' }, // Rojo para el usuario
+      { id: 2, name: 'Bot', position: 0, color: '#0000ff' } // Azul para el bot
+    ];
+
+    this.currentPlayer = this.players[0]; // El usuario comienza primero  
+
     this.gameService.gameStateUpdated.subscribe((state: any) => {
       this.players = state.players;
       this.currentPlayer = state.currentPlayer;
       this.diceResult = state.diceResult;
-    });
+
+      // Si es el turno del bot, realizar una tirada automática
+      if (this.currentPlayer && this.currentPlayer.name === "Bot") {
+          setTimeout(() => {
+              this.gameService.rollDice();
+          }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
+      }
+  });
 
     // Iniciar la partida (ejemplo)
     this.gameService.startGame('12345'); // Reemplaza '12345' con el ID real de la partida
@@ -122,16 +136,16 @@ export class GameComponent implements OnInit {
   }
 
   /**
-   * Verifica si el jugador actual es el usuario.
-   */
-  get isCurrentPlayer(): boolean {
-    return this.currentPlayer && this.currentPlayer.id === 1; // Reemplaza con la lógica real
-  }
+ * Verifica si el jugador actual es el usuario.
+ */
+get isCurrentPlayer(): boolean {
+  return this.currentPlayer && this.currentPlayer.id === 1; // Reemplaza con la lógica real
+}
 
-  /**
-   * Lanza los dados.
-   */
-  rollDice(): void {
-    this.gameService.rollDice();
-  }
+/**
+* Lanza los dados.
+*/
+rollDice(): void {
+  this.gameService.rollDice();
+}
 }
