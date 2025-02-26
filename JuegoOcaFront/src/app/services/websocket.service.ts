@@ -10,6 +10,7 @@ export class WebsocketService {
   messageReceived = new Subject<any>(); // Notifica cuando se recibe un mensaje
   disconnected = new Subject<void>(); // Notifica cuando se desconecta el WebSocket
   activeConnections = new Subject<number>(); // Notifica el número de conexiones activas
+  friendNotAvailable = new Subject<string>(); // Notifica cuando un amigo no está disponible
 
   private tokenKey = 'websocket_token'; // Clave para almacenar el token en sessionStorage
   private rxjsSocket: WebSocketSubject<string>; // Conexión WebSocket
@@ -109,34 +110,50 @@ export class WebsocketService {
    */
   private handleMessage(message: string): void {
     try {
+      // Manejar mensajes "ping" primero
+      if (message === 'ping') {
+        this.sendRxjs('pong'); // Responder con "pong"
+        return; // Salir del método sin intentar parsear el mensaje
+      }
+  
+      // Intentar parsear solo si es un JSON válido
       const parsedMessage = JSON.parse(message);
       console.log('WebSocketService: Mensaje recibido:', parsedMessage);
-
+  
       // Convertir propiedades a camelCase si es necesario
       const normalizedMessage = this.normalizeKeys(parsedMessage);
-
+  
       // Procesar el mensaje según su tipo
-      if (normalizedMessage.type === 'friendInvitation') {
-        this.handleFriendInvitation(normalizedMessage);
-      } else if (normalizedMessage.type === 'activeConnections') {
-        this.handleActiveConnections(normalizedMessage);
-      } else if (normalizedMessage.type === 'gameStarted') {
-        this.handleGameStarted(normalizedMessage);
-      } else if (normalizedMessage.type === 'waitingForOpponent') {
-        this.handleWaitingForOpponent(normalizedMessage);
-      } else if (normalizedMessage.type === 'friendConnected' || normalizedMessage.type === 'friendDisconnected') {
-        this.handleFriendStatus(normalizedMessage);
-      } else {
-        console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
+      switch (normalizedMessage.type) {
+        case 'friendInvitation':
+          this.handleFriendInvitation(normalizedMessage);
+          break;
+        case 'activeConnections':
+          this.handleActiveConnections(normalizedMessage);
+          break;
+        case 'gameStarted':
+          this.handleGameStarted(normalizedMessage);
+          break;
+        case 'waitingForOpponent':
+          this.handleWaitingForOpponent(normalizedMessage);
+          break;
+        case 'friendConnected':
+        case 'friendDisconnected':
+          this.handleFriendStatus(normalizedMessage);
+          break;
+        case 'friendNotAvailable':
+          this.friendNotAvailable.next(normalizedMessage.message); // Notificar que el amigo no está disponible
+          break;
+        default:
+          console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
       }
-
+  
       // Notificar a los suscriptores que se ha recibido un mensaje
       this.messageReceived.next(normalizedMessage);
     } catch (error) {
-      console.error('Error al parsear el mensaje:', error);
+      console.error('Error procesando mensaje:', error);
     }
   }
-
   /**
    * Maneja una invitación de amigo.
    */

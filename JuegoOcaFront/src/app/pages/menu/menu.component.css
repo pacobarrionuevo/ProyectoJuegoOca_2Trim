@@ -136,7 +136,17 @@ input[type="text"]:focus-visible {
   padding: 1%;
   border-radius: 10px;
 }
-
+.error-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px;
+  background: #ff4444;
+  color: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
 
 @media (max-width: 768px) {
   .menu-grid {

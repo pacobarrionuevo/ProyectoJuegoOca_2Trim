@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { WebsocketService } from '../../services/websocket.service';
 import { FormsModule } from '@angular/forms';
@@ -19,7 +19,7 @@ import { Subscription } from 'rxjs';
   imports: [CommonModule, FormsModule, RouterLink],
   styleUrls: ['./menu.component.css']
 })
-export class MenuComponent implements OnInit {
+export class MenuComponent implements OnInit, OnDestroy {
   usuarios: User[] = [];
   usuariosFiltrados: User[] = [];
   terminoBusqueda: string = '';
@@ -38,8 +38,11 @@ export class MenuComponent implements OnInit {
 
   activeConnections: number = 0;
   private wsSubscriptions: Subscription[] = [];
+
+  // Variable para manejar el mensaje de error
+  errorMessage: string | null = null;
+
   constructor(
-    
     private webSocketService: WebsocketService,
     private apiService: ApiService,
     private authService: AuthService,
@@ -82,50 +85,50 @@ export class MenuComponent implements OnInit {
         if (message.type === 'invalidInvitation') {
           this.handleInvalidInvitation(message);
         }
-        // Mantenemos tu lógica original de mensajes
+        if (message.type === 'friendNotAvailable') {
+          this.errorMessage = message.message; // Mostrar mensaje de error
+          setTimeout(() => this.errorMessage = null, 5000); // Ocultar después de 5 segundos
+        }
         if (message.FriendId) {
           console.log(`Actualizando estado del amigo ${message.FriendId} a ${message.Estado}`);
           this.actualizarEstadoAmigo(message.FriendId, message.Estado);
         }
-        
-        // Agregamos manejo de invitaciones
         if (message.type === 'invitationReceived') {
           this.handleInvitation(message);
         }
       })
     );
 
-    // Listeners de conexión/desconexión (se mantienen igual)
+    // Listeners de conexión/desconexión
     this.wsSubscriptions.push(
       this.webSocketService.connected.subscribe(() => {
         console.log('WebSocket conectado');
       }),
-      
       this.webSocketService.disconnected.subscribe(() => {
         console.log('WebSocket desconectado');
       }),
-      
       this.webSocketService.activeConnections.subscribe((count) => {
         this.activeConnections = count;
         console.log(`Conexiones activas: ${count}`);
       }),
       this.webSocketService.messageReceived.subscribe((message: any) => {
         console.log("Mensaje WebSocket recibido:", message);
-        
         if (message.type === 'friendConnected' || message.type === 'friendDisconnected') {
-            const estado = message.type === 'friendConnected' ? 'Conectado' : 'Desconectado';
-            this.actualizarEstadoAmigo(message.friendId, estado);
+          const estado = message.type === 'friendConnected' ? 'Conectado' : 'Desconectado';
+          this.actualizarEstadoAmigo(message.friendId, estado);
         }
-        
         if (message.type === 'activeConnections') {
-            this.activeConnections = message.count;
+          this.activeConnections = message.count;
         }
-  }))
+      })
+    );
   }
+
   ngOnDestroy(): void {
     // Limpieza de subscriptions
     this.wsSubscriptions.forEach(sub => sub.unsubscribe());
   }
+
   private handleInvitation(message: any): void {
     const aceptar = confirm(`${message.inviterName} te ha invitado a una partida. ¿Aceptas?`);
     if (aceptar) {
@@ -138,44 +141,43 @@ export class MenuComponent implements OnInit {
 
   private handleInvalidInvitation(message: any): void {
     alert(`Error de invitación: ${message.message}`);
-    
     console.error('Intento de auto-invitación bloqueado');
   }
+
   actualizarEstadoAmigo(friendId: number, estado: string): void {
     this.amigos = this.amigos.map(amigo => {
-        if (amigo.UsuarioId === friendId) {
-            return { ...amigo, UsuarioEstado: estado };
-        }
-        return amigo;
+      if (amigo.UsuarioId === friendId) {
+        return { ...amigo, UsuarioEstado: estado };
+      }
+      return amigo;
     });
-    
     // Forzar actualización de la vista
-    this.cdr.detectChanges(); 
-}
+    this.cdr.detectChanges();
+  }
 
   invitarAPartida(friendId: number): void {
     if (!friendId || friendId === this.usuarioId) {
-        alert('Selecciona un amigo válido');
-        return;
+      alert('Selecciona un amigo válido');
+      return;
     }
 
     // Verificar conexión WebSocket
     if (!this.webSocketService.isConnectedRxjs()) {
-        const token = this.authService.getUserDataFromToken();
-        if (token) this.webSocketService.connectRxjs(token);
+      const token = this.authService.getUserDataFromToken();
+      if (token) this.webSocketService.connectRxjs(token);
     }
 
     // Enviar mensaje
     this.webSocketService.sendRxjs(JSON.stringify({
-        type: 'inviteFriend',
-        friendId: friendId
+      type: 'inviteFriend',
+      friendId: friendId
     }));
-}
+  }
 
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
       this.usuarios = usuarios.map(usuario => ({
-        UsuarioId: usuario.usuarioId, 
+        UsuarioId: usuario.usuarioId,
         UsuarioApodo: usuario.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(usuario.usuarioFotoPerfil)
       }));
@@ -188,10 +190,9 @@ export class MenuComponent implements OnInit {
   }
 
   buscarUsuarios(): void {
-    this.usuariosFiltrados = this.terminoBusqueda.trim() 
-      ? this.usuarios.filter(usuario => 
-          usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase())
-        ) 
+    this.usuariosFiltrados = this.terminoBusqueda.trim()
+      ? this.usuarios.filter(usuario =>
+        usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase()))
       : [...this.usuarios];
   }
 
@@ -200,7 +201,7 @@ export class MenuComponent implements OnInit {
     this.webSocketService.clearToken();
     this.webSocketService.disconnectRxjs();
     sessionStorage.removeItem('auth_token');
-    this.router.navigate(['/login']); 
+    this.router.navigate(['/login']);
   }
 
   cargarInfoUsuario(): void {
@@ -215,8 +216,6 @@ export class MenuComponent implements OnInit {
     }
   }
 
-  // La solicitud se manda bien y sin problemas
-  // --> Hacer mediante websockets D:
   enviarSolicitud(receiverId: number): void {
     this.friendService.sendFriendRequest(receiverId).subscribe({
       next: (result) => {
@@ -230,16 +229,11 @@ export class MenuComponent implements OnInit {
     });
   }
 
-  // Las carga correctamente --> ¿Websockets?
   obtenerSolicitudesPendientes() {
     this.friendService.getPendingRequests().subscribe({
       next: (solicitudes: any[]) => {
         console.log('Solicitudes pendientes recibidas:', solicitudes);
-        // Mapeamos cada objeto de amistad a nuestra interfaz SolicitudAmistad.
-        // Se asume que this.usuarioId es el ID del usuario autenticado, de modo que se
-        // busca en cada amistad el usuario contrario (por ejemplo, el que envió la solicitud)
         this.solicitudesPendientes = solicitudes.map(amistadObj => {
-          // Buscar en el array amistadUsuario el que NO sea el usuario actual.
           const otro = amistadObj.amistadUsuario.find(ua => ua.usuarioId !== this.usuarioId);
           return {
             amistadId: amistadObj.amistadId,
@@ -253,73 +247,64 @@ export class MenuComponent implements OnInit {
     });
   }
 
-  // Necesario para obtener bien las solicitudes
   getUsuarioApodoById(userId: number): string {
     const usuario = this.usuarios.find(u => u.UsuarioId === userId);
     return usuario ? usuario.UsuarioApodo : 'te ha equivocao compi 😂';
   }
 
-  // Se acepta todo guay
   aceptarSolicitud(solicitud: any) {
-    console.log('Solicitud recibida:', solicitud); 
-  
+    console.log('Solicitud recibida:', solicitud);
+
     if (!solicitud) {
       console.error('Error: La solicitud es null o undefined');
       return;
     }
-  
+
     if (!solicitud.amistadId) {
       console.error('Error: amistadId no está definido en la solicitud:', solicitud);
       return;
     }
-  
+
     const amistadId = solicitud.amistadId;
     console.log('Enviando amistadId:', amistadId);
-  
+
     this.friendService.aceptarSolicitud(amistadId).subscribe({
       next: (res) => console.log('Solicitud aceptada:', res),
       error: (err) => console.error('Error al aceptar solicitud:', err),
     });
   }
 
-  // Se rechaza todo guay
   rechazarSolicitud(solicitud: any) {
     console.log('Solicitud recibida para rechazar:', solicitud);
-  
+
     if (!solicitud) {
       console.error('Error: La solicitud es null o undefined');
       return;
     }
-  
+
     if (!solicitud.amistadId) {
       console.error('Error: amistadId no está definido en la solicitud:', solicitud);
       return;
     }
-  
+
     const amistadId = solicitud.amistadId;
     console.log('Enviando rechazo para amistadId:', amistadId);
-  
+
     this.friendService.rechazarSolicitud(amistadId).subscribe({
       next: (res) => console.log('Solicitud rechazada:', res),
       error: (err) => console.error('Error al rechazar solicitud:', err)
     });
   }
 
-  // Cargan bien
   cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
-      // Mapeo de amigos con la lógica original
       this.amigos = amigos.map(amigo => ({
         UsuarioId: amigo.UsuarioId || amigo.usuarioId,
         UsuarioApodo: amigo.UsuarioApodo || amigo.usuarioApodo,
         UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
-        UsuarioEstado: amigo.UsuarioEstado || amigo.usuarioEstado || 'Desconectado' // Estado inicial conservador
+        UsuarioEstado: amigo.UsuarioEstado || amigo.usuarioEstado || 'Desconectado'
       }));
-  
-      // Copia los amigos a la lista filtrada
       this.amigosFiltrados = [...this.amigos];
-  
-      // Solicitar estados actualizados al servidor WebSocket
       this.webSocketService.sendRxjs(JSON.stringify({
         type: 'requestStatusUpdate'
       }));
@@ -334,13 +319,11 @@ export class MenuComponent implements OnInit {
         UsuarioFotoPerfil: this.validarUrlImagen(amigo.UsuarioFotoPerfil || amigo.usuarioFotoPerfil),
         UsuarioEstado: this.obtenerEstadoAmigo(amigo.UsuarioId || amigo.usuarioId)
       }));
-  
       this.amigosFiltrados = [...this.amigos];
     });
   }
 
-  // Bueno, esto se puede quedar
   private obtenerEstadoAmigo(usuarioId: string): string {
     return this.usuariosConectados.has(usuarioId) ? 'Conectado' : 'Desconectado';
-  } 
+  }
 }
