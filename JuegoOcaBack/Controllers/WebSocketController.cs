@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using JuegoOcaBack.WebSocketAdvanced;
+using System.Security.Claims;
 
 namespace JuegoOcaBack.Controllers
 {
@@ -30,5 +31,16 @@ namespace JuegoOcaBack.Controllers
                 HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             }
         }
+        [HttpGet("online-users")]
+        public IActionResult GetOnlineUsers()
+        {
+            var connectedUsers = _websocketNetwork.GetConnectedUsers();
+            return Ok(new
+            {
+                OnlineUsers = connectedUsers,
+                Total = connectedUsers.Count
+            });
+        }
     }
 }
+    

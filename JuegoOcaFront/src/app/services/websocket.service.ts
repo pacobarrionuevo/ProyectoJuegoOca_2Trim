@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-
+import { HttpClient } from '@angular/common/http';
+import {  Observable,BehaviorSubject } from 'rxjs';
+import { environment } from '../../environments/environment';
 @Injectable({
   providedIn: 'root'
 })
@@ -11,11 +13,11 @@ export class WebsocketService {
   disconnected = new Subject<void>(); // Notifica cuando se desconecta el WebSocket
   activeConnections = new Subject<number>(); // Notifica el número de conexiones activas
   friendNotAvailable = new Subject<string>(); // Notifica cuando un amigo no está disponible
-
+  public onlineUsers$ = new BehaviorSubject<Set<number>>(new Set());
   private tokenKey = 'websocket_token'; // Clave para almacenar el token en sessionStorage
   private rxjsSocket: WebSocketSubject<string>; // Conexión WebSocket
-
-  constructor() {
+  private baseURL = `${environment.apiUrl}`; 
+  constructor(private http: HttpClient) {
     this.reconnectIfNeeded(); // Intentar reconectar al iniciar el servicio
   }
 
@@ -35,7 +37,9 @@ export class WebsocketService {
     console.log(`WebSocketService: isConnectedRxjs() -> ${isConnected}`);
     return isConnected;
   }
-
+  fetchOnlineUsers(): Observable<number[]> {
+    return this.http.get<number[]>(`${this.baseURL}/ws/online-users`);
+  }
   /**
    * Conecta el WebSocket usando un token de autenticación.
    */
@@ -125,6 +129,15 @@ export class WebsocketService {
   
       // Procesar el mensaje según su tipo
       switch (normalizedMessage.type) {
+        case 'onlineUsers':
+        this.handleOnlineUsers(normalizedMessage);
+        break;
+      case 'friendConnected':
+        this.addOnlineUser(normalizedMessage.friendId);
+        break;
+      case 'friendDisconnected':
+        this.removeOnlineUser(normalizedMessage.friendId);
+        break;
         case 'friendInvitation':
           this.handleFriendInvitation(normalizedMessage);
           break;
@@ -237,7 +250,21 @@ export class WebsocketService {
       console.log('WebSocketService: No hay token almacenado, no se puede reconectar');
     }
   }
-
+  private handleOnlineUsers(message: { users: number[] }): void {
+    this.onlineUsers$.next(new Set(message.users));
+  }
+  
+  private addOnlineUser(userId: number): void {
+    const current = this.onlineUsers$.value;
+    current.add(userId);
+    this.onlineUsers$.next(current);
+  }
+  
+  private removeOnlineUser(userId: number): void {
+    const current = this.onlineUsers$.value;
+    current.delete(userId);
+    this.onlineUsers$.next(current);
+  }
   /**
    * Elimina el token almacenado (por ejemplo, al cerrar sesión).
    */

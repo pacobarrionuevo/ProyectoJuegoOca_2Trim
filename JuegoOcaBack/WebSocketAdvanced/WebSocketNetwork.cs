@@ -400,6 +400,21 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
             }
         }
+        public List<int> GetConnectedUsers()
+        {
+            _connectedSemaphore.Wait();
+            try
+            {
+                return _connectedPlayers
+                    .Where(p => p.IsOpen)
+                    .Select(p => p.Id)
+                    .ToList();
+            }
+            finally
+            {
+                _connectedSemaphore.Release();
+            }
+        }
 
         private async Task OnDisconnectedAsync(WebSocketHandler disconnectedHandler)
         {
