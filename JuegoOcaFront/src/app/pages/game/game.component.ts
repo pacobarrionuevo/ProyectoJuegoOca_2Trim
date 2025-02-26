@@ -1,10 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { GameService } from '../../services/game.service';
+import { RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
-  styleUrls: ['./game.component.css']
+  styleUrls: ['./game.component.css'],
+  standalone: true,
+  imports: [RouterModule, CommonModule],
 })
 export class GameComponent implements OnInit {
   players: any[] = [];
