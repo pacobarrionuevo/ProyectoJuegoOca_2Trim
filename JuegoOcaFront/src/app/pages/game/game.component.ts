@@ -30,7 +30,6 @@ export class GameComponent implements OnInit {
         if (response && response.players) {
             console.log('Partida iniciada correctamente:', response);
             this.players = response.players;
-
             // Establecer el usuario real
             const currentUser = this.players.find(player => player.name !== "Bot");
             if (currentUser) {
@@ -84,12 +83,6 @@ export class GameComponent implements OnInit {
   get isCurrentPlayer(): boolean {
     const currentUser = this.gameService.getCurrentUser(); // Obtener el usuario real desde el servicio
     const isCurrent = this.currentPlayer && this.currentPlayer.id === currentUser?.id;
-
-    console.log('Verificando si el jugador actual es el usuario real:');
-    console.log('Jugador actual:', this.currentPlayer);
-    console.log('Usuario real:', currentUser);
-    console.log('¿Es el usuario real?', isCurrent);
-
     return isCurrent;
   }
 
@@ -97,11 +90,9 @@ export class GameComponent implements OnInit {
    * Inicializa el tablero con 63 casillas.
    */
   initializeBoard(): void {
-    console.log('Inicializando tablero...');
     for (let i = 1; i <= 63; i++) {
       this.cells.push({ number: i, type: this.getCellType(i) });
     }
-    console.log('Tablero inicializado:', this.cells);
   }
 
   /**

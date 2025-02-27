@@ -21,7 +21,9 @@ export class GameService {
 
   constructor(private http: HttpClient, private websocketService: WebsocketService) {
     // Suscribirse a los mensajes del WebSocket
+    console.log("///////////////////////");
     this.websocketService.messageReceived.subscribe((message: any) => {
+      console.log("///////////////////////");
       console.log('Mensaje recibido en GameService:', message);
       this.handleMessage(message);
     });
@@ -65,7 +67,6 @@ export class GameService {
    * Obtiene el usuario real.
    */
   getCurrentUser(): any {
-    console.log('Obteniendo usuario real:', this.currentUser);
     return this.currentUser;
   }
 
@@ -86,7 +87,6 @@ export class GameService {
    */
   rollDice(): void {
     if (!this.currentPlayer) {
-        console.error('No hay un jugador actual definido.');
         return;
     }
 
