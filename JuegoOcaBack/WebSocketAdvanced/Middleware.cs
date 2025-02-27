@@ -1,4 +1,5 @@
 ﻿using System.Net.WebSockets;
+using System.Security.Claims;
 
 namespace JuegoOcaBack.WebSocketAdvanced
 {
@@ -13,12 +14,9 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
-
             if (context.WebSockets.IsWebSocketRequest)
             {
-
-                //coger token de la url y meterlo en la cabecera
-
+                // Extraer token de la URL y agregarlo al header
                 string token = context.Request.Query["token"];
                 if (!string.IsNullOrEmpty(token))
                 {
@@ -27,28 +25,32 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
                 using WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 int userId = ObtenerUserId(context);
-                await _webSocketNetwork.HandleAsync(webSocket,  userId);
-
+                await _webSocketNetwork.HandleAsync(webSocket, userId);
                 return;
             }
-
             else
             {
                 await next(context);
             }
         }
-    
-      private int ObtenerUserId(HttpContext context)
+
+        private int ObtenerUserId(HttpContext context)
         {
-            if (context.User.Identity.IsAuthenticated)
+            // Verificar autenticación
+            if (!context.User.Identity.IsAuthenticated)
             {
-                var userIdClaim = context.User.FindFirst("userId");
-                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-                {
-                    return userId;
-                }
+                throw new UnauthorizedAccessException("Usuario no autenticado");
             }
-            throw new UnauthorizedAccessException("Usuario no autenticado o userId no válido.");
+
+            // Obtener el ID del usuario desde las claims
+            var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                throw new UnauthorizedAccessException("Claim de usuario no válida");
+            }
+
+            return userId;
         }
     }
 }
