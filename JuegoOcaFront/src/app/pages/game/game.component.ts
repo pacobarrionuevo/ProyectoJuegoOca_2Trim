@@ -20,52 +20,62 @@ export class GameComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('Inicializando GameComponent...');
-  
+
     // Inicializar el tablero
     this.initializeBoard();
-  
-    const playerName = "Jugador1"; // Nombre del jugador humano (puedes obtenerlo de un formulario o de otro lugar)
+
+    // Iniciar la partida y obtener los jugadores
+    const playerName = "Jugador1"; // Nombre del jugador humano
     this.gameService.startGame('12345', playerName).subscribe((response) => {
-      if (response) {
-        console.log('Partida iniciada correctamente:', response);
-        this.players = response.Players; // Asigna la lista de jugadores desde la respuesta
+        if (response && response.players) {
+            console.log('Partida iniciada correctamente:', response);
+            this.players = response.players;
 
-        // Establecer el usuario real (por ejemplo, el primer jugador)
-        const currentUser = this.players.find(player => player.name !== "Bot"); // Asume que el bot tiene el nombre "Bot"
-        if (currentUser) {
-          console.log('Usuario real detectado:', currentUser);
-          this.gameService.setCurrentUser(currentUser);
+            // Establecer el usuario real
+            const currentUser = this.players.find(player => player.name !== "Bot");
+            if (currentUser) {
+                console.log('Usuario real detectado:', currentUser);
+                this.gameService.setCurrentUser(currentUser);
+            } else {
+                console.warn('No se encontró un usuario real en la lista de jugadores.');
+            }
+
+            // Asignar el primer jugador como currentPlayer
+            this.currentPlayer = this.players[0];
+            this.gameService.setCurrentPlayer(this.currentPlayer);
+            console.log('Jugador actual asignado:', this.currentPlayer);
         } else {
-          console.warn('No se encontró un usuario real en la lista de jugadores.');
+            console.error('No se pudo iniciar la partida o la lista de jugadores está vacía.');
         }
-
-        // Asignar el primer jugador como currentPlayer (opcional)
-        this.currentPlayer = this.players[0];
-        console.log('Jugador actual asignado:', this.currentPlayer);
-      } else {
-        console.error('No se pudo iniciar la partida.');
-      }
     });
-  
+
     // Suscribirse a las actualizaciones del estado del juego
     this.gameService.gameStateUpdated.subscribe((state: any) => {
-      console.log('Actualización del estado del juego recibida:', state);
-      this.players = state.players;
-      this.currentPlayer = state.currentPlayer;
-      this.diceResult = state.diceResult;
-  
-      console.log('Jugadores actualizados:', this.players);
-      console.log('Jugador actual actualizado:', this.currentPlayer);
-      console.log('Resultado del dado actualizado:', this.diceResult);
-  
-      // Si es el turno del bot, realizar una tirada automática
-      if (this.currentPlayer && this.currentPlayer.name === "Bot") {
-          console.log('Es el turno del bot. Realizando tirada automática...');
-          setTimeout(() => {
-              this.gameService.rollDice();
-          }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
-      }
+        console.log('Actualización del estado del juego recibida:', state);
+        this.players = state.players;
+        this.currentPlayer = state.currentPlayer;
+        this.diceResult = state.diceResult;
+
+        console.log('Jugadores actualizados:', this.players);
+        console.log('Jugador actual actualizado:', this.currentPlayer);
+        console.log('Resultado del dado actualizado:', this.diceResult);
+
+        // Si es el turno del bot, realizar una tirada automática
+        if (this.currentPlayer && this.currentPlayer.name === "Bot") {
+            console.log('Es el turno del bot. Realizando tirada automática...');
+            setTimeout(() => {
+                this.gameService.rollDice();
+            }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
+        }
     });
+}
+  
+  getPlayersInCell(cellNumber: number): any[] {
+    if (!this.players) {
+      console.warn('La lista de jugadores no está inicializada.');
+      return [];
+    }
+    return this.players.filter(player => player.position === cellNumber);
   }
 
   /**
@@ -103,13 +113,6 @@ export class GameComponent implements OnInit {
     if (cellNumber === 19 || cellNumber === 31 || cellNumber === 42) return 'Posada';
     if (cellNumber === 58) return 'Muerte';
     return 'Normal';
-  }
-
-  /**
-   * Obtiene los jugadores que están en una casilla.
-   */
-  getPlayersInCell(cellNumber: number): any[] {
-    return this.players.filter(player => player.position === cellNumber);
   }
 
   /**

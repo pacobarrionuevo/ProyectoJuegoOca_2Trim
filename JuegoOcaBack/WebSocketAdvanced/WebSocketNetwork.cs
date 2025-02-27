@@ -10,6 +10,8 @@ using JuegoOcaBack.Models.Database;
 using JuegoOcaBack.Models.DTO;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
+using JuegoOcaBack.Services;
+using System.Text.Json.Serialization;
 
 namespace JuegoOcaBack.WebSocketAdvanced
 {
@@ -40,6 +42,31 @@ namespace JuegoOcaBack.WebSocketAdvanced
         {
             _serviceProvider = serviceProvider;
             OnActiveConnectionsChanged += count => NotifyActiveConnectionsChanged(count);
+        }
+
+        private GameService GetGameService()
+        {
+            return _serviceProvider.GetRequiredService<GameService>();
+        }
+
+        public async Task BroadcastMessage(string message)
+        {
+            await _semaphore.WaitAsync();
+            try
+            {
+                var handlersSnapshot = _handlers.ToList(); // Crear una copia de la lista para evitar problemas de concurrencia
+                foreach (var handler in handlersSnapshot)
+                {
+                    if (handler.IsOpen) // Verificar si el WebSocket está abierto
+                    {
+                        await handler.SendAsync(message); // Enviar el mensaje a cada cliente conectado
+                    }
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         private async void NotifyActiveConnectionsChanged(int count)
@@ -118,23 +145,64 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
             try
             {
-                var msg = JsonSerializer.Deserialize<MatchmakingMessage>(message);
+                // Deserializar el mensaje a la clase base para obtener el tipo
+                var baseMessage = JsonSerializer.Deserialize<WebSocketMessage>(message);
+                Console.WriteLine($"Tipo de mensaje: {baseMessage.Type}");
 
-                if (msg?.type == "playRandom")
+                switch (baseMessage.Type.ToLower()) // Convertir a minúsculas para evitar problemas
                 {
-                    await ProcessMatchmaking(handler);
-                }
-                else if (msg?.type == "cancelSearch")
-                {
-                    await _waitingSemaphore.WaitAsync();
-                    _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
-                    _waitingSemaphore.Release();
+                    case "moveplayer":
+                        var movePlayerMessage = JsonSerializer.Deserialize<MovePlayerMessage>(message);
+                        Console.WriteLine($"Moviendo al jugador {movePlayerMessage.PlayerId} con dado {movePlayerMessage.DiceResult}");
+                        var gameService = GetGameService();
+                        gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
+                        break;
+
+                    case "playrandom":
+                        var playRandomMessage = JsonSerializer.Deserialize<PlayRandomMessage>(message);
+                        await ProcessMatchmaking(handler);
+                        break;
+
+                    case "cancelsearch":
+                        var cancelSearchMessage = JsonSerializer.Deserialize<CancelSearchMessage>(message);
+                        await _waitingSemaphore.WaitAsync();
+                        _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
+                        _waitingSemaphore.Release();
+                        break;
+
+                    default:
+                        Console.WriteLine($"Tipo de mensaje no reconocido: {baseMessage.Type}");
+                        break;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error procesando mensaje: {ex.Message}");
             }
+        }
+        public class WebSocketMessage
+        {
+            [JsonPropertyName("type")] // Asegúrate de que coincida con el JSON
+            public string Type { get; set; }
+        }
+
+        public class MovePlayerMessage : WebSocketMessage
+        {
+            [JsonPropertyName("playerId")] // Asegúrate de que coincida con el JSON
+            public int PlayerId { get; set; }
+
+            [JsonPropertyName("diceResult")] // Asegúrate de que coincida con el JSON
+            public int DiceResult { get; set; }
+        }
+
+        public class PlayRandomMessage : WebSocketMessage
+        {
+            // Puedes agregar propiedades específicas para este tipo de mensaje si es necesario
+        }
+
+        public class CancelSearchMessage : WebSocketMessage
+        {
+            // Puedes agregar propiedades específicas para este tipo de mensaje si es necesario
         }
 
         private async Task ProcessMatchmaking(WebSocketHandler handler)
@@ -318,7 +386,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
 
         // Método para obtener el número de conexiones activas
-        public int GetActiveConnections()
+        public int GetActiveConnections()   
         {
             return _activeConnections;
         }

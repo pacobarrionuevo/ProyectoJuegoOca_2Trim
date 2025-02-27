@@ -1,8 +1,11 @@
 ﻿using JuegoOcaBack.Models.Database.Entidades;
 using JuegoOcaBack.Models.DTO;
+using JuegoOcaBack.WebSocketAdvanced;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace JuegoOcaBack.Services
 {
@@ -12,19 +15,23 @@ namespace JuegoOcaBack.Services
         private List<PlayerDTO> _players;
         private int _currentPlayerIndex = 0;
 
-        public GameService()
+        private readonly IServiceProvider _serviceProvider;
+
+        public GameService(IServiceProvider serviceProvider)
         {
+            _serviceProvider = serviceProvider;
             _board = new Board();
             _players = new List<PlayerDTO>();
         }
 
+        private WebSocketNetwork GetWebSocketNetwork()
+        {
+            return _serviceProvider.GetRequiredService<WebSocketNetwork>();
+        }
+
         public PlayerDTO CurrentPlayer => _players[_currentPlayerIndex];
 
-        /// <summary>
-        /// Inicia una nueva partida.
-        /// </summary>
-        /// <param name="gameId">ID de la partida (opcional).</param>
-        /// <param name="playerName">Nombre del jugador humano.</param>
+        // Aquí se empieza la partida
         public void StartGame(string gameId, string playerName)
         {
             // Reiniciar el estado del juego
@@ -81,9 +88,44 @@ namespace JuegoOcaBack.Services
             return newPosition;
         }
 
+        public void HandleMovePlayer(int playerId, int diceResult)
+        {
+            var webSocketNetwork = GetWebSocketNetwork();
+            var player = _players.FirstOrDefault(p => p.Id == playerId);
+            if (player == null) return;
+
+            // Mover al jugador
+            int newPosition = MovePlayer(playerId, diceResult);
+            Console.WriteLine($"Moviendo al jugador {playerId} a la posición {newPosition}");
+
+            // Notificar a los clientes sobre la actualización del estado del juego
+            var moveMessage = new
+            {
+                type = "gameUpdate",
+                players = _players, // Asegúrate de que esta lista esté actualizada
+                currentPlayer = CurrentPlayer,
+                diceResult = diceResult
+            };
+
+            // Enviar el mensaje a través del WebSocket
+            var messageJson = JsonSerializer.Serialize(moveMessage);
+            Console.WriteLine($"Enviando gameUpdate: {messageJson}");
+            webSocketNetwork.BroadcastMessage(messageJson);
+        }
+
+
         public void NextTurn()
         {
             _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
+        }
+
+        public void PlayerMove(int playerId, int diceResult)
+        {
+            // Llamar a HandleMovePlayer para manejar el movimiento y la notificación
+            HandleMovePlayer(playerId, diceResult);
+
+            // Pasar al siguiente turno
+            NextTurn();
         }
 
         public void BotMove()

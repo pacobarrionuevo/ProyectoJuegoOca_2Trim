@@ -28,14 +28,15 @@ export class GameService {
   }
 
   startGame(gameId: string, playerName: string): Observable<any> {
-    const body = { GameId: gameId, PlayerName: playerName }; // Asegúrate de que los nombres de los campos coincidan con lo que espera el servidor
+    this.gameId = gameId; // Asignar el gameId al servicio
+    const body = { GameId: gameId, PlayerName: playerName };
     return this.http.post<any>(`${environment.apiUrl}/api/Game/start-game`, body).pipe(
-      catchError((error) => {
-        console.error('Error al iniciar la partida:', error);
-        return of(null); // Devuelve null en caso de error
-      })
+        catchError((error) => {
+            console.error('Error al iniciar la partida:', error);
+            return of(null);
+        })
     );
-  }
+}
 
   /**
    * Obtiene la lista de jugadores.
@@ -68,6 +69,11 @@ export class GameService {
     return this.currentUser;
   }
 
+  setCurrentPlayer(player: any): void {
+    this.currentPlayer = player;
+    console.log('Jugador actual actualizado en el servicio:', this.currentPlayer);
+  }
+
   /**
    * Obtiene el resultado del dado.
    */
@@ -80,35 +86,39 @@ export class GameService {
    */
   rollDice(): void {
     if (!this.currentPlayer) {
-      console.error('No hay un jugador actual definido.');
-      return;
+        console.error('No hay un jugador actual definido.');
+        return;
     }
-  
-    this.diceResult = Math.floor(Math.random() * 6) + 1; // Lanzar un dado de 6 caras
+
+    // Lanzar un dado de 6 caras
+    this.diceResult = Math.floor(Math.random() * 6) + 1;
     console.log('Resultado del dado:', this.diceResult);
-  
+
     // Enviar el movimiento al servidor
     const moveMessage = {
-      type: 'movePlayer',
-      gameId: this.gameId,
-      playerId: this.currentPlayer.id,
-      diceResult: this.diceResult
+        type: 'movePlayer',
+        gameId: this.gameId, // Asegúrate de que this.gameId esté definido
+        playerId: this.currentPlayer.id,
+        diceResult: this.diceResult
     };
     this.websocketService.sendRxjs(JSON.stringify(moveMessage));
-  
+
     // Notificar a los suscriptores que el estado del juego ha cambiado
     this.notifyGameStateUpdate();
-  }
+}
 
   /**
    * Maneja los mensajes recibidos del servidor.
    */
   private handleMessage(message: any): void {
     console.log('Mensaje recibido en GameService:', message);
-  
+
     if (message.type === 'gameUpdate') {
-        this.players = message.players;
+        this.players = message.players; // Asegúrate de que esto se esté actualizando
         this.currentPlayer = message.currentPlayer;
+        this.diceResult = message.diceResult;
+
+        // Notificar a los suscriptores que el estado del juego ha cambiado
         this.notifyGameStateUpdate();
     } else if (message.type === 'playerJoined') {
         this.players = message.players;
