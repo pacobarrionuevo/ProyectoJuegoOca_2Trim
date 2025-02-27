@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { WebsocketService } from '../../services/websocket.service';
 
 @Component({
   selector: 'app-game',
@@ -16,58 +17,59 @@ export class GameComponent implements OnInit {
   diceResult: number | null = null;
   cells: any[] = []; // Casillas del tablero
 
-  constructor(private gameService: GameService) {}
+  constructor(private websocketService: WebsocketService) {}
 
   ngOnInit(): void {
     console.log('Inicializando GameComponent...');
-
+  
     // Inicializar el tablero
     this.initializeBoard();
-
+  
     // Iniciar la partida y obtener los jugadores
     const playerName = "Jugador1"; // Nombre del jugador humano
-    this.gameService.startGame('12345', playerName).subscribe((response) => {
-        if (response && response.players) {
-            console.log('Partida iniciada correctamente:', response);
-            this.players = response.players;
-            // Establecer el usuario real
-            const currentUser = this.players.find(player => player.name !== "Bot");
-            if (currentUser) {
-                console.log('Usuario real detectado:', currentUser);
-                this.gameService.setCurrentUser(currentUser);
-            } else {
-                console.warn('No se encontró un usuario real en la lista de jugadores.');
-            }
-
-            // Asignar el primer jugador como currentPlayer
-            this.currentPlayer = this.players[0];
-            this.gameService.setCurrentPlayer(this.currentPlayer);
-            console.log('Jugador actual asignado:', this.currentPlayer);
+    this.websocketService.startGame('12345', playerName).subscribe((response) => {
+      if (response && response.Players) {
+        console.log('Partida iniciada correctamente:', response);
+        this.players = response.Players;
+  
+        // Establecer el usuario real
+        const currentUser = this.players.find(player => player.name !== "Bot");
+        if (currentUser) {
+          console.log('Usuario real detectado:', currentUser);
+          this.websocketService.setCurrentUser(currentUser);
         } else {
-            console.error('No se pudo iniciar la partida o la lista de jugadores está vacía.');
+          console.warn('No se encontró un usuario real en la lista de jugadores.');
         }
+  
+        // Asignar el primer jugador como currentPlayer
+        this.currentPlayer = this.players[0];
+        this.websocketService.setCurrentPlayer(this.currentPlayer);
+        console.log('Jugador actual asignado:', this.currentPlayer);
+      } else {
+        console.error('No se pudo iniciar la partida o la lista de jugadores está vacía.');
+      }
     });
-
+  
     // Suscribirse a las actualizaciones del estado del juego
-    this.gameService.gameStateUpdated.subscribe((state: any) => {
-        console.log('Actualización del estado del juego recibida:', state);
-        this.players = state.players;
-        this.currentPlayer = state.currentPlayer;
-        this.diceResult = state.diceResult;
-
-        console.log('Jugadores actualizados:', this.players);
-        console.log('Jugador actual actualizado:', this.currentPlayer);
-        console.log('Resultado del dado actualizado:', this.diceResult);
-
-        // Si es el turno del bot, realizar una tirada automática
-        if (this.currentPlayer && this.currentPlayer.name === "Bot") {
-            console.log('Es el turno del bot. Realizando tirada automática...');
-            setTimeout(() => {
-                this.gameService.rollDice();
-            }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
-        }
+    this.websocketService.gameStateUpdated.subscribe((state: any) => {
+      console.log('Actualización del estado del juego recibida:', state);
+      this.players = state.players;
+      this.currentPlayer = state.currentPlayer;
+      this.diceResult = state.diceResult;
+  
+      console.log('Jugadores actualizados:', this.players);
+      console.log('Jugador actual actualizado:', this.currentPlayer);
+      console.log('Resultado del dado actualizado:', this.diceResult);
+  
+      // Si es el turno del bot, realizar una tirada automática
+      if (this.currentPlayer && this.currentPlayer.name === "Bot") {
+        console.log('Es el turno del bot. Realizando tirada automática...');
+        setTimeout(() => {
+          this.websocketService.rollDice();
+        }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
+      }
     });
-}
+  }
   
   getPlayersInCell(cellNumber: number): any[] {
     if (!this.players) {
@@ -81,7 +83,7 @@ export class GameComponent implements OnInit {
    * Verifica si el jugador actual es el usuario real.
    */
   get isCurrentPlayer(): boolean {
-    const currentUser = this.gameService.getCurrentUser(); // Obtener el usuario real desde el servicio
+    const currentUser = this.websocketService.getCurrentUser(); // Obtener el usuario real desde el servicio
     const isCurrent = this.currentPlayer && this.currentPlayer.id === currentUser?.id;
     return isCurrent;
   }
@@ -172,6 +174,6 @@ export class GameComponent implements OnInit {
    */
   rollDice(): void {
     console.log('Lanzando dado...');
-    this.gameService.rollDice();
+    this.websocketService.rollDice();
   }
 }

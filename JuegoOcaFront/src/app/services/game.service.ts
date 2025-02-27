@@ -38,7 +38,7 @@ export class GameService {
             return of(null);
         })
     );
-}
+  }
 
   /**
    * Obtiene la lista de jugadores.

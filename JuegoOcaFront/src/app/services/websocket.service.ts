@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+import { of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { map, catchError } from 'rxjs/operators'; 
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +19,19 @@ export class WebsocketService {
   private tokenKey = 'websocket_token'; // Clave para almacenar el token en sessionStorage
   private rxjsSocket: WebSocketSubject<string>; // Conexión WebSocket
 
-  constructor() {
+  // ===================================================================================================
+  // PARTE DEL CÓDIGO RELACIONADA CON EL JUEGO
+  private players: any[] = []; // Lista de jugadores
+  private currentPlayer: any = null; // Jugador actual
+  private gameId: string | null = null; // ID de la partida
+  private diceResult: number | null = null; // Resultado del dado
+
+  // Subject para notificar cambios en el estado del juego
+  gameStateUpdated = new Subject<{ players: any[], currentPlayer: any, diceResult: number | null }>();
+
+  // ===================================================================================================
+
+  constructor(private http: HttpClient) {
     this.reconnectIfNeeded(); // Intentar reconectar al iniciar el servicio
   }
 
@@ -104,38 +121,197 @@ export class WebsocketService {
     this.disconnected.next();
   }
 
+  // ===================================================================================================
+  startGame(gameId: string, playerName: string): Observable<any> {
+    this.gameId = gameId; // Asignar el gameId al servicio
+    const body = { GameId: gameId, PlayerName: playerName };
+  
+    return this.http.post<any>(`${environment.apiUrl}/api/Game/start-game`, body).pipe(
+      map((response) => {
+        // Asegurarse de que la respuesta incluya la lista de jugadores
+        if (response && response.Players) {
+          this.players = response.Players; // Actualizar la lista de jugadores en el servicio
+          this.currentPlayer = this.players[0]; // Asignar el primer jugador como currentPlayer
+          this.notifyGameStateUpdate(); // Notificar a los suscriptores
+        }
+        return response; // Devolver la respuesta al componente
+      }),
+      catchError((error) => {
+        console.error('Error al iniciar la partida:', error);
+        return of(null); // Devolver null en caso de error
+      })
+    );
+  }
+
+  /**
+   * Obtiene la lista de jugadores.
+   */
+  getPlayers(): Observable<any[]> {
+    console.log('Obteniendo jugadores desde el servidor...');
+    return this.http.get<any[]>(`${environment.apiUrl}/api/Game/players`).pipe(
+      catchError((error) => {
+        console.error('Error al obtener los jugadores:', error);
+        return of([]); // Devuelve una lista vacía en caso de error
+      })
+    );
+  }
+
+  private currentUser: any = null; // Almacena el usuario real
+
+  /**
+   * Establece el usuario real cuando se une a la partida.
+   */
+  setCurrentUser(user: any): void {
+    console.log('Estableciendo usuario real:', user);
+    this.currentUser = user;
+  }
+
+  /**
+   * Obtiene el usuario real.
+   */
+  getCurrentUser(): any {
+    return this.currentUser;
+  }
+
+  setCurrentPlayer(player: any): void {
+    this.currentPlayer = player;
+    console.log('Jugador actual actualizado en el servicio:', this.currentPlayer);
+  }
+
+  /**
+   * Obtiene el resultado del dado.
+   */
+  getDiceResult(): number | null {
+    return this.diceResult;
+  }
+
+  /**
+   * Lanza los dados y mueve al jugador.
+   */
+  rollDice(): void {
+    console.log('Solicitando tirada de dado al servidor...');
+    this.sendRxjs(JSON.stringify({
+        type: 'rollDice',
+        gameId: this.gameId,
+        playerId: this.currentPlayer.id
+    }));
+}
+
+
+  /**
+   * Notifica a los suscriptores que el estado del juego ha cambiado.
+   */
+  private notifyGameStateUpdate(): void {
+    console.log('Notificando actualización del estado del juego...');
+    console.log('Jugadores actuales:', this.players);
+    console.log('Jugador actual:', this.currentPlayer);
+    console.log('Resultado del dado:', this.diceResult);
+    this.gameStateUpdated.next({
+      players: this.players,
+      currentPlayer: this.currentPlayer,
+      diceResult: this.diceResult
+    });
+  }
+
+  /**
+   * Maneja el fin del juego.
+   */
+  private handleGameOver(results: any): void {
+    console.log('Juego terminado. Resultados:', results);
+    // Aquí puedes mostrar un modal con los resultados
+    alert(`El juego ha terminado. El ganador es: ${results.winnerId}`);
+  }
+  // ===================================================================================================
+
   /**
    * Maneja los mensajes recibidos del WebSocket.
    */
   private handleMessage(message: string): void {
     try {
-      const parsedMessage = JSON.parse(message);
-      console.log('WebSocketService: Mensaje recibido:', parsedMessage);
+        const parsedMessage = JSON.parse(message);
+        console.log('WebSocketService: Mensaje recibido:', parsedMessage);
 
-      // Convertir propiedades a camelCase si es necesario
-      const normalizedMessage = this.normalizeKeys(parsedMessage);
+        // Convertir propiedades a camelCase si es necesario
+        const normalizedMessage = this.normalizeKeys(parsedMessage);
 
-      // Procesar el mensaje según su tipo
-      if (normalizedMessage.type === 'friendInvitation') {
-        this.handleFriendInvitation(normalizedMessage);
-      } else if (normalizedMessage.type === 'activeConnections') {
-        this.handleActiveConnections(normalizedMessage);
-      } else if (normalizedMessage.type === 'gameStarted') {
-        this.handleGameStarted(normalizedMessage);
-      } else if (normalizedMessage.type === 'waitingForOpponent') {
-        this.handleWaitingForOpponent(normalizedMessage);
-      } else if (normalizedMessage.type === 'friendConnected' || normalizedMessage.type === 'friendDisconnected') {
-        this.handleFriendStatus(normalizedMessage);
-      } else {
-        console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
-      }
+        // Procesar el mensaje según su tipo
+        if (normalizedMessage.type === 'friendInvitation') {
+            this.handleFriendInvitation(normalizedMessage);
+        } else if (normalizedMessage.type === 'activeConnections') {
+            this.handleActiveConnections(normalizedMessage);
+        } else if (normalizedMessage.type === 'gameStarted') {
+            this.handleGameStarted(normalizedMessage);
+        } else if (normalizedMessage.type === 'waitingForOpponent') {
+            this.handleWaitingForOpponent(normalizedMessage);
+        } else if (normalizedMessage.type === 'friendConnected' || normalizedMessage.type === 'friendDisconnected') {
+            this.handleFriendStatus(normalizedMessage);
+        } else if (normalizedMessage.type === 'gameUpdate') {
+            this.handleGameUpdate(normalizedMessage);
+        } else if (normalizedMessage.type === 'playerJoined') {
+            this.handlePlayerJoined(normalizedMessage);
+        } else if (normalizedMessage.type === 'botMove') {
+            this.handleBotMove(normalizedMessage);
+        } else if (normalizedMessage.type === 'gameOver') {
+            this.handleGameOver(normalizedMessage);
+        } else {
+            console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
+        }
 
-      // Notificar a los suscriptores que se ha recibido un mensaje
-      this.messageReceived.next(normalizedMessage);
+        // Notificar a los suscriptores que se ha recibido un mensaje
+        this.messageReceived.next(normalizedMessage);
     } catch (error) {
-      console.error('Error al parsear el mensaje:', error);
+        console.error('Error al parsear el mensaje:', error);
     }
+}
+
+  /**
+   * Maneja la actualización del estado del juego.
+   */
+  /**
+ * Maneja la actualización del estado del juego.
+ */
+  private handleGameUpdate(message: any): void {
+    console.log('WebSocketService: Actualización del estado del juego recibida:', message);
+
+    // Actualizar la lista de jugadores
+    this.players = message.players;
+    console.log('Jugadores actualizados:', this.players);
+
+    // Actualizar el jugador actual
+    if (message.currentPlayer) {
+        this.currentPlayer = message.currentPlayer;
+        console.log('Jugador actual actualizado:', this.currentPlayer);
+    }
+
+    // Actualizar el resultado del dado
+    this.diceResult = message.diceResult;
+    console.log('Resultado del dado actualizado:', this.diceResult);
+
+    // Notificar a los suscriptores que el estado del juego ha cambiado
+    this.notifyGameStateUpdate();
   }
+
+  /**
+   * Maneja la entrada de un nuevo jugador.
+   */
+  private handlePlayerJoined(message: any): void {
+      console.log('WebSocketService: Jugador unido:', message);
+      this.players = message.players;
+      this.notifyGameStateUpdate();
+  }
+
+  /**
+   * Maneja el movimiento del bot.
+   */
+  private handleBotMove(message: any): void {
+      console.log('WebSocketService: Movimiento del bot:', message);
+      const bot = this.players.find(player => player.id === message.playerId);
+      if (bot) {
+          bot.position = message.newPosition;
+      }
+      this.notifyGameStateUpdate();
+  }
+
 
   /**
    * Maneja una invitación de amigo.
@@ -162,11 +338,21 @@ export class WebsocketService {
   /**
    * Maneja el inicio de un juego.
    */
-  private handleGameStarted(message: any) {
+  private handleGameStarted(message: any): void {
+    console.log('WebSocketService: Partida iniciada:', message);
+  
+    // Actualizar la lista de jugadores
+    if (message.players) {
+      this.players = message.players;
+      this.currentPlayer = this.players[0]; // Asignar el primer jugador como currentPlayer
+      this.notifyGameStateUpdate(); // Notificar a los suscriptores
+    }
+  
+    // Notificar al componente que la partida ha comenzado
     this.messageReceived.next({
       type: 'gameStarted',
       gameId: message.gameId,
-      opponent: message.opponent
+      players: message.players
     });
   }
 
