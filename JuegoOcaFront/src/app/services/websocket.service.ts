@@ -113,12 +113,14 @@ export class WebsocketService {
    * Maneja los mensajes recibidos del WebSocket.
    */
   private handleMessage(message: string): void {
+    if (message === 'pong') {
+      console.log('Heartbeat recibido: pong');
+      return; // No necesitas procesar este mensaje como JSON
+     // Salir del método sin intentar parsear el mensaje
+    }
     try {
       // Manejar mensajes "ping" primero
-      if (message === 'ping') {
-        this.sendRxjs('pong'); // Responder con "pong"
-        return; // Salir del método sin intentar parsear el mensaje
-      }
+      
   
       // Intentar parsear solo si es un JSON válido
       const parsedMessage = JSON.parse(message);
@@ -135,9 +137,7 @@ export class WebsocketService {
       case 'friendConnected':
         this.addOnlineUser(normalizedMessage.friendId);
         break;
-      case 'friendDisconnected':
-        this.removeOnlineUser(normalizedMessage.friendId);
-        break;
+    
         case 'friendInvitation':
           this.handleFriendInvitation(normalizedMessage);
           break;
@@ -150,7 +150,7 @@ export class WebsocketService {
         case 'waitingForOpponent':
           this.handleWaitingForOpponent(normalizedMessage);
           break;
-        case 'friendConnected':
+        
         case 'friendDisconnected':
           this.handleFriendStatus(normalizedMessage);
           break;

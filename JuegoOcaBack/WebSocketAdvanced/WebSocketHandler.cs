@@ -9,29 +9,31 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private const int BufferSize = 4096;
         private readonly WebSocket _webSocket;
         private readonly byte[] _buffer;
-        public MatchmakingMessage LastMessage { get; private set; } 
-
+        public MatchmakingMessage LastMessage { get; private set; }
+        public int UserId { get; }
+        public DateTime LastActivity { get; set; }
         public int Id { get; init; }
         public bool IsOpen => _webSocket.State == WebSocketState.Open;
 
         public event Func<WebSocketHandler, string, Task> MessageReceived;
         public event Func<WebSocketHandler, Task> Disconnected;
-        public DateTime LastActivity { get; set; } = DateTime.UtcNow;
-        public WebSocketHandler(int id, WebSocket webSocket)
+        public WebSocketHandler(int userId, WebSocket webSocket)
         {
-            Id = id;
+            UserId = userId;
             _webSocket = webSocket;
+            LastActivity = DateTime.UtcNow;
             _buffer = new byte[BufferSize];
         }
 
         public async Task HandleAsync()
         {
-            while (IsOpen)
+            while (_webSocket.State == WebSocketState.Open)
             {
                 try
                 {
-                    string message = await ReadAsync();
-                    
+                    var message = await ReceiveMessageAsync();
+                    LastActivity = DateTime.UtcNow;
+
                     if (!string.IsNullOrWhiteSpace(message) && MessageReceived != null)
                     {
                         await MessageReceived.Invoke(this, message);
@@ -88,6 +90,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
         public void Dispose()
         {
             _webSocket.Dispose();
+        }
+        private async Task<string> ReceiveMessageAsync()
+        {
+            var buffer = new byte[1024];
+            WebSocketReceiveResult result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            return Encoding.UTF8.GetString(buffer, 0, result.Count);
+        }
+        public async Task CloseAsync()
+        {
+            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Conexión cerrada", CancellationToken.None);
         }
     }
 }

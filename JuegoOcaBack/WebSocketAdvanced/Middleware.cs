@@ -26,7 +26,8 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
 
                 using WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                await _webSocketNetwork.HandleAsync(webSocket);
+                int userId = ObtenerUserId(context);
+                await _webSocketNetwork.HandleAsync(webSocket,  userId);
 
                 return;
             }
@@ -35,6 +36,19 @@ namespace JuegoOcaBack.WebSocketAdvanced
             {
                 await next(context);
             }
+        }
+    
+      private int ObtenerUserId(HttpContext context)
+        {
+            if (context.User.Identity.IsAuthenticated)
+            {
+                var userIdClaim = context.User.FindFirst("userId");
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return userId;
+                }
+            }
+            throw new UnauthorizedAccessException("Usuario no autenticado o userId no válido.");
         }
     }
 }

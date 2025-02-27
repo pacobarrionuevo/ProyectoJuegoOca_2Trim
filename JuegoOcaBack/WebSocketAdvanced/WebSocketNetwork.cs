@@ -27,6 +27,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private readonly SemaphoreSlim _connectedSemaphore = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim _waitingSemaphore = new SemaphoreSlim(1, 1);
+        private readonly Dictionary<int, WebSocketHandler> _connectedUsers = new Dictionary<int, WebSocketHandler>();
 
         private readonly IServiceProvider _serviceProvider;
 
@@ -40,6 +41,8 @@ namespace JuegoOcaBack.WebSocketAdvanced
         {
             _serviceProvider = serviceProvider;
             OnActiveConnectionsChanged += count => NotifyActiveConnectionsChanged(count);
+            // Iniciar verificación de inactividad en segundo plano
+            Task.Run(CheckInactiveConnections);
         }
 
         private async void NotifyActiveConnectionsChanged(int count)
@@ -59,13 +62,47 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
             }
         }
+        private async Task CheckInactiveConnections()
+        {
+            while (true)
+            {
+                await Task.Delay(60000); // Verificar cada 60 segundos
+                var now = DateTime.UtcNow;
 
-        public async Task HandleAsync(WebSocket webSocket)
+                foreach (var userId in _connectedUsers.Keys.ToList())
+                {
+                    var handler = _connectedUsers[userId];
+                    if ((now - handler.LastActivity).TotalMinutes > 1.5) // 1.5 minutos sin actividad
+                    {
+                        await RemoveUser(userId);
+                        Console.WriteLine($"Usuario {userId} desconectado por inactividad.");
+                    }
+                }
+            }
+        }
+        private async Task RemoveUser(int userId)
+        {
+            await _semaphore.WaitAsync();
+            try
+            {
+                if (_connectedUsers.TryGetValue(userId, out var handler))
+                {
+                    await handler.CloseAsync();
+                    _connectedUsers.Remove(userId);
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+        public async Task HandleAsync(WebSocket webSocket, int userId)
         {
             // Esta parte del código se encarga de 
             Interlocked.Increment(ref _activeConnections);
             OnActiveConnectionsChanged?.Invoke(_activeConnections);
-            var handler = await CreateHandlerAsync(webSocket);
+            var handler = await CreateHandlerAsync(webSocket, userId);
+            await AddUser(userId, handler);
             try
             {
                 // Actualizar estado primero
@@ -85,6 +122,11 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 await CleanupDisconnectedPlayer(handler);
             }
         }
+        private async Task AddUser(int userId, WebSocketHandler handler)
+        {
+            _connectedUsers[userId] = handler;
+            Console.WriteLine($"Usuario {userId} conectado.");
+        }
         private async Task StartHeartbeat(WebSocketHandler handler)
         {
             while (handler.IsOpen)
@@ -102,20 +144,22 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
-        private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket)
+        private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket, int userId)
         {
-            await _connectedSemaphore.WaitAsync();
+            var handler = new WebSocketHandler(userId, webSocket);
+            await _semaphore.WaitAsync();
             try
             {
-                var handler = new WebSocketHandler(Interlocked.Increment(ref _idCounter), webSocket);
+
+                
                 handler.Disconnected += OnDisconnectedHandler;
                 handler.MessageReceived += OnMessageReceivedHandler;
-                _connectedPlayers.Add(handler);
+                _connectedUsers[userId] = handler;
                 return handler;
             }
             finally
             {
-                _connectedSemaphore.Release();
+                _semaphore.Release();
             }
         }
 
@@ -152,6 +196,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private async Task OnMessageReceivedHandler(WebSocketHandler handler, string message)
         {
             Console.WriteLine($"Mensaje recibido de {handler.Id}: {message}");
+            if (message == "pong")
+            {
+                Console.WriteLine("Heartbeat recibido: pong");
+                handler.LastActivity = DateTime.UtcNow; // Actualizar la última actividad
+                return; // No procesar como JSON
+            }
 
             try
             {
@@ -175,11 +225,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
                     _waitingSemaphore.Release();
                 }
-                else if (message == "pong")
-                {
-                    handler.LastActivity = DateTime.UtcNow; // Nueva propiedad en WebSocketHandler
-                    return;
-                }
+
             }
             catch (Exception ex)
             {
@@ -212,18 +258,18 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
             // Obtener nombre del invitador
             using var scope = _serviceProvider.CreateScope();
-                var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
-                var inviterUser = await wsMethods.GetUserById(inviter.Id);
-                string inviterName = inviterUser?.UsuarioApodo ?? "Jugador desconocido";
+            var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
+            var inviterUser = await wsMethods.GetUserById(inviter.Id);
+            string inviterName = inviterUser?.UsuarioApodo ?? "Jugador desconocido";
 
-                // Enviar invitación al amigo
-                await friend.SendAsync(JsonSerializer.Serialize(new
-                {
-                    type = "invitationReceived",
-                    inviterId = inviter.Id,
-                    inviterName = inviterName
-                }));
-            
+            // Enviar invitación al amigo
+            await friend.SendAsync(JsonSerializer.Serialize(new
+            {
+                type = "invitationReceived",
+                inviterId = inviter.Id,
+                inviterName = inviterName
+            }));
+
         }
 
 
@@ -402,18 +448,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         public List<int> GetConnectedUsers()
         {
-            _connectedSemaphore.Wait();
-            try
-            {
-                return _connectedPlayers
-                    .Where(p => p.IsOpen)
-                    .Select(p => p.Id)
-                    .ToList();
-            }
-            finally
-            {
-                _connectedSemaphore.Release();
-            }
+            return _connectedUsers.Keys.ToList();
         }
 
         private async Task OnDisconnectedAsync(WebSocketHandler disconnectedHandler)
@@ -472,7 +507,8 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
 
 
-    }
+    } 
+
 
     // Records con propiedades en camelCase
     public record MatchmakingMessage(string type, int? friendId = null,
