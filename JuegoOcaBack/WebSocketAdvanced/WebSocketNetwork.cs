@@ -143,18 +143,20 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
             }
         }
-
         private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket, int userId)
         {
-            var handler = new WebSocketHandler(userId, webSocket);
+            var handler = new WebSocketHandler(userId, webSocket); // Asegúrate de que userId sea correcto
             await _semaphore.WaitAsync();
             try
             {
+     
+                handler.Disconnected -= OnDisconnectedHandler; // Eliminar suscripción previa (si existe)
+                handler.Disconnected += OnDisconnectedHandler; // Suscribir el evento
 
-                
-                handler.Disconnected += OnDisconnectedHandler;
                 handler.MessageReceived += OnMessageReceivedHandler;
                 _connectedUsers[userId] = handler;
+
+                Console.WriteLine($"Usuario {userId} conectado y suscrito correctamente.");
                 return handler;
             }
             finally
@@ -162,9 +164,9 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 _semaphore.Release();
             }
         }
-
         private async Task OnDisconnectedHandler(WebSocketHandler handler)
         {
+            Console.WriteLine($"Evento de desconexión disparado para el usuario {handler.Id}.");
             await CleanupDisconnectedPlayer(handler);
             await UpdateUserStatusAsync(handler, "Desconectado");
             await NotifyFriendsAsync(handler, false);
@@ -177,22 +179,48 @@ namespace JuegoOcaBack.WebSocketAdvanced
             await _waitingSemaphore.WaitAsync();
             try
             {
+                // Verificar si el usuario ya fue eliminado
+                if (!_connectedUsers.ContainsKey(handler.Id))
+                {
+                    Console.WriteLine($"Usuario {handler.Id} ya fue eliminado.");
+                    return;
+                }
+
+                // Cerrar el WebSocket si está abierto
+                if (handler.IsOpen)
+                {
+                    Console.WriteLine($"Cerrando WebSocket para el usuario {handler.Id}.");
+                    await handler.CloseAsync();
+                }
+
                 // Eliminar de todas las listas
                 _connectedPlayers.RemoveAll(p => p.Id == handler.Id);
                 _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
                 _handlers.RemoveAll(p => p.Id == handler.Id);
+
+                // Eliminar de _connectedUsers
+                if (_connectedUsers.ContainsKey(handler.Id))
+                {
+                    _connectedUsers.Remove(handler.Id);
+                    Console.WriteLine($"Usuario {handler.Id} eliminado de _connectedUsers.");
+                }
+
                 // Notificar cambio de estado
                 await UpdateUserStatusAsync(handler, "Desconectado");
                 await NotifyFriendsAsync(handler, false);
+
                 Interlocked.Decrement(ref _activeConnections);
                 OnActiveConnectionsChanged?.Invoke(_activeConnections);
+
+                Console.WriteLine($"Usuario {handler.Id} limpiado correctamente.");
             }
             finally
             {
                 _semaphore.Release();
+                _connectedSemaphore.Release();
+                _waitingSemaphore.Release();
             }
         }
-
         private async Task OnMessageReceivedHandler(WebSocketHandler handler, string message)
         {
             Console.WriteLine($"Mensaje recibido de {handler.Id}: {message}");

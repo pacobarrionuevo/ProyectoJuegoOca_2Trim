@@ -10,7 +10,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private readonly WebSocket _webSocket;
         private readonly byte[] _buffer;
         public MatchmakingMessage LastMessage { get; private set; }
-        public int UserId { get; }
+       
         public DateTime LastActivity { get; set; }
         public int Id { get; init; }
         public bool IsOpen => _webSocket.State == WebSocketState.Open;
@@ -19,7 +19,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         public event Func<WebSocketHandler, Task> Disconnected;
         public WebSocketHandler(int userId, WebSocket webSocket)
         {
-            UserId = userId;
+            Id = userId;
             _webSocket = webSocket;
             LastActivity = DateTime.UtcNow;
             _buffer = new byte[BufferSize];
@@ -38,20 +38,20 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     {
                         await MessageReceived.Invoke(this, message);
                     }
-
                 }
                 catch (WebSocketException)
                 {
+                    Console.WriteLine($"WebSocketException para el usuario {Id}. Cerrando conexión...");
                     Dispose();
                 }
             }
 
             if (Disconnected != null)
             {
+                Console.WriteLine($"Disparando evento de desconexión para el usuario {Id}.");
                 await Disconnected.Invoke(this);
             }
         }
-
         private async Task<string> ReadAsync()
         {
             using (var memoryStream = new MemoryStream()) // Usar bloque using con paréntesis

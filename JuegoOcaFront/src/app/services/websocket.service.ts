@@ -1,14 +1,17 @@
-import { Injectable } from '@angular/core';
+import { Injectable,NgZone } from '@angular/core';
 import { Subject } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { HttpClient } from '@angular/common/http';
 import {  Observable,BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { catchError } from 'rxjs/operators'; 
+import { of,map,  } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
 export class WebsocketService {
   connected = new Subject<void>(); // Notifica cuando se conecta el WebSocket
+  
   messageReceived = new Subject<any>(); // Notifica cuando se recibe un mensaje
   disconnected = new Subject<void>(); // Notifica cuando se desconecta el WebSocket
   activeConnections = new Subject<number>(); // Notifica el número de conexiones activas
@@ -17,7 +20,7 @@ export class WebsocketService {
   private tokenKey = 'websocket_token'; // Clave para almacenar el token en sessionStorage
   private rxjsSocket: WebSocketSubject<string>; // Conexión WebSocket
   private baseURL = `${environment.apiUrl}`; 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private ngZone: NgZone) {
     this.reconnectIfNeeded(); // Intentar reconectar al iniciar el servicio
   }
 
@@ -38,7 +41,10 @@ export class WebsocketService {
     return isConnected;
   }
   fetchOnlineUsers(): Observable<number[]> {
-    return this.http.get<number[]>(`${this.baseURL}/ws/online-users`);
+    return this.http.get<{ onlineUsers: number[] }>(`${this.baseURL}/ws/online-users`).pipe(
+      map(response => Array.isArray(response?.onlineUsers) ? response.onlineUsers : []),
+      catchError(() => of([]))
+    );
   }
   /**
    * Conecta el WebSocket usando un token de autenticación.
@@ -113,10 +119,10 @@ export class WebsocketService {
    * Maneja los mensajes recibidos del WebSocket.
    */
   private handleMessage(message: string): void {
-    if (message === 'pong') {
-      console.log('Heartbeat recibido: pong');
-      return; // No necesitas procesar este mensaje como JSON
-     // Salir del método sin intentar parsear el mensaje
+    if (message === 'pong' || message === 'ping') {
+      console.log(`Heartbeat recibido: ${message}`);
+      return;
+
     }
     try {
       // Manejar mensajes "ping" primero
@@ -131,12 +137,16 @@ export class WebsocketService {
   
       // Procesar el mensaje según su tipo
       switch (normalizedMessage.type) {
+        case 'friendDisconnected':
+          this.handleFriendStatus(normalizedMessage);
+          break;
+          case 'friendConnected':
+            this.addOnlineUser(normalizedMessage.friendId);
+            break;
         case 'onlineUsers':
         this.handleOnlineUsers(normalizedMessage);
         break;
-      case 'friendConnected':
-        this.addOnlineUser(normalizedMessage.friendId);
-        break;
+     
     
         case 'friendInvitation':
           this.handleFriendInvitation(normalizedMessage);
@@ -150,10 +160,7 @@ export class WebsocketService {
         case 'waitingForOpponent':
           this.handleWaitingForOpponent(normalizedMessage);
           break;
-        
-        case 'friendDisconnected':
-          this.handleFriendStatus(normalizedMessage);
-          break;
+
         case 'friendNotAvailable':
           this.friendNotAvailable.next(normalizedMessage.message); // Notificar que el amigo no está disponible
           break;
@@ -225,12 +232,33 @@ export class WebsocketService {
     this.disconnected.next();
   }
 
-  /**
-   * Normaliza las claves de un objeto a camelCase.
-   */
+ 
+  
+  // Actualización usando nueva instancia para notificar el cambio
+  private addOnlineUser(userId: number): void {
+    this.ngZone.run(() => {
+      const updated = new Set(this.onlineUsers$.value);
+      updated.add(userId);
+      this.onlineUsers$.next(updated);
+    });
+  }
+
+  private removeOnlineUser(userId: number): void {
+    this.ngZone.run(() => {
+      const updated = new Set(this.onlineUsers$.value);
+      updated.delete(userId);
+      this.onlineUsers$.next(updated);
+    });
+  }
+
+  private handleOnlineUsers(message: { users: number[] }): void {
+    this.ngZone.run(() => {
+      this.onlineUsers$.next(new Set(message.users));
+    });
+  }
+
   private normalizeKeys(obj: any): any {
     if (typeof obj !== 'object' || obj === null) return obj;
-
     return Object.keys(obj).reduce((acc: any, key) => {
       const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
       acc[camelKey] = this.normalizeKeys(obj[key]);
@@ -238,36 +266,16 @@ export class WebsocketService {
     }, {});
   }
 
-  /**
-   * Intenta reconectar el WebSocket si hay un token almacenado.
-   */
   private reconnectIfNeeded() {
     const storedToken = sessionStorage.getItem(this.tokenKey);
     if (storedToken) {
       console.log('WebSocketService: Reconectando WebSocket con token almacenado');
-      this.connectRxjs(storedToken); // Intentar reconectar
+      this.connectRxjs(storedToken);
     } else {
       console.log('WebSocketService: No hay token almacenado, no se puede reconectar');
     }
   }
-  private handleOnlineUsers(message: { users: number[] }): void {
-    this.onlineUsers$.next(new Set(message.users));
-  }
-  
-  private addOnlineUser(userId: number): void {
-    const current = this.onlineUsers$.value;
-    current.add(userId);
-    this.onlineUsers$.next(current);
-  }
-  
-  private removeOnlineUser(userId: number): void {
-    const current = this.onlineUsers$.value;
-    current.delete(userId);
-    this.onlineUsers$.next(current);
-  }
-  /**
-   * Elimina el token almacenado (por ejemplo, al cerrar sesión).
-   */
+
   clearToken() {
     sessionStorage.removeItem(this.tokenKey);
     console.log('WebSocketService: Token eliminado');

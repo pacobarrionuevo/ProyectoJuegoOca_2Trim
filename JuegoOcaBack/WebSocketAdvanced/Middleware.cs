@@ -36,18 +36,19 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private int ObtenerUserId(HttpContext context)
         {
-            // Verificar autenticación
+            // 1. Verificar que el usuario está autenticado
             if (!context.User.Identity.IsAuthenticated)
             {
                 throw new UnauthorizedAccessException("Usuario no autenticado");
             }
 
-            // Obtener el ID del usuario desde las claims
-            var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+            // 2. Obtener la claim personalizada "id" del token JWT
+            var userIdClaim = context.User.FindFirst("id");
 
+            // 3. Validar que la claim existe y es un número
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
             {
-                throw new UnauthorizedAccessException("Claim de usuario no válida");
+                throw new UnauthorizedAccessException("Claim 'id' no encontrada o inválida");
             }
 
             return userId;

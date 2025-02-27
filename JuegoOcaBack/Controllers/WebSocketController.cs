@@ -40,8 +40,8 @@ namespace JuegoOcaBack.Controllers
             var connectedUsers = _websocketNetwork.GetConnectedUsers();
             return Ok(new
             {
-                OnlineUsers = connectedUsers,
-                Total = connectedUsers.Count
+                onlineUsers = connectedUsers, // Propiedad "onlineUsers"
+                total = connectedUsers.Count
             });
         }
     }

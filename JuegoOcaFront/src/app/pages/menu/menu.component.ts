@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { WebsocketService } from '../../services/websocket.service';
 import { User } from '../../models/User';
@@ -7,7 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { ImageService } from '../../services/image.service';
 import { SolicitudAmistad } from '../../models/solicitud-amistad';
 import { FriendService } from '../../services/friend.service';
-import { Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -15,44 +15,35 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports:[FormsModule,RouterModule,CommonModule],
+  imports: [FormsModule, RouterModule, CommonModule],
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.css']
 })
 export class MenuComponent implements OnInit, OnDestroy {
-  // Lista de usuarios y amigos
   usuarios: User[] = [];
   usuariosFiltrados: User[] = [];
   amigos: User[] = [];
   amigosFiltrados: User[] = [];
-private BASE_URL = environment.apiUrl;
-  // Estado de conexión
-  onlineUserIds = new Set<number>(); // Almacena IDs de usuarios conectados
-  private subs: Subscription[] = []; // Para manejar subscripciones
-
-  // Búsqueda y filtrado
+  private BASE_URL = environment.apiUrl;
+  onlineUserIds = new Set<number>();
+  private subs: Subscription[] = [];
   terminoBusqueda: string = '';
   busquedaAmigos: string = '';
-
-  // Información del usuario actual
   usuarioApodo: string = '';
   usuarioFotoPerfil: string = '';
   usuarioId: number | null = null;
   perfil_default: string;
-
-  // Solicitudes de amistad
   solicitudesPendientes: SolicitudAmistad[] = [];
-
-  // Mensajes de error
   errorMessage: string | null = null;
 
   constructor(
-    private webSocketService: WebsocketService,
+    public webSocketService: WebsocketService,
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
     private imageService: ImageService,
-    private friendService: FriendService
+    private friendService: FriendService,
+    private ngZone: NgZone
   ) {
     this.perfil_default = this.imageService.getImageUrl('Perfil_Deffault.png');
   }
@@ -62,81 +53,73 @@ private BASE_URL = environment.apiUrl;
     this.obtenerUsuarios();
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
+    this.subs.push(
+      this.webSocketService.onlineUsers$.subscribe(users => {
+        console.log('Usuarios en línea actualizados:', users);
+        this.onlineUserIds = users;
+      })
+    );
 
-    // Conectar al WebSocket
     const token = localStorage.getItem('accessToken');
     if (token) {
       this.webSocketService.connectRxjs(token);
     }
-
-    // Configurar listeners del WebSocket
     this.setupWebSocketListeners();
-
-    // Cargar usuarios conectados
     this.loadOnlineUsers();
+
+    // Fallback: refrescar la lista de usuarios conectados cada segundo
+    const intervalSub = interval(1000).subscribe(() => {
+      this.loadOnlineUsers();
+    });
+    this.subs.push(intervalSub);
   }
 
   ngOnDestroy(): void {
-    // Limpiar subscripciones
     this.subs.forEach(sub => sub.unsubscribe());
   }
 
-  // Cargar usuarios conectados
   private loadOnlineUsers(): void {
     this.subs.push(
       this.webSocketService.fetchOnlineUsers().subscribe({
         next: (users) => {
+          // Se crea un nuevo Set para forzar la detección de cambios
           this.onlineUserIds = new Set(users);
         },
         error: (err) => {
-          console.error('Error cargando usuarios conectados:', err);
-          this.errorMessage = 'No se pudo cargar la lista de usuarios conectados';
+          this.onlineUserIds = new Set();
+          console.error('Error cargando usuarios:', err);
         }
       })
     );
   }
 
-  // Configurar listeners del WebSocket
   private setupWebSocketListeners(): void {
     this.subs.push(
       this.webSocketService.onlineUsers$.subscribe(users => {
         this.onlineUserIds = users;
-      }),
-
-      this.webSocketService.messageReceived.subscribe((message: any) => {
-        if (message.type === 'friendConnected') {
-          this.onlineUserIds.add(message.friendId);
-        } else if (message.type === 'friendDisconnected') {
-          this.onlineUserIds.delete(message.friendId);
-        }
       })
     );
   }
+
   invitarAPartida(friendId: number): void {
     if (!friendId || friendId === this.usuarioId) {
       alert('Selecciona un amigo válido');
       return;
     }
-
-    // Verificar conexión WebSocket
     if (!this.webSocketService.isConnectedRxjs()) {
       const token = this.authService.getUserDataFromToken();
       if (token) this.webSocketService.connectRxjs(token);
     }
-
-    // Enviar mensaje
     this.webSocketService.sendRxjs(JSON.stringify({
       type: 'inviteFriend',
       friendId: friendId
     }));
   }
 
-  // Verificar si un usuario está conectado
   isUserOnline(userId: number): boolean {
     return this.onlineUserIds.has(userId);
   }
 
-  // Cargar información del usuario actual
   private cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
@@ -148,7 +131,6 @@ private BASE_URL = environment.apiUrl;
     }
   }
 
-  // Obtener lista de usuarios
   private obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
       this.usuarios = usuarios.map(usuario => ({
@@ -160,7 +142,6 @@ private BASE_URL = environment.apiUrl;
     });
   }
 
-  // Buscar usuarios
   buscarUsuarios(): void {
     this.usuariosFiltrados = this.terminoBusqueda.trim()
       ? this.usuarios.filter(usuario =>
@@ -168,7 +149,6 @@ private BASE_URL = environment.apiUrl;
       : [...this.usuarios];
   }
 
-  // Cargar lista de amigos
   private cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe(amigos => {
       this.amigos = amigos.map(amigo => ({
@@ -181,12 +161,10 @@ private BASE_URL = environment.apiUrl;
     });
   }
 
-  // Validar URL de imagen
   validarUrlImagen(fotoPerfil: string | null): string {
     return fotoPerfil ? `${this.BASE_URL}/fotos/${fotoPerfil}` : this.perfil_default;
   }
 
-  // Enviar solicitud de amistad
   enviarSolicitud(receiverId: number): void {
     this.friendService.sendFriendRequest(receiverId).subscribe({
       next: (result) => {
@@ -200,7 +178,6 @@ private BASE_URL = environment.apiUrl;
     });
   }
 
-  // Obtener solicitudes pendientes
   private obtenerSolicitudesPendientes(): void {
     this.friendService.getPendingRequests().subscribe({
       next: (solicitudes) => {
@@ -218,7 +195,6 @@ private BASE_URL = environment.apiUrl;
     });
   }
 
-  // Aceptar solicitud de amistad
   aceptarSolicitud(solicitud: SolicitudAmistad): void {
     this.friendService.aceptarSolicitud(solicitud.amistadId).subscribe({
       next: () => {
@@ -232,7 +208,6 @@ private BASE_URL = environment.apiUrl;
     });
   }
 
-  // Rechazar solicitud de amistad
   rechazarSolicitud(solicitud: SolicitudAmistad): void {
     this.friendService.rechazarSolicitud(solicitud.amistadId).subscribe({
       next: () => {
@@ -245,7 +220,6 @@ private BASE_URL = environment.apiUrl;
     });
   }
 
-  // Cerrar sesión
   logout(): void {
     this.authService.logout();
     this.webSocketService.clearToken();
