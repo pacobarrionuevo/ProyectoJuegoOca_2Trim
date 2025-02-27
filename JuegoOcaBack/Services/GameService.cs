@@ -1,6 +1,8 @@
 ﻿using JuegoOcaBack.Models.Database.Entidades;
 using JuegoOcaBack.Models.DTO;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace JuegoOcaBack.Services
 {
@@ -17,6 +19,28 @@ namespace JuegoOcaBack.Services
         }
 
         public PlayerDTO CurrentPlayer => _players[_currentPlayerIndex];
+
+        /// <summary>
+        /// Inicia una nueva partida.
+        /// </summary>
+        /// <param name="gameId">ID de la partida (opcional).</param>
+        /// <param name="playerName">Nombre del jugador humano.</param>
+        public void StartGame(string gameId, string playerName)
+        {
+            // Reiniciar el estado del juego
+            _players.Clear();
+            _currentPlayerIndex = 0;
+
+            // Agregar al jugador humano
+            AddPlayer(playerName);
+
+            // Agregar al bot
+            AddBot();
+
+            // Inicializar el tablero (ya se hace en el constructor)
+            Console.WriteLine($"Partida iniciada con ID: {gameId}");
+            Console.WriteLine($"Jugadores: {string.Join(", ", _players.Select(p => p.Name))}");
+        }
 
         public void AddPlayer(string name)
         {

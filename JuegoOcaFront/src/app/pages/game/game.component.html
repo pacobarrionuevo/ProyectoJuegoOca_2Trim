@@ -18,10 +18,10 @@
   </div>
 
   <!-- Controles del juego -->
-  <div class="controls">
-    <button (click)="rollDice()" [disabled]="!isCurrentPlayer">Lanzar Dado</button>
-    <div *ngIf="diceResult !== null" class="dice-result">
-      Resultado del dado: {{ diceResult }}
-    </div>
+<div class="controls">
+  <button (click)="rollDice()" [disabled]="!isCurrentPlayer">Lanzar Dado</button>
+  <div *ngIf="diceResult !== null" class="dice-result">
+    Resultado del dado: {{ diceResult }}
   </div>
+</div>
 </div>

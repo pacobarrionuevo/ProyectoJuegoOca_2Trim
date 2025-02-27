@@ -19,41 +19,79 @@ export class GameComponent implements OnInit {
   constructor(private gameService: GameService) {}
 
   ngOnInit(): void {
+    console.log('Inicializando GameComponent...');
+  
     // Inicializar el tablero
     this.initializeBoard();
+  
+    const playerName = "Jugador1"; // Nombre del jugador humano (puedes obtenerlo de un formulario o de otro lugar)
+    this.gameService.startGame('12345', playerName).subscribe((response) => {
+      if (response) {
+        console.log('Partida iniciada correctamente:', response);
+        this.players = response.Players; // Asigna la lista de jugadores desde la respuesta
 
-    // Inicializar jugadores (usuario y bot)
-    this.players = [
-      { id: 1, name: 'Jugador 1', position: 0, color: '#ff0000' }, // Rojo para el usuario
-      { id: 2, name: 'Bot', position: 0, color: '#0000ff' } // Azul para el bot
-    ];
+        // Establecer el usuario real (por ejemplo, el primer jugador)
+        const currentUser = this.players.find(player => player.name !== "Bot"); // Asume que el bot tiene el nombre "Bot"
+        if (currentUser) {
+          console.log('Usuario real detectado:', currentUser);
+          this.gameService.setCurrentUser(currentUser);
+        } else {
+          console.warn('No se encontró un usuario real en la lista de jugadores.');
+        }
 
-    this.currentPlayer = this.players[0]; // El usuario comienza primero  
-
+        // Asignar el primer jugador como currentPlayer (opcional)
+        this.currentPlayer = this.players[0];
+        console.log('Jugador actual asignado:', this.currentPlayer);
+      } else {
+        console.error('No se pudo iniciar la partida.');
+      }
+    });
+  
+    // Suscribirse a las actualizaciones del estado del juego
     this.gameService.gameStateUpdated.subscribe((state: any) => {
+      console.log('Actualización del estado del juego recibida:', state);
       this.players = state.players;
       this.currentPlayer = state.currentPlayer;
       this.diceResult = state.diceResult;
-
+  
+      console.log('Jugadores actualizados:', this.players);
+      console.log('Jugador actual actualizado:', this.currentPlayer);
+      console.log('Resultado del dado actualizado:', this.diceResult);
+  
       // Si es el turno del bot, realizar una tirada automática
       if (this.currentPlayer && this.currentPlayer.name === "Bot") {
+          console.log('Es el turno del bot. Realizando tirada automática...');
           setTimeout(() => {
               this.gameService.rollDice();
           }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
       }
-  });
+    });
+  }
 
-    // Iniciar la partida (ejemplo)
-    this.gameService.startGame('12345'); // Reemplaza '12345' con el ID real de la partida
+  /**
+   * Verifica si el jugador actual es el usuario real.
+   */
+  get isCurrentPlayer(): boolean {
+    const currentUser = this.gameService.getCurrentUser(); // Obtener el usuario real desde el servicio
+    const isCurrent = this.currentPlayer && this.currentPlayer.id === currentUser?.id;
+
+    console.log('Verificando si el jugador actual es el usuario real:');
+    console.log('Jugador actual:', this.currentPlayer);
+    console.log('Usuario real:', currentUser);
+    console.log('¿Es el usuario real?', isCurrent);
+
+    return isCurrent;
   }
 
   /**
    * Inicializa el tablero con 63 casillas.
    */
   initializeBoard(): void {
+    console.log('Inicializando tablero...');
     for (let i = 1; i <= 63; i++) {
       this.cells.push({ number: i, type: this.getCellType(i) });
     }
+    console.log('Tablero inicializado:', this.cells);
   }
 
   /**
@@ -136,16 +174,10 @@ export class GameComponent implements OnInit {
   }
 
   /**
- * Verifica si el jugador actual es el usuario.
- */
-get isCurrentPlayer(): boolean {
-  return this.currentPlayer && this.currentPlayer.id === 1; // Reemplaza con la lógica real
-}
-
-/**
-* Lanza los dados.
-*/
-rollDice(): void {
-  this.gameService.rollDice();
-}
+   * Lanza los dados.
+   */
+  rollDice(): void {
+    console.log('Lanzando dado...');
+    this.gameService.rollDice();
+  }
 }
