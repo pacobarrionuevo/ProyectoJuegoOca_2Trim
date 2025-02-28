@@ -156,6 +156,9 @@ export class WebsocketService {
         case 'gameStarted':
           this.handleGameStarted(normalizedMessage);
           break;
+          case 'friendListUpdate':
+            this.messageReceived.next({ type: 'friendListUpdate' });
+            break;
         case 'waitingForOpponent':
           this.handleWaitingForOpponent(normalizedMessage);
           break;

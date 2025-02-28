@@ -10,6 +10,7 @@ using JuegoOcaBack.Models.Database;
 using JuegoOcaBack.Models.DTO;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
+using JuegoOcaBack.Services;
 
 namespace JuegoOcaBack.WebSocketAdvanced
 {
@@ -145,7 +146,10 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket, int userId)
         {
-            var handler = new WebSocketHandler(userId, webSocket); // Asegúrate de que userId sea correcto
+            using var scope = _serviceProvider.CreateScope();
+            var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
+            var user = await wsMethods.GetUserById(userId);
+            var handler = new WebSocketHandler(userId, webSocket, username: user?.UsuarioApodo ?? "Usuario desconocido"); // Asegúrate de que userId sea correcto
             await _semaphore.WaitAsync();
             try
             {
@@ -228,7 +232,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             {
                 Console.WriteLine("Heartbeat recibido: pong");
                 handler.LastActivity = DateTime.UtcNow; // Actualizar la última actividad
-                return; // No procesar como JSON
+                return;
             }
 
             try
@@ -252,6 +256,18 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     await _waitingSemaphore.WaitAsync();
                     _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
                     _waitingSemaphore.Release();
+                }
+                else if (msg.type == "sendFriendRequest")
+                {
+                    await ProcessFriendRequest(handler, msg.receiverId ?? 0);
+                }
+                else if (msg.type == "acceptFriendRequest")
+                {
+                    await ProcessAcceptFriendRequest(handler, msg.requestId ?? 0);
+                }
+                else if (msg.type == "rejectFriendRequest")
+                {
+                    await ProcessRejectFriendRequest(handler, msg.requestId ?? 0);
                 }
 
             }
@@ -298,7 +314,78 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 fromUserNickname = inviterName
             }));
         }
+        private async Task ProcessRejectFriendRequest(WebSocketHandler handler, int requestId)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var friendService = scope.ServiceProvider.GetRequiredService<FriendRequestService>();
 
+            var requestDetails = await friendService.GetRequestDetails(requestId);
+            if (requestDetails == null) return;
+
+            var success = await friendService.RejectFriendRequest(requestId, handler.Id);
+
+            if (success)
+            {
+                // Notificar al solicitante original
+                if (_connectedUsers.TryGetValue(requestDetails.SenderId, out var sender))
+                {
+                    await sender.SendAsync(JsonSerializer.Serialize(new
+                    {
+                        type = "friendRequestRejected",
+                        requestId = requestId,
+                        reason = "La solicitud fue rechazada"
+                    }));
+                }
+            }
+        }
+        private async Task ProcessFriendRequest(WebSocketHandler handler, int receiverId)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var friendService = scope.ServiceProvider.GetRequiredService<FriendRequestService>();
+
+            var result = await friendService.SendFriendRequest(handler.Id, receiverId);
+
+            if (result.Success)
+            {
+                // Notificar al receptor
+                if (_connectedUsers.TryGetValue(receiverId, out var receiver))
+                {
+                    await receiver.SendAsync(JsonSerializer.Serialize(new
+                    {
+                        type = "friendRequest",
+                        requestId = result.AmistadId,
+                        senderId = handler.Id,
+                        senderName = result.SenderName
+                    }));
+                }
+            }
+        }
+
+        private async Task ProcessAcceptFriendRequest(WebSocketHandler handler, int requestId)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var friendService = scope.ServiceProvider.GetRequiredService<FriendRequestService>();
+
+            var request = await friendService.GetRequestDetails(requestId);
+            if (request == null) return;
+
+            var success = await friendService.AcceptFriendRequest(requestId, handler.Id);
+
+            if (success)
+            {
+                // Notificar a ambos usuarios
+                var notifyPayload = new { type = "friendListUpdate" };
+
+                // Al usuario que aceptó
+                await handler.SendAsync(JsonSerializer.Serialize(notifyPayload));
+
+                // Al solicitante original
+                if (_connectedUsers.TryGetValue(request.SenderId, out var sender))
+                {
+                    await sender.SendAsync(JsonSerializer.Serialize(notifyPayload));
+                }
+            }
+        }
 
         private async Task ProcessMatchmaking(WebSocketHandler handler)
         {
@@ -540,7 +627,8 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
     // Records con propiedades en camelCase
     public record MatchmakingMessage(string type, int? friendId = null,
-        int? inviterId = null);
+        int? inviterId = null, int? receiverId = null, 
+    int? requestId = null);
     public record GameReadyMessage(string type, string gameId, int opponentId);
     public record WaitlistMessage(string type, int playersInQueue, int totalPlayers);
 }

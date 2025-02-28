@@ -9,6 +9,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private const int BufferSize = 4096;
         private readonly WebSocket _webSocket;
         private readonly byte[] _buffer;
+        public string Username { get; set; }
         public MatchmakingMessage LastMessage { get; private set; }
        
         public DateTime LastActivity { get; set; }
@@ -17,10 +18,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public event Func<WebSocketHandler, string, Task> MessageReceived;
         public event Func<WebSocketHandler, Task> Disconnected;
-        public WebSocketHandler(int userId, WebSocket webSocket)
+        public WebSocketHandler(int userId, WebSocket webSocket, string username)
         {
             Id = userId;
             _webSocket = webSocket;
+            Username = username;
+
             LastActivity = DateTime.UtcNow;
             _buffer = new byte[BufferSize];
         }
