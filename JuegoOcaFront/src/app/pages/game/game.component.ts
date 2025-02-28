@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { WebsocketService } from '../../services/websocket.service'; // Importa el WebsocketService
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ImageService } from '../../services/image.service';
+import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-game',
@@ -33,8 +35,13 @@ export class GameComponent implements OnInit {
   diceResult: number | null = null;
   cells: any[] = []; // Casillas del tablero
 
+  usuarioApodo: string = '';
+  usuarioFotoPerfil: string = '';
+  usuarioId: number | null = null;
+
   // Inyecta el WebsocketService
-  constructor(private websocketService: WebsocketService, private imageService: ImageService) {
+  constructor(private websocketService: WebsocketService, private imageService: ImageService, private authService: AuthService,
+      private router: Router) {
     this.versus = this.imageService.getImageUrl('Street_Fighter_VS_logo.png');
     this.fotoOca = this.imageService.getImageUrl('OcaFoto.jpg');
     this.fotoPosada = this.imageService.getImageUrl('RockingBeatas.jpg');
@@ -57,8 +64,10 @@ export class GameComponent implements OnInit {
     // Inicializar el tablero
     this.initializeBoard();
 
+    this.cargarInfoUsuario();
+
     // Iniciar la partida y obtener los jugadores
-    const playerName = "Jugador1"; // Nombre del jugador humano
+    const playerName = this.usuarioApodo; // Nombre del jugador humano
     this.websocketService.startGame('12345', playerName).subscribe((response) => {
         if (response && response.players) {
             console.log('Partida iniciada correctamente:', response);
@@ -106,6 +115,22 @@ export class GameComponent implements OnInit {
       }
   });
 }
+
+validarUrlImagen(fotoPerfil: string | null): string {
+    return fotoPerfil ? `${environment.apiUrl}/fotos/${fotoPerfil}` : 'na';
+  }
+
+  cargarInfoUsuario(): void {
+    const userInfo = this.authService.getUserDataFromToken();
+    if (userInfo) {
+      this.usuarioApodo = userInfo.name;
+      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture);
+      this.usuarioId = userInfo.id;
+    } else {
+      console.error('No se pudo obtener la información del usuario. ¿El token está disponible?');
+      this.router.navigate(['/login']); // Redirigir al login si no hay token
+    }
+  }
 
   getPlayersInCell(cellNumber: number): any[] {
     if (!this.players) {
