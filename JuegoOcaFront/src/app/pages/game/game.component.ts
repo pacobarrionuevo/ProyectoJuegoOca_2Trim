@@ -22,6 +22,11 @@ export class GameComponent implements OnInit {
   fotoCarcel: string;
   fotoLaberinto: string;
   fotoPozo: string;
+  fotoAbajo: string;
+  fotoDerecha: string;
+  fotoIzquierda: string;
+  fotoArriba: string;
+  fotoBanderaInicio: string;
 
   players: any[] = [];
   currentPlayer: any;
@@ -39,6 +44,11 @@ export class GameComponent implements OnInit {
     this.fotoCarcel = this.imageService.getImageUrl('carcel.png');
     this.fotoLaberinto = this.imageService.getImageUrl('laberinto.jpg');
     this.fotoPozo = this.imageService.getImageUrl('pozo.jpg');
+    this.fotoAbajo = this.imageService.getImageUrl('FlechaAbajo.png');
+    this.fotoDerecha = this.imageService.getImageUrl('FlechaDerecha.png');
+    this.fotoIzquierda = this.imageService.getImageUrl('FlechaIzquierda.png');
+    this.fotoArriba = this.imageService.getImageUrl('FlechaArriba.png');
+    this.fotoBanderaInicio = this.imageService.getImageUrl('banderainicio.jpg');
   } 
 
   ngOnInit(): void {
@@ -127,6 +137,17 @@ export class GameComponent implements OnInit {
    * Obtiene el tipo de casilla (Oca, Puente, Posada, Muerte, etc.).
    */
   getCellType(cellNumber: number): string {
+    if (cellNumber === 1) return 'Inicio';
+    if (cellNumber === 2 || cellNumber === 3 || cellNumber === 4 || cellNumber === 28 || cellNumber === 29 
+      || cellNumber === 30 || cellNumber === 47 || cellNumber === 48 || cellNumber === 49 || cellNumber === 60
+    ) return 'FlechaDerecha';
+    if (cellNumber === 7 || cellNumber === 8 || cellNumber === 10 || cellNumber === 11 || cellNumber === 13 
+      || cellNumber === 33 || cellNumber === 34 || cellNumber === 35 || cellNumber === 37 || cellNumber === 51 || cellNumber === 61
+    ) return 'FlechaArriba';
+    if (cellNumber === 15 || cellNumber === 16 || cellNumber === 17 || cellNumber === 20 || cellNumber === 38 || cellNumber === 39 
+      || cellNumber === 40 || cellNumber === 55 || cellNumber === 56 || cellNumber === 62) return 'FlechaIzquierda';
+    if (cellNumber === 21 || cellNumber === 22 || cellNumber === 24 || cellNumber === 25 || cellNumber === 43 || cellNumber === 44 || cellNumber === 46 
+      || cellNumber === 57) return 'FlechaAbajo';
     if (cellNumber === 5 || cellNumber === 9 || cellNumber === 14 || cellNumber === 18
       || cellNumber === 23 || cellNumber === 27 || cellNumber === 32 || cellNumber === 36
       || cellNumber === 41 || cellNumber === 45 || cellNumber === 50 || cellNumber === 54
