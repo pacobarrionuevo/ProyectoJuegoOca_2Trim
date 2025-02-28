@@ -73,22 +73,27 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 else if (i == 1)
                 {
                     cell.Type = "Inicio";
+                    cell.Effect = i;
                 }
                 else if (i == 2 || i == 3 || i == 4 || i == 28 || i == 29 || i == 30 || i == 47 || i == 48 || i == 49 || i == 60)
                 {
                     cell.Type = "FlechaDerecha";
+                    cell.Effect = i;
                 }
                 else if (i == 7 || i == 8 || i == 10 || i == 11 || i == 13 || i == 33 || i == 34 || i == 35 || i == 37|| i == 51 || i == 61)
                 {
                     cell.Type = "FlechaArriba";
+                    cell.Effect = i;
                 }
                 else if (i == 15 || i == 16 || i == 17 || i == 20 || i == 39 || i == 40 || i == 55 || i == 56 || i == 62)
                 {
                     cell.Type = "FlechaIzquierda";
+                    cell.Effect = i;
                 }
                 else if (i == 22 || i == 24 || i == 25 || i == 44 || i == 46 || i == 57)
                 {
                     cell.Type = "FlechaAbajo";
+                    cell.Effect = i;
                 }
                 Cells.Add(cell);
             }

@@ -37,10 +37,10 @@
       <img *ngIf="cell.type === 'Laberinto'" [src]="fotoLaberinto" alt="Imagen de Laberinto" class="tablero-image">
       <img *ngIf="cell.type === 'Pozo'" [src]="fotoPozo" alt="Imagen de Pozo" class="tablero-image">
       <img *ngIf="cell.type === 'Carcel'" [src]="fotoCarcel" alt="Imagen de Carcel" class="tablero-image">
-      <img *ngIf="cell.type === 'FlechaAbajo'" [src]="fotoAbajo" alt="Imagen de Flecha" class="tablero-image">
-      <img *ngIf="cell.type === 'FlechaDerecha'" [src]="fotoDerecha" alt="Imagen de Flecha" class="tablero-image">
-      <img *ngIf="cell.type === 'FlechaIzquierda'" [src]="fotoIzquierda" alt="Imagen de Flecha" class="tablero-image">
-      <img *ngIf="cell.type === 'FlechaArriba'" [src]="fotoArriba" alt="Imagen de Flecha" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaAbajo'" [src]="fotoAbajo" alt="Imagen de FlechaA" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaDerecha'" [src]="fotoDerecha" alt="Imagen de FlechaD" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaIzquierda'" [src]="fotoIzquierda" alt="Imagen de FlechaI" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaArriba'" [src]="fotoArriba" alt="Imagen de FlechaAr" class="tablero-image">
       <img *ngIf="cell.type === 'Inicio'" [src]="fotoBanderaInicio" alt="Imagen de Inicio" class="tablero-image">
       <div class="players">
         <span *ngFor="let player of getPlayersInCell(cell.number)" class="player" [style.background-color]="player.color">

@@ -109,6 +109,8 @@
   position: absolute;
   bottom: 2px;
   left: 2px;
+
+  z-index: 1;
 }
 
 .player {
@@ -124,10 +126,7 @@
 }
 
 .tablero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Ajusta la imagen para cubrir la casilla sin deformarse */
-  position: absolute;
-  top: 0;
-  left: 0;
+  width: 80%;
+  height: 80%;
+  object-fit: cover;
 }
