@@ -19,11 +19,16 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 var cell = new CellDTO { Number = i, Type = "Normal", Effect = 0 };
 
                 // Casillas especiales
-                if (i == 5 || i == 9 || i == 14 || i == 18 || i == 23 || i == 27 || i == 32
-                    || i == 36 || i == 41 || i == 45 || i == 50 || i == 54 || i == 59 || i == 63) // Casillas de la oca
+                if (i == 9 || i == 18 || i == 27 || i == 36 || i == 45 || i == 54 || i == 63) // Casillas de la oca
                 {
                     cell.Type = "Oca";
-                    cell.Effect = i + 1; // Avanza a la siguiente oca
+                    cell.Effect = i + 5; // Avanza a la siguiente oca
+                    
+                }
+                else if (i == 5 || i == 14 || i == 23 || i == 32 || i == 41 || i == 50 || i == 59)
+                {
+                    cell.Type = "Oca";
+                    cell.Effect = i + 4; // Avanza a la siguiente oca
                 }
                 else if (i == 6 || i == 12) // Puentes
                 {
@@ -33,7 +38,7 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 else if (i == 19) // Posada
                 {
                     cell.Type = "Posada";
-                    cell.Effect = -1; // Pierde un turno
+                    cell.Effect = 1; // Vuelve al principio
                 }
                 else if (i == 26) // Dados
                 {
@@ -49,12 +54,12 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 else if (i == 42) // Laberinto
                 {
                     cell.Type = "Laberinto";
-                    cell.Effect = -2; // Pierde un turno
+                    cell.Effect = 1; // Vuelve al principio
                 }
                 else if (i == 52) // Cárcel
                 {
                     cell.Type = "Carcel";
-                    cell.Effect = -3; // Pierdes tres turnos
+                    cell.Effect = 1; // Vuelve al principio
                 }
                 else if (i == 53) // Dados
                 {
