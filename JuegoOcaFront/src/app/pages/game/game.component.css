@@ -77,11 +77,12 @@
 /* Tablero */
 .board {
   width: 80%; /* Ancho del tablero */
-  height: 800px; /* Altura del tablero */
+  height: 600px; /* Altura del tablero */
   position: relative;
   border: 2px solid #B63A3A; /* Borde del tablero */
   border-radius: 10px;
   background-color: #DAC694; /* Fondo del tablero */
+  box-sizing: border-box; /* Incluye el padding en el ancho y alto */
 }
 
 .cell {
@@ -109,8 +110,7 @@
   position: absolute;
   bottom: 2px;
   left: 2px;
-
-  z-index: 1;
+  z-index: 1; /* Asegura que los jugadores estén por encima de las imágenes */
 }
 
 .player {

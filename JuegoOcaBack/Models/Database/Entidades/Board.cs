@@ -29,10 +29,15 @@ namespace JuegoOcaBack.Models.Database.Entidades
                     cell.Type = "Oca";
                     cell.Effect = i + 4; // Avanza a la siguiente oca
                 }
-                else if (i == 6 || i == 12) // Puentes
+                else if (i == 6 ) // Puente1
                 {
                     cell.Type = "Puente";
-                    cell.Effect = i + 6; // Avanza 6 casillas
+                    cell.Effect = 12;
+                }
+                else if (i == 12) // Puente1
+                {
+                    cell.Type = "Puente";
+                    cell.Effect = 6;
                 }
                 else if (i == 19) // Posada
                 {
