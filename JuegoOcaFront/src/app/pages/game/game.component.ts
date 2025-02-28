@@ -18,6 +18,10 @@ export class GameComponent implements OnInit {
   fotoPosada: string;
   fotoPuente: string;
   fotoMuerte: string;
+  fotoDados: string;
+  fotoCarcel: string;
+  fotoLaberinto: string;
+  fotoPozo: string;
 
   players: any[] = [];
   currentPlayer: any;
@@ -31,6 +35,10 @@ export class GameComponent implements OnInit {
     this.fotoPosada = this.imageService.getImageUrl('RockingBeatas.jpg');
     this.fotoPuente = this.imageService.getImageUrl('puente.jpeg');
     this.fotoMuerte = this.imageService.getImageUrl('verdaderamuerte.png');
+    this.fotoDados = this.imageService.getImageUrl('balatrodice.png');
+    this.fotoCarcel = this.imageService.getImageUrl('carcel.png');
+    this.fotoLaberinto = this.imageService.getImageUrl('laberinto.jpg');
+    this.fotoPozo = this.imageService.getImageUrl('pozo.jpg');
   } 
 
   ngOnInit(): void {
@@ -119,9 +127,16 @@ export class GameComponent implements OnInit {
    * Obtiene el tipo de casilla (Oca, Puente, Posada, Muerte, etc.).
    */
   getCellType(cellNumber: number): string {
-    if (cellNumber % 9 === 0 && cellNumber !== 63) return 'Oca';
+    if (cellNumber === 5 || cellNumber === 9 || cellNumber === 14 || cellNumber === 18
+      || cellNumber === 23 || cellNumber === 27 || cellNumber === 32 || cellNumber === 36
+      || cellNumber === 41 || cellNumber === 45 || cellNumber === 50 || cellNumber === 54
+      || cellNumber === 59 || cellNumber === 63) return 'Oca';
     if (cellNumber === 6 || cellNumber === 12) return 'Puente';
-    if (cellNumber === 19 || cellNumber === 31 || cellNumber === 42) return 'Posada';
+    if (cellNumber === 19) return 'Posada';
+    if (cellNumber === 26 || cellNumber === 53) return 'Dados';
+    if (cellNumber === 31) return 'Pozo';
+    if (cellNumber === 42) return 'Laberinto';
+    if (cellNumber === 52) return 'Carcel';
     if (cellNumber === 58) return 'Muerte';
     return 'Normal';
   }
