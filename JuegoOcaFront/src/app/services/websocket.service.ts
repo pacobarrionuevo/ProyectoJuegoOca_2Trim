@@ -203,7 +203,7 @@ export class WebsocketService {
         currentPlayer: this.currentPlayer,
         diceResult: this.diceResult
     });
-}
+  }
 
   /**
    * Maneja el fin del juego.
@@ -291,7 +291,7 @@ export class WebsocketService {
 
     // Notificar a los suscriptores que el estado del juego ha cambiado
     this.notifyGameStateUpdate();
-}
+  }
 
   /**
    * Maneja la entrada de un nuevo jugador.

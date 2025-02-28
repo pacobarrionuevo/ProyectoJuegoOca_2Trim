@@ -55,6 +55,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             try
             {
                 var handlersSnapshot = _handlers.ToList(); // Crear una copia de la lista para evitar problemas de concurrencia
+                Console.WriteLine($"Enviando mensaje a {handlersSnapshot.Count} clientes: {message}");
                 foreach (var handler in handlersSnapshot)
                 {
                     if (handler.IsOpen) // Verificar si el WebSocket está abierto
@@ -89,13 +90,18 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public async Task HandleAsync(WebSocket webSocket)
         {
-            // Esta parte del código se encarga de 
+            // Incrementar el contador de conexiones activas
             Interlocked.Increment(ref _activeConnections);
             OnActiveConnectionsChanged?.Invoke(_activeConnections);
 
+            // Crear el handler y agregarlo a las listas
             var handler = await CreateHandlerAsync(webSocket);
+
+            // Actualizar el estado del usuario y notificar a los amigos
             await UpdateUserStatusAsync(handler, "Conectado");
             await NotifyFriendsAsync(handler, true);
+
+            // Manejar la conexión
             await handler.HandleAsync();
         }
 
@@ -107,7 +113,14 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 var handler = new WebSocketHandler(Interlocked.Increment(ref _idCounter), webSocket);
                 handler.Disconnected += OnDisconnectedHandler;
                 handler.MessageReceived += OnMessageReceivedHandler;
+
+                // Agregar el handler a la lista de handlers
+                _handlers.Add(handler);
+
+                // Agregar el handler a la lista de jugadores conectados
                 _connectedPlayers.Add(handler);
+
+                Console.WriteLine($"Nuevo cliente conectado. ID: {handler.Id}, Total de clientes: {_handlers.Count}");
                 return handler;
             }
             finally
@@ -129,8 +142,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
             await _waitingSemaphore.WaitAsync();
             try
             {
+                // Eliminar el handler de las listas
+                _handlers.Remove(handler);
                 _connectedPlayers.Remove(handler);
                 _waitingPlayers.Remove(handler);
+
+                Console.WriteLine($"Cliente desconectado. ID: {handler.Id}, Total de clientes: {_handlers.Count}");
             }
             finally
             {

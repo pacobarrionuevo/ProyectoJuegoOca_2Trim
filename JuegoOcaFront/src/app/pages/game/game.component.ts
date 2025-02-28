@@ -50,23 +50,28 @@ export class GameComponent implements OnInit {
 
     // Suscribirse a las actualizaciones del estado del juego
     this.websocketService.gameStateUpdated.subscribe((state: any) => {
-        console.log('Actualización del estado del juego recibida en GameComponent:', state);
-        this.players = [...state.players]; // Crear una nueva instancia del arreglo
-        this.currentPlayer = { ...state.currentPlayer }; // Crear una nueva instancia del objeto
-        this.diceResult = state.diceResult;
-
-        console.log('Jugadores actualizados en GameComponent:', this.players);
-        console.log('Jugador actual actualizado en GameComponent:', this.currentPlayer);
-        console.log('Resultado del dado actualizado en GameComponent:', this.diceResult);
-
-        // Si es el turno del bot, realizar una tirada automática
-        if (this.currentPlayer && this.currentPlayer.name === "Bot") {
-            console.log('Es el turno del bot. Realizando tirada automática...');
-            setTimeout(() => {
-                this.websocketService.rollDice();
-            }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
-        }
-    });
+      console.log('Actualización del estado del juego recibida en GameComponent:', state);
+  
+      // Convertir players en un arreglo si es un objeto
+      const playersArray = Array.isArray(state.players) ? state.players : Object.values(state.players);
+  
+      // Actualizar las propiedades del componente
+      this.players = [...playersArray]; // Crear una nueva instancia del arreglo
+      this.currentPlayer = { ...state.currentPlayer }; // Crear una nueva instancia del objeto
+      this.diceResult = state.diceResult;
+  
+      console.log('Jugadores actualizados en GameComponent:', this.players);
+      console.log('Jugador actual actualizado en GameComponent:', this.currentPlayer);
+      console.log('Resultado del dado actualizado en GameComponent:', this.diceResult);
+  
+      // Si es el turno del bot, realizar una tirada automática
+      if (this.currentPlayer && this.currentPlayer.name === "Bot") {
+          console.log('Es el turno del bot. Realizando tirada automática...');
+          setTimeout(() => {
+              this.websocketService.rollDice();
+          }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
+      }
+  });
 }
 
   getPlayersInCell(cellNumber: number): any[] {
