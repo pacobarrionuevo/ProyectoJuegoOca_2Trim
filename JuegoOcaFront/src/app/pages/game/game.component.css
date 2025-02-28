@@ -9,6 +9,8 @@
   position: relative;
   width: 800px; /* Ajusta el tamaño del tablero */
   height: 800px; /* Ajusta el tamaño del tablero */
+  background-color: #f9f9f9; /* Fondo del tablero */
+  border: 2px solid #333; /* Borde del tablero */
 }
 
 .cell {
@@ -20,6 +22,7 @@
   justify-content: center;
   align-items: center;
   background-color: #f0f0f0;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Sombra para las celdas */
 }
 
 .cell-number {
@@ -27,11 +30,15 @@
   top: 2px;
   left: 2px;
   font-size: 12px;
+  color: #333;
 }
 
 .players {
   display: flex;
   gap: 2px;
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
 }
 
 .player {
@@ -43,16 +50,21 @@
   align-items: center;
   font-size: 10px;
   color: white;
+  background-color: #007bff; /* Color por defecto para los jugadores */
 }
 
 .controls {
   margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .dice-result {
   margin-top: 10px;
   font-size: 18px;
   font-weight: bold;
+  color: #333;
 }
 
 /* Estilos para casillas especiales */
@@ -70,20 +82,26 @@
 
 .cell-muerte {
   background-color: #333; /* Gris oscuro para la muerte */
+  color: white; /* Texto en blanco para mejor contraste */
 }
 
-.players {
-  display: flex;
-  gap: 2px;
+.game-info {
+  margin-top: 20px;
+  text-align: center;
 }
 
-.player {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 10px;
+.game-info button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
   color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.game-info button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }

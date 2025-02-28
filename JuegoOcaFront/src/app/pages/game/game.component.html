@@ -11,32 +11,25 @@
       <div class="cell-number">{{ cell.number }}</div>
       <div class="players">
         <span *ngFor="let player of getPlayersInCell(cell.number)" class="player" [style.background-color]="player.color">
-            {{ player.name }}
+          {{ player.name }}
         </span>
-    </div>
+      </div>
     </div>
   </div>
 
   <!-- Controles del juego -->
   <div class="controls">
     <button (click)="rollDice()" [disabled]="!isCurrentPlayer">Lanzar Dado</button>
-    <div *ngIf="diceResult !== null">
+    <div *ngIf="diceResult !== null" class="dice-result">
       <h2>Resultado del Dado</h2>
       <p>{{ diceResult }}</p>
-  </div>
+    </div>
   </div>
 </div>
 
-<div *ngIf="players">
-  <h2>Jugadores</h2>
-  <ul>
-      <li *ngFor="let player of players">
-          {{ player.name }} - Posición: {{ player.position }}
-      </li>
-  </ul>
-</div>
-
-<div *ngIf="currentPlayer">
-  <h2>Jugador Actual</h2>
-  <p>{{ currentPlayer.name }} - Posición: {{ currentPlayer.position }}</p>
+<!-- Información del juego -->
+<div class="game-info">
+  <p>Jugador actual: {{ currentPlayer?.name }}</p>
+  <p>Resultado del dado: {{ diceResult }}</p>
+  <button *ngIf="isCurrentPlayer" (click)="rollDice()">Lanzar dado</button>
 </div>
