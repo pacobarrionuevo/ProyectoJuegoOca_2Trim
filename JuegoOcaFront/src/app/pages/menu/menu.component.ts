@@ -58,6 +58,23 @@ export class MenuComponent implements OnInit, OnDestroy {
     const state = history.state;
   this.gameId = state.gameId;
   this.opponentId = state.opponentId;
+  this.subs.push(
+    this.webSocketService.messageReceived.subscribe(message => {
+      switch(message.type) {
+        case 'friendRequest':
+          this.handleFriendRequest(message);
+          break;
+          
+        case 'friendRequestAccepted':
+          this.handleFriendRequestAccepted(message);
+          break;
+          
+        case 'friendRequestRejected':
+          this.handleFriendRequestRejected(message);
+          break;
+      }
+    })
+  );
     this.subs.push(
       this.webSocketService.messageReceived.subscribe(message => {
         if (message.type === 'gameReady') {
@@ -120,7 +137,61 @@ export class MenuComponent implements OnInit, OnDestroy {
       })
     );
   }
-
+  private handleFriendRequest(message: any): void {
+    const nuevaSolicitud: SolicitudAmistad = {
+      amistadId: message.requestId,
+      usuarioId: message.senderId,
+      usuarioApodo: message.senderName,
+      usuarioFotoPerfil: this.perfil_default
+    };
+    
+    this.solicitudesPendientes.push(nuevaSolicitud);
+  }
+  
+  private handleFriendRequestAccepted(message: any): void {
+    const nuevoAmigo: User = {
+      UsuarioId: message.friendId,
+      UsuarioApodo: message.friendName,
+      UsuarioFotoPerfil: this.perfil_default
+    };
+    
+    this.amigos.push(nuevoAmigo);
+    this.amigosFiltrados = [...this.amigos];
+  }
+  private handleFriendRequestRejected(message: any): void {
+    // 1. Eliminar la solicitud rechazada de la lista local
+    this.solicitudesPendientes = this.solicitudesPendientes.filter(
+      solicitud => solicitud.amistadId !== message.requestId
+    );
+  
+    // 2. Actualizar lista de amigos por si acaso
+    this.cargarAmigos();
+  
+    // 3. Mostrar notificación al usuario
+    this.errorMessage = `La solicitud de amistad fue rechazada.`;
+    setTimeout(() => this.errorMessage = null, 5000);
+  
+  }
+  enviarSolicitud(receiverId: number): void {
+    this.webSocketService.sendRxjs(JSON.stringify({
+      type: 'sendFriendRequest',
+      receiverId: receiverId
+    }));
+  }
+  
+  aceptarSolicitud(solicitud: SolicitudAmistad): void {
+    this.webSocketService.sendRxjs(JSON.stringify({
+      type: 'acceptFriendRequest',
+      requestId: solicitud.amistadId
+    }));
+  }
+  
+  rechazarSolicitud(solicitud: SolicitudAmistad): void {
+    this.webSocketService.sendRxjs(JSON.stringify({
+      type: 'rejectFriendRequest',
+      requestId: solicitud.amistadId
+    }));
+  }
   invitarAPartida(friendId: number): void {
     if (!friendId || friendId === this.usuarioId) {
       alert('Selecciona un amigo válido');
@@ -185,19 +256,6 @@ export class MenuComponent implements OnInit, OnDestroy {
     return fotoPerfil ? `${this.BASE_URL}/fotos/${fotoPerfil}` : this.perfil_default;
   }
 
-  enviarSolicitud(receiverId: number): void {
-    this.friendService.sendFriendRequest(receiverId).subscribe({
-      next: (result) => {
-        console.log('Solicitud enviada:', result);
-        this.obtenerSolicitudesPendientes();
-      },
-      error: (error) => {
-        console.error('Error enviando solicitud:', error);
-        this.errorMessage = 'No se pudo enviar la solicitud';
-      }
-    });
-  }
-
   private obtenerSolicitudesPendientes(): void {
     this.friendService.getPendingRequests().subscribe({
       next: (solicitudes) => {
@@ -215,30 +273,6 @@ export class MenuComponent implements OnInit, OnDestroy {
     });
   }
 
-  aceptarSolicitud(solicitud: SolicitudAmistad): void {
-    this.friendService.aceptarSolicitud(solicitud.amistadId).subscribe({
-      next: () => {
-        this.obtenerSolicitudesPendientes();
-        this.cargarAmigos();
-      },
-      error: (error) => {
-        console.error('Error aceptando solicitud:', error);
-        this.errorMessage = 'No se pudo aceptar la solicitud';
-      }
-    });
-  }
-
-  rechazarSolicitud(solicitud: SolicitudAmistad): void {
-    this.friendService.rechazarSolicitud(solicitud.amistadId).subscribe({
-      next: () => {
-        this.obtenerSolicitudesPendientes();
-      },
-      error: (error) => {
-        console.error('Error rechazando solicitud:', error);
-        this.errorMessage = 'No se pudo rechazar la solicitud';
-      }
-    });
-  }
 
   logout(): void {
     this.authService.logout();

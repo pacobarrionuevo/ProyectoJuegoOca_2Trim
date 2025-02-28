@@ -159,7 +159,29 @@ export class WebsocketService {
         case 'waitingForOpponent':
           this.handleWaitingForOpponent(normalizedMessage);
           break;
-
+          case 'friendRequest':
+            this.messageReceived.next({
+              type: 'friendRequest',
+              requestId: parsedMessage.requestId,
+              senderId: parsedMessage.senderId,
+              senderName: parsedMessage.senderName
+            });
+            break;
+            
+          case 'friendRequestAccepted':
+            this.messageReceived.next({
+              type: 'friendRequestAccepted',
+              friendId: parsedMessage.friendId,
+              friendName: parsedMessage.friendName
+            });
+            break;
+            
+          case 'friendRequestRejected':
+            this.messageReceived.next({
+              type: 'friendRequestRejected',
+              friendId: parsedMessage.friendId
+            });
+            break;
         case 'friendNotAvailable':
           this.friendNotAvailable.next(normalizedMessage.message); // Notificar que el amigo no está disponible
           break;
