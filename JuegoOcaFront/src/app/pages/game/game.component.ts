@@ -50,14 +50,14 @@ export class GameComponent implements OnInit {
 
     // Suscribirse a las actualizaciones del estado del juego
     this.websocketService.gameStateUpdated.subscribe((state: any) => {
-        console.log('Actualización del estado del juego recibida:', state);
+        console.log('Actualización del estado del juego recibida en GameComponent:', state);
         this.players = state.players;
         this.currentPlayer = state.currentPlayer;
         this.diceResult = state.diceResult;
 
-        console.log('Jugadores actualizados:', this.players);
-        console.log('Jugador actual actualizado:', this.currentPlayer);
-        console.log('Resultado del dado actualizado:', this.diceResult);
+        console.log('Jugadores actualizados en GameComponent:', this.players);
+        console.log('Jugador actual actualizado en GameComponent:', this.currentPlayer);
+        console.log('Resultado del dado actualizado en GameComponent:', this.diceResult);
 
         // Si es el turno del bot, realizar una tirada automática
         if (this.currentPlayer && this.currentPlayer.name === "Bot") {
@@ -67,7 +67,7 @@ export class GameComponent implements OnInit {
             }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
         }
     });
-  }
+}
 
   getPlayersInCell(cellNumber: number): any[] {
     if (!this.players) {

@@ -180,6 +180,8 @@ export class WebsocketService {
    */
   rollDice(): void {
     console.log('Solicitando tirada de dado al servidor...');
+    console.log('Game ID:', this.gameId);
+    console.log('Jugador actual:', this.currentPlayer);
     this.sendRxjs(JSON.stringify({
         type: 'rollDice',
         gameId: this.gameId,
@@ -197,11 +199,11 @@ export class WebsocketService {
     console.log('Jugador actual:', this.currentPlayer);
     console.log('Resultado del dado:', this.diceResult);
     this.gameStateUpdated.next({
-      players: this.players,
-      currentPlayer: this.currentPlayer,
-      diceResult: this.diceResult
+        players: this.players,
+        currentPlayer: this.currentPlayer,
+        diceResult: this.diceResult
     });
-  }
+}
 
   /**
    * Maneja el fin del juego.
@@ -255,31 +257,41 @@ export class WebsocketService {
 }
 
   /**
-   * Maneja la actualización del estado del juego.
-   */
-  /**
  * Maneja la actualización del estado del juego.
  */
   private handleGameUpdate(message: any): void {
     console.log('WebSocketService: Actualización del estado del juego recibida:', message);
 
-    // Actualizar la lista de jugadores
-    this.players = message.players;
-    console.log('Jugadores actualizados:', this.players);
-
-    // Actualizar el jugador actual
-    if (message.currentPlayer) {
-        this.currentPlayer = message.currentPlayer;
-        console.log('Jugador actual actualizado:', this.currentPlayer);
+    // Verificar si los jugadores están presentes en el mensaje
+    if (message.players) {
+        console.log('Jugadores recibidos:', message.players);
+        this.players = message.players;
+        console.log('Jugadores actualizados:', this.players);
+    } else {
+        console.warn('No se recibieron jugadores en la actualización del juego.');
     }
 
-    // Actualizar el resultado del dado
-    this.diceResult = message.diceResult;
-    console.log('Resultado del dado actualizado:', this.diceResult);
+    // Verificar si el jugador actual está presente en el mensaje
+    if (message.currentPlayer) {
+        console.log('Jugador actual recibido:', message.currentPlayer);
+        this.currentPlayer = message.currentPlayer;
+        console.log('Jugador actual actualizado:', this.currentPlayer);
+    } else {
+        console.warn('No se recibió el jugador actual en la actualización del juego.');
+    }
+
+    // Verificar si el resultado del dado está presente en el mensaje
+    if (message.diceResult !== undefined) {
+        console.log('Resultado del dado recibido:', message.diceResult);
+        this.diceResult = message.diceResult;
+        console.log('Resultado del dado actualizado:', this.diceResult);
+    } else {
+        console.warn('No se recibió el resultado del dado en la actualización del juego.');
+    }
 
     // Notificar a los suscriptores que el estado del juego ha cambiado
     this.notifyGameStateUpdate();
-  }
+}
 
   /**
    * Maneja la entrada de un nuevo jugador.

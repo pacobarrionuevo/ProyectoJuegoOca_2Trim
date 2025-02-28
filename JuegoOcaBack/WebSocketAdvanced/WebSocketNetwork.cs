@@ -158,6 +158,29 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
                         break;
 
+                    case "rolldice":
+                        var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);
+                        Console.WriteLine($"Tirando dado para el jugador {rollDiceMessage.PlayerId}");
+                        gameService = GetGameService();
+
+                        // Verificar que la partida esté iniciada
+                        if (!gameService.IsGameStarted())
+                        {
+                            Console.WriteLine("Error: La partida no ha sido iniciada.");
+                            break;
+                        }
+
+                        // Verificar que haya jugadores
+                        if (gameService.ObtainPlayers().Count == 0)
+                        {
+                            Console.WriteLine("Error: No hay jugadores en la partida.");
+                            break;
+                        }
+
+                        int diceResult = new Random().Next(1, 7); // Generar un número aleatorio entre 1 y 6
+                        gameService.PlayerMove(rollDiceMessage.PlayerId, diceResult);
+                        break;
+
                     case "playrandom":
                         var playRandomMessage = JsonSerializer.Deserialize<PlayRandomMessage>(message);
                         await ProcessMatchmaking(handler);
@@ -184,6 +207,15 @@ namespace JuegoOcaBack.WebSocketAdvanced
         {
             [JsonPropertyName("type")] // Asegúrate de que coincida con el JSON
             public string Type { get; set; }
+        }
+
+        public class RollDiceMessage : WebSocketMessage
+        {
+            [JsonPropertyName("playerId")] // Asegúrate de que coincida con el JSON
+            public int PlayerId { get; set; }
+
+            [JsonPropertyName("gameId")] // Asegúrate de que coincida con el JSON
+            public string GameId { get; set; }
         }
 
         public class MovePlayerMessage : WebSocketMessage
