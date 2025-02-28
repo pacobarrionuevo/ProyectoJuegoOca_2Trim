@@ -125,21 +125,11 @@ export class WebsocketService {
   startGame(gameId: string, playerName: string): Observable<any> {
     this.gameId = gameId; // Asignar el gameId al servicio
     const body = { GameId: gameId, PlayerName: playerName };
-  
     return this.http.post<any>(`${environment.apiUrl}/api/Game/start-game`, body).pipe(
-      map((response) => {
-        // Asegurarse de que la respuesta incluya la lista de jugadores
-        if (response && response.Players) {
-          this.players = response.Players; // Actualizar la lista de jugadores en el servicio
-          this.currentPlayer = this.players[0]; // Asignar el primer jugador como currentPlayer
-          this.notifyGameStateUpdate(); // Notificar a los suscriptores
-        }
-        return response; // Devolver la respuesta al componente
-      }),
-      catchError((error) => {
-        console.error('Error al iniciar la partida:', error);
-        return of(null); // Devolver null en caso de error
-      })
+        catchError((error) => {
+            console.error('Error al iniciar la partida:', error);
+            return of(null);
+        })
     );
   }
 
