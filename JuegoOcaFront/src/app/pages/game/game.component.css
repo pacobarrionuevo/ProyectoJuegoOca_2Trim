@@ -1,16 +1,87 @@
 .game-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  height: 100vh;
   padding: 20px;
+  gap: 20px; /* Espacio entre el marcador y el tablero */
 }
 
+/* Marcador */
+.marker {
+  width: 20%; /* Ancho del marcador */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espacio entre elementos */
+  padding: 20px;
+  background-color: #DAC694;
+  border: 2px solid #B63A3A; /* Borde del marcador */
+  border-radius: 10px; /* Bordes redondeados */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra */
+}
+
+.player-info {
+  text-align: center;
+}
+
+.player-info p {
+  font-size: 16px;
+  color: #555;
+}
+
+.foto {
+  display: flex;
+  justify-content: center;
+}
+
+.foto_versus {
+  width: 50%;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px; /* Espacio entre elementos */
+}
+
+.controls button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #B63A3A;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.controls button:disabled {
+  background-color: #ad5c5c;
+  cursor: not-allowed;
+}
+
+.dice-result {
+  text-align: center;
+}
+
+.dice-result h2 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #333;
+}
+
+.dice-result p {
+  font-size: 24px;
+  font-weight: bold;
+  color: #B63A3A;
+}
+
+/* Tablero */
 .board {
+  width: 80%; /* Ancho del tablero */
+  height: 800px; /* Altura del tablero */
   position: relative;
-  width: 800px; /* Ajusta el tamaño del tablero */
-  height: 800px; /* Ajusta el tamaño del tablero */
-  background-color: #f9f9f9; /* Fondo del tablero */
-  border: 2px solid #333; /* Borde del tablero */
+  border: 2px solid #B63A3A; /* Borde del tablero */
+  border-radius: 10px;
+  background-color: #DAC694; /* Fondo del tablero */
 }
 
 .cell {
@@ -30,7 +101,6 @@
   top: 2px;
   left: 2px;
   font-size: 12px;
-  color: #333;
 }
 
 .players {
@@ -50,21 +120,7 @@
   align-items: center;
   font-size: 10px;
   color: white;
-  background-color: #007bff; /* Color por defecto para los jugadores */
-}
-
-.controls {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.dice-result {
-  margin-top: 10px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
+  background-color: #8800ff; /* Color por defecto para los jugadores */
 }
 
 /* Estilos para casillas especiales */
@@ -83,25 +139,4 @@
 .cell-muerte {
   background-color: #333; /* Gris oscuro para la muerte */
   color: white; /* Texto en blanco para mejor contraste */
-}
-
-.game-info {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.game-info button {
-  margin-top: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.game-info button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
 }

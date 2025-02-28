@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { WebsocketService } from '../../services/websocket.service'; // Importa el WebsocketService
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { ImageService } from '../../services/image.service';
 
 @Component({
   selector: 'app-game',
@@ -11,12 +12,18 @@ import { CommonModule } from '@angular/common';
   imports: [RouterModule, CommonModule],
 })
 export class GameComponent implements OnInit {
+  // inicializamos fotos
+  versus: string;
+
   players: any[] = [];
   currentPlayer: any;
   diceResult: number | null = null;
   cells: any[] = []; // Casillas del tablero
 
-  constructor(private websocketService: WebsocketService) {} // Inyecta el WebsocketService
+  // Inyecta el WebsocketService
+  constructor(private websocketService: WebsocketService, private imageService: ImageService) {
+    this.versus = this.imageService.getImageUrl('Street_Fighter_VS_logo.png');
+  } 
 
   ngOnInit(): void {
     console.log('Inicializando GameComponent...');
