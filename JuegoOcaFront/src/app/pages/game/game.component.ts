@@ -14,6 +14,10 @@ import { ImageService } from '../../services/image.service';
 export class GameComponent implements OnInit {
   // inicializamos fotos
   versus: string;
+  fotoOca: string;
+  fotoPosada: string;
+  fotoPuente: string;
+  fotoMuerte: string;
 
   players: any[] = [];
   currentPlayer: any;
@@ -23,6 +27,10 @@ export class GameComponent implements OnInit {
   // Inyecta el WebsocketService
   constructor(private websocketService: WebsocketService, private imageService: ImageService) {
     this.versus = this.imageService.getImageUrl('Street_Fighter_VS_logo.png');
+    this.fotoOca = this.imageService.getImageUrl('OcaFoto.jpg');
+    this.fotoPosada = this.imageService.getImageUrl('RockingBeatas.jpg');
+    this.fotoPuente = this.imageService.getImageUrl('puente.jpeg');
+    this.fotoMuerte = this.imageService.getImageUrl('verdaderamuerte.png');
   } 
 
   ngOnInit(): void {

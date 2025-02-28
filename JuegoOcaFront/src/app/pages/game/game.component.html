@@ -29,6 +29,10 @@
          [style.left.px]="getCellPosition(cell.number).x"
          [style.top.px]="getCellPosition(cell.number).y">
       <div class="cell-number">{{ cell.number }}</div>
+      <img *ngIf="cell.type === 'Oca'" [src]="fotoOca" alt="Imagen de Oca" class="tablero-image">
+      <img *ngIf="cell.type === 'Posada'" [src]="fotoPosada" alt="Imagen de Posada" class="tablero-image">
+      <img *ngIf="cell.type === 'Puente'" [src]="fotoPuente" alt="Imagen de Puente" class="tablero-image">
+      <img *ngIf="cell.type === 'Muerte'" [src]="fotoMuerte" alt="Imagen de Muerte" class="tablero-image">
       <div class="players">
         <span *ngFor="let player of getPlayersInCell(cell.number)" class="player" [style.background-color]="player.color">
           {{ player.name }}
