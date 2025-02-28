@@ -26,6 +26,8 @@ export class WebsocketService {
   private gameId: string | null = null; // ID de la partida
   private diceResult: number | null = null; // Resultado del dado
 
+  messages: string[] = [];
+
   // Subject para notificar cambios en el estado del juego
   gameStateUpdated = new Subject<{ players: any[], currentPlayer: any, diceResult: number | null }>();
 
@@ -261,34 +263,46 @@ export class WebsocketService {
  */
   private handleGameUpdate(message: any): void {
     console.log('WebSocketService: Actualización del estado del juego recibida:', message);
-
+  
     // Verificar si los jugadores están presentes en el mensaje
     if (message.players) {
-        console.log('Jugadores recibidos:', message.players);
-        this.players = message.players;
-        console.log('Jugadores actualizados:', this.players);
+      console.log('Jugadores recibidos:', message.players);
+  
+      // Convertir players en un arreglo si es un objeto
+      const playersArray = Array.isArray(message.players) 
+        ? message.players 
+        : Object.values(message.players);
+  
+      // Añadir propiedades isMoving y targetPosition a cada jugador
+      this.players = playersArray.map((player: any) => ({
+        ...player,
+        isMoving: false, // Añadir propiedad isMoving
+        targetPosition: player.position, // Añadir propiedad targetPosition
+      }));
+  
+      console.log('Jugadores actualizados:', this.players);
     } else {
-        console.warn('No se recibieron jugadores en la actualización del juego.');
+      console.warn('No se recibieron jugadores en la actualización del juego.');
     }
-
+  
     // Verificar si el jugador actual está presente en el mensaje
     if (message.currentPlayer) {
-        console.log('Jugador actual recibido:', message.currentPlayer);
-        this.currentPlayer = message.currentPlayer;
-        console.log('Jugador actual actualizado:', this.currentPlayer);
+      console.log('Jugador actual recibido:', message.currentPlayer);
+      this.currentPlayer = message.currentPlayer;
+      console.log('Jugador actual actualizado:', this.currentPlayer);
     } else {
-        console.warn('No se recibió el jugador actual en la actualización del juego.');
+      console.warn('No se recibió el jugador actual en la actualización del juego.');
     }
-
+  
     // Verificar si el resultado del dado está presente en el mensaje
     if (message.diceResult !== undefined) {
-        console.log('Resultado del dado recibido:', message.diceResult);
-        this.diceResult = message.diceResult;
-        console.log('Resultado del dado actualizado:', this.diceResult);
+      console.log('Resultado del dado recibido:', message.diceResult);
+      this.diceResult = message.diceResult;
+      console.log('Resultado del dado actualizado:', this.diceResult);
     } else {
-        console.warn('No se recibió el resultado del dado en la actualización del juego.');
+      console.warn('No se recibió el resultado del dado en la actualización del juego.');
     }
-
+  
     // Notificar a los suscriptores que el estado del juego ha cambiado
     this.notifyGameStateUpdate();
   }
