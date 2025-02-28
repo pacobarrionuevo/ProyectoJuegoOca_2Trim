@@ -125,10 +125,7 @@ export class WebsocketService {
 
     }
     try {
-      // Manejar mensajes "ping" primero
-      
-  
-      // Intentar parsear solo si es un JSON válido
+    
       const parsedMessage = JSON.parse(message);
       console.log('WebSocketService: Mensaje recibido:', parsedMessage);
   
@@ -146,11 +143,13 @@ export class WebsocketService {
         case 'onlineUsers':
         this.handleOnlineUsers(normalizedMessage);
         break;
-     
+        case 'gameReady':
+          this.handleGameReady(normalizedMessage);
+          break;
     
         case 'friendInvitation':
           this.handleFriendInvitation(normalizedMessage);
-          break;
+         break;
         case 'activeConnections':
           this.handleActiveConnections(normalizedMessage);
           break;
@@ -179,15 +178,22 @@ export class WebsocketService {
    */
   private handleFriendInvitation(message: any) {
     const accept = confirm(`${message.fromUserNickname} te ha invitado a jugar. ¿Aceptas?`);
-    if (accept) {
-      const response = {
-        type: 'acceptInvitation',
-        hostId: message.fromUserId
-      };
-      this.sendRxjs(JSON.stringify(response));
-    }
+    const response = {
+      type: 'acceptInvitation',
+      inviterId: message.fromUserId
+    };
+    this.sendRxjs(JSON.stringify(response));
+    
   }
-
+  private handleGameReady(message: any): void {
+    // Emitir un evento específico para gameReady
+    this.messageReceived.next({
+      type: 'gameReady',
+      gameId: message.gameId,
+      opponentId: message.opponentId,
+      isPrivate: message.isPrivate
+    });
+  }
   /**
    * Maneja el número de conexiones activas.
    */

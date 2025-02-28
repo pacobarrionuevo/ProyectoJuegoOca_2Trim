@@ -273,7 +273,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }));
                 return;
             }
-            var friend = _connectedPlayers.FirstOrDefault(p => p.Id == friendId);
+            _connectedUsers.TryGetValue(friendId, out var friend);
 
             if (friend == null || !friend.IsOpen)
             {
@@ -293,11 +293,10 @@ namespace JuegoOcaBack.WebSocketAdvanced
             // Enviar invitación al amigo
             await friend.SendAsync(JsonSerializer.Serialize(new
             {
-                type = "invitationReceived",
-                inviterId = inviter.Id,
-                inviterName = inviterName
+                type = "friendInvitation", 
+                fromUserId = inviter.Id,
+                fromUserNickname = inviterName
             }));
-
         }
 
 
@@ -341,7 +340,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         private async Task CreatePrivateGameRoom(WebSocketHandler acceptor, int inviterId)
         {
-            var inviter = _connectedPlayers.FirstOrDefault(p => p.Id == inviterId);
+            _connectedUsers.TryGetValue(inviterId, out var inviter);
 
             if (inviter == null || !inviter.IsOpen)
             {
@@ -370,6 +369,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 gameId = roomId,
                 opponentId = inviter.Id
             }));
+
         }
         private async Task CreateMatch(WebSocketHandler p1, WebSocketHandler p2)
         {

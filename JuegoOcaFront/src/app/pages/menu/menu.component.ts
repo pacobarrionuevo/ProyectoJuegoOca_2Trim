@@ -35,6 +35,8 @@ export class MenuComponent implements OnInit, OnDestroy {
   perfil_default: string;
   solicitudesPendientes: SolicitudAmistad[] = [];
   errorMessage: string | null = null;
+  opponentId: number | null = null;
+  gameId: string | null = null;
 
   constructor(
     public webSocketService: WebsocketService,
@@ -53,12 +55,30 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.obtenerUsuarios();
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
+    const state = history.state;
+  this.gameId = state.gameId;
+  this.opponentId = state.opponentId;
+    this.subs.push(
+      this.webSocketService.messageReceived.subscribe(message => {
+        if (message.type === 'gameReady') {
+          console.log('Redirigiendo a game component con gameId:', message.gameId);
+          
+          this.router.navigate(['/game'], {
+            state: {
+              gameId: this.gameId,
+              opponentId: this.opponentId 
+            }
+          });
+          
+        }
+      })),
     this.subs.push(
       this.webSocketService.onlineUsers$.subscribe(users => {
         console.log('Usuarios en línea actualizados:', users);
         this.onlineUserIds = users;
       })
-    );
+    )
+    ;
 
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -67,7 +87,7 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.setupWebSocketListeners();
     this.loadOnlineUsers();
 
-    // Fallback: refrescar la lista de usuarios conectados cada segundo
+ //refrescar la lista de usuarios conectados cada segundo
     const intervalSub = interval(1000).subscribe(() => {
       this.loadOnlineUsers();
     });
