@@ -194,6 +194,7 @@ validarUrlImagen(fotoPerfil: string | null): string {
   getPlayersInCell(cellNumber: number): any[] {
     if (!this.players) {
       console.warn('La lista de jugadores no está inicializada.');
+      console.log('Salguero hijoputa');
       return [];
     }
     return this.players.filter(player => player.position === cellNumber);
