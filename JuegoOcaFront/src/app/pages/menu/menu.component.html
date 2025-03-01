@@ -31,8 +31,15 @@
         <button class="perfilButton" (click)="aceptarSolicitud(solicitud)"><b>Aceptar</b></button>
         <button class="cerrar-sesion-btn" (click)="rechazarSolicitud(solicitud)"><b>Rechazar</b></button>
       </div>
+    <div *ngFor="let solicitud of solicitudesPendientes" class="solicitud-container">
+      <span>{{ solicitud.usuarioApodo }} quiere ser tu amigo</span>&nbsp;
+      <div class="botones-solicitud">
+        <button class="perfilButton" (click)="aceptarSolicitud(solicitud)"><b>Aceptar</b></button>
+        <button class="cerrar-sesion-btn" (click)="rechazarSolicitud(solicitud)"><b>Rechazar</b></button>
+      </div>
     </div>
   </div>
+  
   
 
   <br>
@@ -47,7 +54,9 @@
     <p class="titulo">Amigos</p>
     <input type="text" class="lista" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
 
+
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
+      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
       <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
         <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
         <p *ngIf="isUserOnline(amigo.UsuarioId)" class="estado-conectado">🟢 Conectado 🟢</p>
@@ -55,6 +64,8 @@
         <button [routerLink]="'/perfil'">Ver perfil</button>&nbsp;
         <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
     </div>
+  </div>
+
   </div>
 
 
