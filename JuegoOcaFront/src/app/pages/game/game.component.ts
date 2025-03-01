@@ -39,6 +39,9 @@ export class GameComponent implements OnInit {
   usuarioFotoPerfil: string = '';
   usuarioId: number | null = null;
 
+  winnerName: string = '';
+  gameOver: boolean = false;
+
   // Inyecta el WebsocketService
   constructor(private websocketService: WebsocketService, private imageService: ImageService, private authService: AuthService,
       private router: Router) {
@@ -113,7 +116,23 @@ export class GameComponent implements OnInit {
               this.websocketService.rollDice();
           }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
       }
-  });
+    });
+
+    // Suscribirse al mensaje de fin de juego
+    this.websocketService.messageReceived.subscribe((message: any) => {
+        if (message.type === 'gameOver') {
+          this.gameOver = true;
+          this.showGameOverModal(message.winnerName);
+        }
+    });
+}
+
+showGameOverModal(winnerName: string): void {
+    // Aquí puedes mostrar un modal con el resultado del juego
+    alert(`El juego ha terminado. El ganador es: ${winnerName}`);
+    
+    // Redirigir al usuario a la vista '/matchmaking'
+    this.router.navigate(['/matchmaking']);
 }
 
 validarUrlImagen(fotoPerfil: string | null): string {

@@ -74,9 +74,11 @@ public class GameService
             var gameOverMessage = new
             {
                 type = "gameOver",
-                winnerId = player.Id
+                winnerId = player.Id,
+                winnerName = player.Name
             };
-            // Enviar el mensaje a través del WebSocket
+            var messageJson = JsonSerializer.Serialize(gameOverMessage);
+            GetWebSocketNetwork().BroadcastMessage(messageJson); // Notificar a todos los clientes
             return 63;
         }
 

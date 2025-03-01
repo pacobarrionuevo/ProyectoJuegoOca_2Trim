@@ -16,6 +16,13 @@
         <h2>Resultado del Dado</h2>
         <p>{{ diceResult }}</p>
       </div>
+
+      <!-- En tu modal HTML -->
+      <div *ngIf="gameOver">
+        <h2>El juego ha terminado</h2>
+        <p>El ganador es: {{ winnerName }}</p>
+        <button routerLink="/matchmaking">Volver al matchmaking</button>
+      </div>
     </div>
   </div>
 

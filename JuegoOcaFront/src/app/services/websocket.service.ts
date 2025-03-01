@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { map, catchError } from 'rxjs/operators'; 
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -33,7 +34,7 @@ export class WebsocketService {
 
   // ===================================================================================================
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private router: Router) {
     this.reconnectIfNeeded(); // Intentar reconectar al iniciar el servicio
   }
 
@@ -210,11 +211,14 @@ export class WebsocketService {
   /**
    * Maneja el fin del juego.
    */
-  private handleGameOver(results: any): void {
-    console.log('Juego terminado. Resultados:', results);
+  private handleGameOver(message: any): void {
+    console.log('Juego terminado. Resultados:', message);
     // Aquí puedes mostrar un modal con los resultados
-    alert(`El juego ha terminado. El ganador es: ${results.winnerId}`);
-  }
+    alert(`El juego ha terminado. El ganador es: ${message.winnerName}`);
+    
+    // Redirigir al usuario a la vista '/matchmaking'
+    this.router.navigate(['/matchmaking']);
+}
   // ===================================================================================================
 
   /**
@@ -246,7 +250,7 @@ export class WebsocketService {
         } else if (normalizedMessage.type === 'botMove') {
             this.handleBotMove(normalizedMessage);
         } else if (normalizedMessage.type === 'gameOver') {
-            this.handleGameOver(normalizedMessage);
+            this.handleGameOver(normalizedMessage); // Manejar el fin del juego
         } else {
             console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
         }
