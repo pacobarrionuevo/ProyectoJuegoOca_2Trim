@@ -42,7 +42,7 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 else if (i == 19) // Posada
                 {
                     cell.Type = "Posada";
-                    cell.Effect = 1; // Vuelve al principio
+                    cell.Effect = i; // Vuelve al principio
                 }
                 else if (i == 26) // Dados
                 {
@@ -52,18 +52,17 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 else if (i == 31) // Pozo
                 {
                     cell.Type = "Pozo";
-                    int[] efectosPozo = { -1, 32 };
-                    cell.Effect = efectosPozo[_random.Next(efectosPozo.Length)];
+                    cell.Effect = i;
                 }
                 else if (i == 42) // Laberinto
                 {
                     cell.Type = "Laberinto";
-                    cell.Effect = 1; // Vuelve al principio
+                    cell.Effect = i; // Vuelve al principio
                 }
                 else if (i == 52) // Cárcel
                 {
                     cell.Type = "Carcel";
-                    cell.Effect = 1; // Vuelve al principio
+                    cell.Effect = i; // Vuelve al principio
                 }
                 else if (i == 53) // Dados
                 {
