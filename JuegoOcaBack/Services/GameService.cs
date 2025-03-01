@@ -66,6 +66,22 @@ public class GameService
         var player = _players.FirstOrDefault(p => p.Id == playerId);
         if (player == null) return -1;
 
+        // Si el jugador tiene turnos para perder, decrementa el contador y no mueve
+        if (player.TurnsToSkip > 0)
+        {
+            player.TurnsToSkip--;
+            var skipTurnMessage = new
+            {
+                type = "skipTurn",
+                playerId = player.Id,
+                playerName = player.Name,
+                turnsToSkip = player.TurnsToSkip
+            };
+            var skipTurnMessageJson = JsonSerializer.Serialize(skipTurnMessage);
+            GetWebSocketNetwork().BroadcastMessage(skipTurnMessageJson);
+            return player.Position; // No se mueve, sigue en la misma posición
+        }
+
         int newPosition = player.Position + dices;
 
         if (newPosition >= 63) // Ganó el juego
@@ -89,6 +105,37 @@ public class GameService
         if (cell != null && cell.Type != "Normal")
         {
             newPosition = cell.Effect;
+
+            // Manejar efectos especiales de las casillas
+            switch (cellType)
+            {
+                case "Oca":
+                case "Puente":
+                case "Dados":
+                    // Repetir turno
+                    player.TurnsToSkip = -1; // -1 indica que debe repetir turno
+                    break;
+                case "Posada":
+                    // Pierde un turno
+                    player.TurnsToSkip = 1;
+                    break;
+                case "Pozo":
+                    // Pierde dos turnos
+                    player.TurnsToSkip = 1;
+                    break;
+                case "Carcel":
+                    // Pierde tres turnos
+                    player.TurnsToSkip = 2;
+                    break;
+                case "Laberinto":
+                    // Retrocede a la casilla 30
+                    newPosition = 30;
+                    break;
+                case "Muerte":
+                    // Vuelve al inicio
+                    newPosition = 1;
+                    break;
+            }
         }
 
         player.Position = newPosition;
@@ -123,13 +170,13 @@ public class GameService
             case "Muerte":
                 return "¡Has caído en la muerte! Vuelves al inicio.";
             case "Dados":
-                return "Tira de nuevo por caer en los dados.";
+                return "De Dado a Dado y tiro porque me ha tocado";
             case "Laberinto":
                 return "¡Estás en el laberinto! Retrocedes a la casilla 30.";
             case "Pozo":
-                return "¡Has caído en el pozo! Pierdes dos turnos.";
+                return "¡Has caído en el pozo! Pierdes un turno.";
             case "Carcel":
-                return "¡Estás en la cárcel! Pierdes tres turnos.";
+                return "¡Estás en la cárcel! Pierdes dos turnos.";
             default:
                 return "";
         }
@@ -168,6 +215,24 @@ public class GameService
             return;
         }
 
+        var currentPlayer = _players[_currentPlayerIndex];
+
+        // Si el jugador debe repetir turno, no se cambia
+        if (currentPlayer.TurnsToSkip == -1)
+        {
+            currentPlayer.TurnsToSkip = 0; // Reinicia el contador de turnos perdidos
+            Console.WriteLine($"El jugador {currentPlayer.Name} repite turno.");
+            return;
+        }
+
+        // Si el jugador tiene turnos para perder, no se cambia
+        if (currentPlayer.TurnsToSkip > 0)
+        {
+            Console.WriteLine($"El jugador {currentPlayer.Name} pierde un turno.");
+            return;
+        }
+
+        // Cambiar al siguiente jugador
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
         Console.WriteLine($"Siguiente turno: Jugador actual es {CurrentPlayer.Name}");
     }

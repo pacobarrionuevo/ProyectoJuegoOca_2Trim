@@ -252,7 +252,9 @@ export class WebsocketService {
         } else if (normalizedMessage.type === 'gameOver') {
             this.handleGameOver(normalizedMessage);
         } else if (normalizedMessage.type === 'moveResult') {
-            this.handleMoveResult(normalizedMessage); // Manejar el resultado del movimiento
+            this.handleMoveResult(normalizedMessage);
+        } else if (normalizedMessage.type === 'skipTurn') {
+            this.handleSkipTurn(normalizedMessage); // Manejar el mensaje de turno perdido
         } else {
             console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
         }
@@ -262,6 +264,15 @@ export class WebsocketService {
     } catch (error) {
         console.error('Error al parsear el mensaje:', error);
     }
+}
+
+private handleSkipTurn(message: any): void {
+    console.log('Turno perdido:', message);
+    this.messageReceived.next({
+        type: 'skipTurn',
+        playerName: message.playerName,
+        turnsToSkip: message.turnsToSkip
+    });
 }
 
 private handleMoveResult(message: any): void {

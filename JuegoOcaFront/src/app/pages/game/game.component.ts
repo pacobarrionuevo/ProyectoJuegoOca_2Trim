@@ -121,6 +121,12 @@ export class GameComponent implements OnInit {
       }
     });
 
+    this.websocketService.messageReceived.subscribe((message: any) => {
+      if (message.type === 'skipTurn') {
+          this.showSkipTurnMessage(message);
+      }
+    });
+
     // Subscribirse a que se envíen mensajes de los resultados del turno
     this.websocketService.messageReceived.subscribe((message: any) => {
       if (message.type === 'moveResult') {
@@ -143,6 +149,16 @@ showGameOverModal(winnerName: string): void {
     
     // Redirigir al usuario a la vista '/matchmaking'
     this.router.navigate(['/matchmaking']);
+}
+
+showSkipTurnMessage(message: any): void {
+  this.moveMessage = `${message.playerName} pierde ${message.turnsToSkip} turno(s).`;
+  this.showMoveMessage = true;
+
+  // Ocultar el mensaje después de unos segundos
+  setTimeout(() => {
+      this.showMoveMessage = false;
+  }, 5000); // 5 segundos
 }
 
 showMoveResult(message: any): void {
