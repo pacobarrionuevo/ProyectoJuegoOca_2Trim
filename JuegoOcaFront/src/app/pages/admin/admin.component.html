@@ -1,0 +1,35 @@
+<div class="admin-container" *ngIf="esAdmin">
+    <h1>Panel de Administración</h1>
+    
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Avatar</th>
+          <th>Apodo</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let usuario of usuarios">
+          <td>
+            <img [src]="usuario.UsuarioFotoPerfil" class="user-avatar" alt="Avatar">
+          </td>
+          <td>{{ usuario.UsuarioApodo }}</td>
+          <td>{{ usuario.UsuarioEmail }}</td>
+          <td>
+            <select [(ngModel)]="usuario.Rol" (change)="cambiarRol(usuario)">
+              <option value="usuario">Usuario</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </td>
+          <td>
+            <button class="ban-button" (click)="toggleBaneo(usuario)">
+              {{ usuario.EstaBaneado ? 'Desbanear' : 'Banear' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>

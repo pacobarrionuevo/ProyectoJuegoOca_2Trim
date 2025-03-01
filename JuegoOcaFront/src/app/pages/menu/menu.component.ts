@@ -80,7 +80,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       })
     );
   }
-
+  
   private inicializarActualizaciones(): void {
     this.subs.push(
       interval(1000).subscribe(() => this.actualizarUsuariosConectados()),
@@ -199,10 +199,10 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   // Métodos auxiliares
   private cargarInfoUsuario(): void {
-    const userInfo = this.authService.getUserDataFromToken();
+    const userInfo = this.authService.getUserData();
     if (userInfo) {
-      this.usuarioApodo = userInfo.name;
-      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture);
+      this.usuarioApodo = userInfo.apodo;
+      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.fotoPerfil);
       this.usuarioId = userInfo.id;
     } else {
       this.router.navigate(['/login']);

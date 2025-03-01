@@ -12,5 +12,7 @@
         public List<UsuarioTieneAmistad> UsuarioAmistad { get; set; }
 
         public string UsuarioEstado { get; set; }
+        public string Rol { get; set; }
+        public bool EstaBaneado { get; set; }
     }
 }

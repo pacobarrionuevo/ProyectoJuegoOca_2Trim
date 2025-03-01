@@ -7,6 +7,7 @@ using JuegoOcaBack.Models.Mappers;
 using JuegoOcaBack.Services;
 using JuegoOcaBack.WebSocketAdvanced;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

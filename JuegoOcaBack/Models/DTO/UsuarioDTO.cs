@@ -9,5 +9,7 @@
         public string UsuarioContrasena { get; set; }
         public string UsuarioConfirmarContrasena { get; set; }
         public string UsuarioEstado { get; set; }
+        public string Rol { get; set; }
+        public bool EstaBaneado { get; set; }
     }
 }
