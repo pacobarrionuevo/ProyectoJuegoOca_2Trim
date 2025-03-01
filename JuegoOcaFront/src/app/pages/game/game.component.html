@@ -17,7 +17,10 @@
         <p>{{ diceResult }}</p>
       </div>
 
-      <!-- En tu modal HTML -->
+      <div *ngIf="showMoveMessage" class="move-message">
+        {{ moveMessage }}
+      </div>
+
       <div *ngIf="gameOver">
         <h2>El juego ha terminado</h2>
         <p>El ganador es: {{ winnerName }}</p>

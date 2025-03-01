@@ -42,6 +42,9 @@ export class GameComponent implements OnInit {
   winnerName: string = '';
   gameOver: boolean = false;
 
+  moveMessage: string = '';
+  showMoveMessage: boolean = false;
+
   // Inyecta el WebsocketService
   constructor(private websocketService: WebsocketService, private imageService: ImageService, private authService: AuthService,
       private router: Router) {
@@ -114,7 +117,14 @@ export class GameComponent implements OnInit {
           console.log('Es el turno del bot. Realizando tirada automática...');
           setTimeout(() => {
               this.websocketService.rollDice();
-          }, 1000); // Esperar 1 segundo antes de que el bot tire el dado
+          }, 5000); // Esperar 5 segundo antes de que el bot tire el dado
+      }
+    });
+
+    // Subscribirse a que se envíen mensajes de los resultados del turno
+    this.websocketService.messageReceived.subscribe((message: any) => {
+      if (message.type === 'moveResult') {
+          this.showMoveResult(message);
       }
     });
 
@@ -133,6 +143,20 @@ showGameOverModal(winnerName: string): void {
     
     // Redirigir al usuario a la vista '/matchmaking'
     this.router.navigate(['/matchmaking']);
+}
+
+showMoveResult(message: any): void {
+  this.moveMessage = `${message.playerName} ha sacado un ${message.diceResult}. `;
+  this.moveMessage += `Se mueve a la casilla ${message.newPosition}. `;
+  if (message.specialMessage) {
+      this.moveMessage += message.specialMessage;
+  }
+  this.showMoveMessage = true;
+
+  // Ocultar el mensaje después de unos segundos
+  setTimeout(() => {
+      this.showMoveMessage = false;
+  }, 5000); // 5 segundos
 }
 
 validarUrlImagen(fotoPerfil: string | null): string {

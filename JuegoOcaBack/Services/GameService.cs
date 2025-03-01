@@ -83,13 +83,56 @@ public class GameService
         }
 
         var cell = _board.Cells.FirstOrDefault(c => c.Number == newPosition);
+        string cellType = cell?.Type ?? "Normal";
+        string specialMessage = GetSpecialMessage(cellType);
+
         if (cell != null && cell.Type != "Normal")
         {
             newPosition = cell.Effect;
         }
 
         player.Position = newPosition;
+
+        // Enviar mensaje de movimiento y casilla especial
+        var moveMessage = new
+        {
+            type = "moveResult",
+            playerId = player.Id,
+            playerName = player.Name,
+            diceResult = dices,
+            newPosition = newPosition,
+            cellType = cellType,
+            specialMessage = specialMessage
+        };
+        var moveMessageJson = JsonSerializer.Serialize(moveMessage);
+        GetWebSocketNetwork().BroadcastMessage(moveMessageJson);
+
         return newPosition;
+    }
+
+    private string GetSpecialMessage(string cellType)
+    {
+        switch (cellType)
+        {
+            case "Oca":
+                return "De oca en oca y tiro porque me toca";
+            case "Puente":
+                return "De puente en puente y tiro porque me lleva la corriente";
+            case "Posada":
+                return "Descansas en la posada. Pierdes un turno.";
+            case "Muerte":
+                return "¡Has caído en la muerte! Vuelves al inicio.";
+            case "Dados":
+                return "Tira de nuevo por caer en los dados.";
+            case "Laberinto":
+                return "¡Estás en el laberinto! Retrocedes a la casilla 30.";
+            case "Pozo":
+                return "¡Has caído en el pozo! Pierdes dos turnos.";
+            case "Carcel":
+                return "¡Estás en la cárcel! Pierdes tres turnos.";
+            default:
+                return "";
+        }
     }
 
     public void HandleMovePlayer(int playerId, int diceResult)

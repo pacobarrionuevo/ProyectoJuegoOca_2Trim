@@ -250,7 +250,9 @@ export class WebsocketService {
         } else if (normalizedMessage.type === 'botMove') {
             this.handleBotMove(normalizedMessage);
         } else if (normalizedMessage.type === 'gameOver') {
-            this.handleGameOver(normalizedMessage); // Manejar el fin del juego
+            this.handleGameOver(normalizedMessage);
+        } else if (normalizedMessage.type === 'moveResult') {
+            this.handleMoveResult(normalizedMessage); // Manejar el resultado del movimiento
         } else {
             console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
         }
@@ -260,6 +262,18 @@ export class WebsocketService {
     } catch (error) {
         console.error('Error al parsear el mensaje:', error);
     }
+}
+
+private handleMoveResult(message: any): void {
+    console.log('Resultado del movimiento:', message);
+    this.messageReceived.next({
+        type: 'moveResult',
+        playerName: message.playerName,
+        diceResult: message.diceResult,
+        newPosition: message.newPosition,
+        cellType: message.cellType,
+        specialMessage: message.specialMessage
+    });
 }
 
   /**
