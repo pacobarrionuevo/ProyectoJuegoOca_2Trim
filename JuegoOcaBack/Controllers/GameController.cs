@@ -27,6 +27,18 @@ namespace JuegoOcaBack.Controllers
         public IActionResult MoverJugador([FromBody] MovePlayerRequest request)
         {
             int newPosition = _gameService.MovePlayer(request.PlayerId, request.Dices);
+
+            var gameUpdateMessage = new
+            {
+                type = "gameUpdate",
+                players = _gameService.ObtainPlayers(),
+                currentPlayer = _gameService.CurrentPlayer,
+                diceResult = request.Dices
+            };
+            // Enviar el mensaje a través del WebSocket
+
+            _gameService.NextTurn();
+
             return Ok(new { NewPosition = newPosition });
         }
 
@@ -35,6 +47,26 @@ namespace JuegoOcaBack.Controllers
         {
             var jugadores = _gameService.ObtainPlayers();
             return Ok(jugadores);
+        }
+
+        [HttpPost("start-game")]
+        public IActionResult StartGame([FromBody] StartGameRequest request)
+        {
+            if (request == null || string.IsNullOrEmpty(request.PlayerName))
+            {
+                return BadRequest("El nombre del jugador es obligatorio.");
+            }
+
+            // Iniciar la partida
+            _gameService.StartGame(request.GameId, request.PlayerName);
+
+            return Ok(new { Message = "Partida iniciada correctamente.", Players = _gameService.ObtainPlayers() });
+        }
+
+        public class StartGameRequest
+        {
+            public string GameId { get; set; }
+            public string PlayerName { get; set; }
         }
     }
 }

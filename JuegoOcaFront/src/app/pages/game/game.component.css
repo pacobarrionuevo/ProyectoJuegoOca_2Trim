@@ -1,0 +1,145 @@
+.game-container {
+  display: flex;
+  height: 100vh;
+  padding: 20px;
+  gap: 20px; /* Espacio entre el marcador y el tablero */
+}
+
+/* Marcador */
+.marker {
+  width: 20%; /* Ancho del marcador */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espacio entre elementos */
+  padding: 20px;
+  background-color: #DAC694;
+  border: 2px solid #B63A3A; /* Borde del marcador */
+  border-radius: 10px; /* Bordes redondeados */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra */
+}
+
+.player-info {
+  text-align: center;
+}
+
+.player-info p {
+  font-size: 16px;
+  color: #555;
+}
+
+.foto {
+  display: flex;
+  justify-content: center;
+}
+
+.foto_versus {
+  width: 50%;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px; /* Espacio entre elementos */
+}
+
+.controls button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #B63A3A;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.controls button:disabled {
+  background-color: #ad5c5c;
+  cursor: not-allowed;
+}
+
+.dice-result {
+  text-align: center;
+}
+
+.dice-result h2 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #333;
+}
+
+.dice-result p {
+  font-size: 24px;
+  font-weight: bold;
+  color: #B63A3A;
+}
+
+/* Tablero */
+.board {
+  width: 80%; /* Ancho del tablero */
+  height: 600px; /* Altura del tablero */
+  position: relative;
+  border: 2px solid #B63A3A; /* Borde del tablero */
+  border-radius: 10px;
+  background-color: #DAC694; /* Fondo del tablero */
+  box-sizing: border-box; /* Incluye el padding en el ancho y alto */
+}
+
+.cell {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border: 1px solid #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Sombra para las celdas */
+}
+
+.cell-number {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+}
+
+.players {
+  display: flex;
+  gap: 2px;
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  z-index: 1; /* Asegura que los jugadores estén por encima de las imágenes */
+}
+
+.player {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  color: white;
+  background-color: #8800ff; /* Color por defecto para los jugadores */
+}
+
+.tablero-image {
+  width: 80%;
+  height: 80%;
+  object-fit: cover;
+}
+
+.move-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1000;
+  font-size: 16px;
+}

@@ -380,7 +380,7 @@ export class WebsocketService {
     this.messageReceived.next({
       type: 'gameStarted',
       gameId: message.gameId,
-      opponent: message.opponent
+      players: message.players
     });
   }
 

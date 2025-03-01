@@ -1,1 +1,65 @@
-<p>game works!</p>
+<div class="game-container">
+  <!-- Marcador y controles -->
+  <div class="marker">
+    <div class="player-info">
+      <h2>{{usuarioApodo}}</h2>
+    </div>
+    <div class="foto">
+      <img [src]="versus" alt="foto_versus" class="foto_versus">
+    </div>
+    <div class="player-info">
+      <h2>Bot</h2>
+    </div>
+    <div class="controls">
+      <button (click)="rollDice()" [disabled]="!isCurrentPlayer"><b>Lanzar Dado</b></button>
+      <div *ngIf="diceResult !== null" class="dice-result">
+        <h2>Resultado del Dado</h2>
+        <p>{{ diceResult }}</p>
+      </div>
+
+      <div *ngIf="showMoveMessage" class="move-message">
+        {{ moveMessage }}
+      </div>
+
+      <div *ngIf="gameOver">
+        <h2>El juego ha terminado</h2>
+        <p>El ganador es: {{ winnerName }}</p>
+        <button routerLink="/matchmaking">Volver al matchmaking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tablero -->
+  <div class="board">
+    <div *ngFor="let cell of cells" class="cell" 
+         [class.cell-oca]="cell.type === 'Oca'"
+         [class.cell-puente]="cell.type === 'Puente'"
+         [class.cell-posada]="cell.type === 'Posada'"
+         [class.cell-muerte]="cell.type === 'Muerte'"
+         [style.left.px]="getCellPosition(cell.number).x"
+         [style.top.px]="getCellPosition(cell.number).y">
+      <div class="cell-number">{{ cell.number }}</div>
+      <img *ngIf="cell.type === 'Oca'" [src]="fotoOca" alt="Imagen de Oca" class="tablero-image">
+      <img *ngIf="cell.type === 'Posada'" [src]="fotoPosada" alt="Imagen de Posada" class="tablero-image">
+      <img *ngIf="cell.type === 'Puente'" [src]="fotoPuente" alt="Imagen de Puente" class="tablero-image">
+      <img *ngIf="cell.type === 'Muerte'" [src]="fotoMuerte" alt="Imagen de Muerte" class="tablero-image">
+      <img *ngIf="cell.type === 'Dados'" [src]="fotoDados" alt="Imagen de Dados" class="tablero-image">
+      <img *ngIf="cell.type === 'Laberinto'" [src]="fotoLaberinto" alt="Imagen de Laberinto" class="tablero-image">
+      <img *ngIf="cell.type === 'Pozo'" [src]="fotoPozo" alt="Imagen de Pozo" class="tablero-image">
+      <img *ngIf="cell.type === 'Carcel'" [src]="fotoCarcel" alt="Imagen de Carcel" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaAbajo'" [src]="fotoAbajo" alt="Imagen de FlechaA" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaDerecha'" [src]="fotoDerecha" alt="Imagen de FlechaD" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaIzquierda'" [src]="fotoIzquierda" alt="Imagen de FlechaI" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaArriba'" [src]="fotoArriba" alt="Imagen de FlechaAr" class="tablero-image">
+      <img *ngIf="cell.type === 'Inicio'" [src]="fotoBanderaInicio" alt="Imagen de Inicio" class="tablero-image">
+      <div class="players">
+        <span *ngFor="let player of getPlayersInCell(cell.number)" 
+              class="player" 
+              [style.background-color]="player.color"
+              [class.moving]="player.isMoving"> <!-- Aplica la clase de animación -->
+          {{ player.name }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
