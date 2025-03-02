@@ -269,90 +269,86 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 var baseMsg = JsonSerializer.Deserialize<MatchmakingMessage>(message);
                 if (baseMsg == null)
                 {
-                    case "moveplayer":
-                        var movePlayerMessage = JsonSerializer.Deserialize<MovePlayerMessage>(message);
-                        Console.WriteLine($"Moviendo al jugador {movePlayerMessage.PlayerId} con dado {movePlayerMessage.DiceResult}");
-                        var gameService = GetGameService();
-                        gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
-                        break;
-
-                    case "rolldice":
-                        var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);
-                        Console.WriteLine($"Tirando dado para el jugador {rollDiceMessage.PlayerId}");
-                        gameService = GetGameService();
-
-                        // Verificar que la partida esté iniciada
-                        if (!gameService.IsGameStarted())
-                        {
-                            Console.WriteLine("Error: La partida no ha sido iniciada.");
+                    switch (baseMsg.Type?.ToLower())
+                    {
+                        case "playrandom":
+                            await ProcessMatchmaking(handler);
                             break;
-                        }
 
-                        // Verificar que haya jugadores
-                        if (gameService.ObtainPlayers().Count == 0)
-                        {
-                            Console.WriteLine("Error: No hay jugadores en la partida.");
+                        case "invitefriend":
+                            await ProcessInvitation(handler, baseMsg.FriendId ?? 0);
                             break;
-                        }
 
-                        int diceResult = new Random().Next(1, 7);
-                        gameService.PlayerMove(rollDiceMessage.PlayerId, diceResult);
-                        break;
-                    Console.WriteLine("No se pudo deserializar el mensaje o es nulo.");
-                    return;
+                        case "acceptinvitation":
+                            await CreatePrivateGameRoom(handler, baseMsg.InviterId ?? 0);
+                            break;
+
+                        case "cancelsearch":
+                            await _waitingSemaphore.WaitAsync();
+                            _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
+                            _waitingSemaphore.Release();
+                            break;
+
+                        case "chatmessage":
+                            var chatMessage = JsonSerializer.Deserialize<ChatMessage>(message);
+                            await BroadcastMessage(JsonSerializer.Serialize(new
+                            {
+                                Type = "chatMessage",
+                                Sender = chatMessage.Sender,
+                                Text = chatMessage.Text
+                            }));
+                            break;
+
+                        case "sendfriendrequest":
+                            await ProcessFriendRequest(handler, baseMsg.ReceiverId ?? 0);
+                            break;
+
+                        case "acceptfriendrequest":
+                            await ProcessAcceptFriendRequest(handler, baseMsg.RequestId ?? 0);
+                            break;
+
+                        case "rejectfriendrequest":
+                            await ProcessRejectFriendRequest(handler, baseMsg.RequestId ?? 0);
+                            break;
+
+                        case "moveplayer":
+                            var movePlayerMessage = JsonSerializer.Deserialize<MovePlayerMessage>(message);
+                            Console.WriteLine($"Moviendo al jugador {movePlayerMessage.PlayerId} con dado {movePlayerMessage.DiceResult}");
+                            var gameService = GetGameService();
+                            gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
+                            break;
+
+                        case "rolldice":
+                            var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);
+                            Console.WriteLine($"Tirando dado para el jugador {rollDiceMessage.PlayerId}");
+                            gameService = GetGameService();
+
+                            // Verificar que la partida esté iniciada
+                            if (!gameService.IsGameStarted())
+                            {
+                                Console.WriteLine("Error: La partida no ha sido iniciada.");
+                                break;
+                            }
+
+                            // Verificar que haya jugadores
+                            if (gameService.ObtainPlayers().Count == 0)
+                            {
+                                Console.WriteLine("Error: No hay jugadores en la partida.");
+                                break;
+                            }
+
+                            int diceResult = new Random().Next(1, 7);
+                            gameService.PlayerMove(rollDiceMessage.PlayerId, diceResult);
+                            break;
+                            Console.WriteLine("No se pudo deserializar el mensaje o es nulo.");
+                            return;
+
+                        default:
+                            Console.WriteLine($"Tipo de mensaje no reconocido: {baseMsg.Type}");
+                            break;
+                    }
                 }
-                switch (baseMsg.Type?.ToLower())
-                {
-                    case "playrandom":
-                        await ProcessMatchmaking(handler);
-                        break;
-
-                    case "invitefriend":
-                        await ProcessInvitation(handler, baseMsg.FriendId ?? 0);
-                        break;
-                            
-                    case "acceptinvitation":
-                        await CreatePrivateGameRoom(handler, baseMsg.InviterId ?? 0);
-                        break;
-
-                    case "cancelsearch":
-                        await _waitingSemaphore.WaitAsync();
-                        _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
-                        _waitingSemaphore.Release();
-                        break;
-
-                    case "chatmessage":
-                        var chatMessage = JsonSerializer.Deserialize<ChatMessage>(message);
-                        await BroadcastMessage(JsonSerializer.Serialize(new
-                        {
-                            Type = "chatMessage",
-                            Sender = chatMessage.Sender,
-                            Text = chatMessage.Text
-                        }));
-                    case "sendfriendrequest":
-                        await ProcessFriendRequest(handler, baseMsg.ReceiverId ?? 0);
-                        break;
-
-                    case "acceptfriendrequest":
-                        await ProcessAcceptFriendRequest(handler, baseMsg.RequestId ?? 0);
-                        break;
-
-                    case "rejectfriendrequest":
-                        await ProcessRejectFriendRequest(handler, baseMsg.RequestId ?? 0);
-                        break;
-
-                    case "rolldice":
-                        await HandleRollDice(message);
-                        break;
-
-                    case "moveplayer":
-                        await HandleMovePlayer(message);
-                        break;
-
-                    default:
-                        Console.WriteLine($"Tipo de mensaje no reconocido: {baseMsg.Type}");
-                        break;
-                }
+                
             }
             catch (Exception ex)
             {

@@ -47,7 +47,7 @@ export class AuthService {
   }
 
   login(authData: AuthRequest, rememberMe: boolean): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseURL}/api/Usuario/login`, authData).pipe(
+    return this.http.post<AuthResponse>(`${this.baseURL}/login`, authData).pipe(
       tap((response: AuthResponse) => {
         // Borra ambos Storage antes de guardar el token y la información del admin
         localStorage.removeItem('accessToken');
@@ -74,13 +74,8 @@ export class AuthService {
     this.isAdminSubject.next(false);
   }
 
-  register(userData: User): Observable<{ StringToken: string }> {
-    return this.http.post<{ StringToken: string }>(`${this.baseURL}/Registro`, userData).pipe(
-      tap(response => {
-        localStorage.setItem('accessToken', response.StringToken);
-        this.updateAuthState();
-      })
-    );
+  register(formData: FormData): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseURL}/Registro`, formData, { headers: {} });
   }
 
   updateAuthState(): void {

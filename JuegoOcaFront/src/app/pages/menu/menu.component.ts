@@ -228,13 +228,14 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
-  private obtenerUsuarios(): void {
-    this.apiService.getUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = usuarios.map(usuario => this.mapearUsuario(usuario));
-        this.usuariosFiltrados = [...this.usuarios];
-      },
-      error: (err) => console.error('Error cargando usuarios:', err)
+  obtenerUsuarios(): void {
+    this.apiService.getUsuarios().subscribe(usuarios => {
+      this.usuarios = usuarios.map(usuario => ({
+        UsuarioId: usuario.usuarioId, 
+        UsuarioApodo: usuario.usuarioApodo,
+        UsuarioFotoPerfil: this.validarUrlImagen(usuario.usuarioFotoPerfil)
+      }));
+      this.usuariosFiltrados = [...this.usuarios];
     });
   }
 

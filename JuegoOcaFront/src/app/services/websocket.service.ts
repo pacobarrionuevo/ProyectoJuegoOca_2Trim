@@ -206,47 +206,78 @@ export class WebsocketService {
     this.router.navigate(['/matchmaking']);
 }
 
-  // Maneja todos los posibles mensajes recibidos del websockets
-  private handleMessage(message: string): void {
-    try {
-        const parsedMessage = JSON.parse(message);
-        console.log('WebSocketService: Mensaje recibido:', parsedMessage);
-  
-        // Convertir propiedades a camelCase si es necesario
-        const normalizedMessage = this.normalizeKeys(parsedMessage);
-  
-        // Procesar el mensaje según su tipo
-        if (normalizedMessage.type === 'chatMessage') {
-            this.messageReceived.next(normalizedMessage);
-        } else if (normalizedMessage.type === 'friendInvitation') {
-            this.handleFriendInvitation(normalizedMessage);
-        } else if (normalizedMessage.type === 'activeConnections') {
-            this.handleActiveConnections(normalizedMessage);
-        } else if (normalizedMessage.type === 'gameStarted') {
-            this.handleGameStarted(normalizedMessage);
-        } else if (normalizedMessage.type === 'waitingForOpponent') {
-            this.handleWaitingForOpponent(normalizedMessage);
-        } else if (normalizedMessage.type === 'friendConnected' || normalizedMessage.type === 'friendDisconnected') {
-            this.handleFriendStatus(normalizedMessage);
-        } else if (normalizedMessage.type === 'gameUpdate') {
-            this.handleGameUpdate(normalizedMessage);
-        } else if (normalizedMessage.type === 'playerJoined') {
-            this.handlePlayerJoined(normalizedMessage);
-        } else if (normalizedMessage.type === 'botMove') {
-            this.handleBotMove(normalizedMessage);
-        } else if (normalizedMessage.type === 'gameOver') {
-            this.handleGameOver(normalizedMessage);
-        } else if (normalizedMessage.type === 'moveResult') {
-            this.handleMoveResult(normalizedMessage);
-        } else if (normalizedMessage.type === 'skipTurn') {
-            this.handleSkipTurn(normalizedMessage);
-        } else {
-            console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
-        }
-    } catch (error) {
-        console.error('Error al parsear el mensaje:', error);
-    }
+// Maneja todos los posibles mensajes recibidos del websockets
+private handleMessage(message: string): void {
+  try {
+      // Ignorar mensajes "ping" y "pong"
+      if (message === 'ping' || message === 'pong') {
+          console.log('WebSocketService: Mensaje de keep-alive recibido:', message);
+          return;
+      }
+
+      // Intentar parsear el mensaje como JSON
+      const parsedMessage = JSON.parse(message);
+      console.log('WebSocketService: Mensaje recibido:', parsedMessage);
+
+      // Convertir propiedades a camelCase si es necesario
+      const normalizedMessage = this.normalizeKeys(parsedMessage);
+
+      // Procesar el mensaje según su tipo
+      if (normalizedMessage.type === 'chatMessage') {
+          this.messageReceived.next(normalizedMessage);
+      } else if (normalizedMessage.type === 'friendInvitation') {
+          this.handleFriendInvitation(normalizedMessage);
+      } else if (normalizedMessage.type === 'activeConnections') {
+          this.handleActiveConnections(normalizedMessage);
+      } else if (normalizedMessage.type === 'gameStarted') {
+          this.handleGameStarted(normalizedMessage);
+      } else if (normalizedMessage.type === 'waitingForOpponent') {
+          this.handleWaitingForOpponent(normalizedMessage);
+      } else if (normalizedMessage.type === 'friendConnected') {
+          this.addOnlineUser(normalizedMessage.friendId); // Añadir usuario conectado
+      } else if (normalizedMessage.type === 'friendDisconnected') {
+          this.removeOnlineUser(normalizedMessage.friendId); // Eliminar usuario desconectado
+      } else if (normalizedMessage.type === 'onlineUsers') {
+          this.handleOnlineUsers(normalizedMessage); // Manejar lista de usuarios en línea
+      } else if (normalizedMessage.type === 'friendRequest') {
+          // Manejar solicitud de amistad
+          console.log('Solicitud de amistad recibida:', normalizedMessage);
+          this.messageReceived.next(normalizedMessage);
+      } else if (normalizedMessage.type === 'friendRequestAccepted') {
+          // Manejar aceptación de solicitud de amistad
+          console.log('Solicitud de amistad aceptada:', normalizedMessage);
+          this.messageReceived.next(normalizedMessage);
+      } else if (normalizedMessage.type === 'friendRequestRejected') {
+          // Manejar rechazo de solicitud de amistad
+          console.log('Solicitud de amistad rechazada:', normalizedMessage);
+          this.messageReceived.next(normalizedMessage);
+      } else if (normalizedMessage.type === 'friendListUpdate') {
+          // Manejar actualización de la lista de amigos
+          console.log('Lista de amigos actualizada:', normalizedMessage);
+          this.messageReceived.next(normalizedMessage);
+      } else if (normalizedMessage.type === 'friendNotAvailable') {
+          // Manejar amigo no disponible
+          console.log('Amigo no disponible:', normalizedMessage.message);
+          this.friendNotAvailable.next(normalizedMessage.message);
+      } else if (normalizedMessage.type === 'gameUpdate') {
+          this.handleGameUpdate(normalizedMessage);
+      } else if (normalizedMessage.type === 'playerJoined') {
+          this.handlePlayerJoined(normalizedMessage);
+      } else if (normalizedMessage.type === 'botMove') {
+          this.handleBotMove(normalizedMessage);
+      } else if (normalizedMessage.type === 'gameOver') {
+          this.handleGameOver(normalizedMessage);
+      } else if (normalizedMessage.type === 'moveResult') {
+          this.handleMoveResult(normalizedMessage);
+      } else if (normalizedMessage.type === 'skipTurn') {
+          this.handleSkipTurn(normalizedMessage);
+      } else {
+          console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
+      }
+  } catch (error) {
+      console.error('Error al parsear el mensaje:', error);
   }
+}
 
 // Manejar que se salte un turno
 private handleSkipTurn(message: any): void {
