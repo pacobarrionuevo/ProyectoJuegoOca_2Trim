@@ -44,7 +44,10 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("salguero33"),
                 UsuarioFotoPerfil = "Perfil_Deffault.png",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
-                UsuarioEstado = "Desconectado"
+                UsuarioEstado = "Desconectado",
+                 Rol = "admin",
+                EstaBaneado = false,
+
             };
 
             Usuario usuario3 = new Usuario()

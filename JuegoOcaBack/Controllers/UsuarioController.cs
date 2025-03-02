@@ -56,7 +56,7 @@ namespace JuegoOcaBack.Controllers
             };
         }
 
-        [HttpGet("usuarios")]
+        [HttpGet("ListaUsuario")]
         public async Task<ActionResult<IEnumerable<UsuarioDTO>>> GetUsuarios()
         {
             return await _context.Usuarios

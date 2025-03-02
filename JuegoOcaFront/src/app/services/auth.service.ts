@@ -9,7 +9,7 @@ import { AuthResponse } from '../models/auth-response';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private baseURL = `${environment.apiUrl}/api/Usuario`;
+  private baseURL = `${environment.apiUrl}`;
   private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
   private isAdminSubject = new BehaviorSubject<boolean>(this.checkAdmin());
 
