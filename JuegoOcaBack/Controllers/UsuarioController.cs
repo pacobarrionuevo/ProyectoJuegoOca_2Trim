@@ -205,6 +205,104 @@ namespace JuegoOcaBack.Controllers
             return Ok(new { StringToken = accessToken, user.UsuarioId });
         }
 
+        [HttpGet("usuarios/{id}")]
+        public async Task<ActionResult<UsuarioDTO>> GetUsuarioById(int id)
+        {
+            var usuario = await _context.Usuarios
+                .Include(u => u.UsuarioAmistad)
+                .ThenInclude(ua => ua.amistad)
+                .FirstOrDefaultAsync(u => u.UsuarioId == id);
+
+            if (usuario == null)
+            {
+                return NotFound("Usuario no encontrado");
+            }
+
+            var usuarioDto = new UsuarioDTO
+            {
+                UsuarioId = usuario.UsuarioId,
+                UsuarioApodo = usuario.UsuarioApodo,
+                UsuarioEmail = usuario.UsuarioEmail,
+                UsuarioFotoPerfil = usuario.UsuarioFotoPerfil,
+                UsuarioEstado = usuario.UsuarioEstado,
+                Rol = usuario.Rol,
+                EstaBaneado = usuario.EstaBaneado,
+                EsAmigo = usuario.UsuarioAmistad.Any(ua => ua.amistad.IsAccepted)
+            };
+
+            return Ok(usuarioDto);
+        }
+
+        [HttpPut("usuarios/{id}")]
+        public async Task<IActionResult> ActualizarUsuario(int id, [FromBody] ActualizarUsuarioDTO dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+            {
+                return NotFound("Usuario no encontrado");
+            }
+
+            if (!string.IsNullOrEmpty(dto.UsuarioApodo))
+            {
+                usuario.UsuarioApodo = dto.UsuarioApodo;
+            }
+
+            if (!string.IsNullOrEmpty(dto.UsuarioEmail))
+            {
+                usuario.UsuarioEmail = dto.UsuarioEmail;
+            }
+
+            if (!string.IsNullOrEmpty(dto.UsuarioContrasena))
+            {
+                if (dto.UsuarioContrasena != dto.UsuarioConfirmarContrasena)
+                {
+                    return BadRequest("Las contraseñas no coinciden");
+                }
+                usuario.UsuarioContrasena = PasswordHelper.Hash(dto.UsuarioContrasena);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(usuario);
+        }
+
+        [HttpPost("usuarios/{id}/avatar")]
+        public async Task<IActionResult> SubirAvatar(int id, IFormFile file)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+            {
+                return NotFound("Usuario no encontrado");
+            }
+
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No se ha proporcionado un archivo válido");
+            }
+
+            string rutaFotoPerfil = $"{Guid.NewGuid()}_{file.FileName}";
+            await StoreImageAsync("fotos/" + rutaFotoPerfil, file);
+
+            usuario.UsuarioFotoPerfil = rutaFotoPerfil;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { UsuarioFotoPerfil = usuario.UsuarioFotoPerfil });
+        }
+
+        [HttpDelete("usuarios/{id}/avatar")]
+        public async Task<IActionResult> EliminarAvatar(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+            {
+                return NotFound("Usuario no encontrado");
+            }
+
+            usuario.UsuarioFotoPerfil = "OcaFoto.jpg";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { UsuarioFotoPerfil = usuario.UsuarioFotoPerfil });
+        }
+
         private async Task StoreImageAsync(string relativePath, IFormFile file)
         {
             using Stream stream = file.OpenReadStream();

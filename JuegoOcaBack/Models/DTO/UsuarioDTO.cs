@@ -11,5 +11,6 @@
         public string UsuarioEstado { get; set; }
         public string Rol { get; set; }
         public bool EstaBaneado { get; set; }
+        public bool EsAmigo { get; set; }
     }
 }

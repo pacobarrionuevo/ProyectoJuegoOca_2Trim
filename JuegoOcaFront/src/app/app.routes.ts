@@ -20,17 +20,20 @@ export const routes: Routes =
     {
         path: 'register',
         component: RegisterComponent
-    },{
+    },
+    {
         path: 'menu',
         component: MenuComponent
-    },{
+    },
+    {
         path: 'matchmaking',
         component: MatchmakingComponent
     },
     {
-        path: 'perfil',
+        path: 'perfil/:id',
         component: PerfilComponent
-    },{ 
+    },
+    { 
         path: 'game', 
         component: GameComponent 
     }

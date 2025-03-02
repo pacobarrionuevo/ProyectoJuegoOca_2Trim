@@ -7,7 +7,7 @@
     </div>
     <br>
     <div class="botones">
-      <button [routerLink]="'/perfil'" class="perfilButton">PERFIL</button>
+      <button [routerLink]="['/perfil', usuarioId]" class="perfilButton">PERFIL</button>
       <button (click)="logout()" class="cerrar-sesion-btn">CERRAR SESIÓN</button>
     </div>
   </div>
@@ -44,15 +44,12 @@
   <div class="elementosMenu">
     <p class="titulo">Amigos</p>
     <input type="text" class="lista" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
-
-
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
-      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
       <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
         <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
         <p *ngIf="isUserOnline(amigo.UsuarioId)" class="estado-conectado">🟢 Conectado 🟢</p>
       <p *ngIf="!isUserOnline(amigo.UsuarioId)" class="estado-desconectado">🔴 Desconectado 🔴</p>
-        <button [routerLink]="'/perfil'">Ver perfil</button>&nbsp;
+        <button [routerLink]="['/perfil', usuarioId]">Ver perfil</button>&nbsp;
         <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
     </div>
   </div>

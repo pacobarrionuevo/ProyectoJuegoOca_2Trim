@@ -8,5 +8,5 @@ export interface User {
     Rol?: 'usuario' | 'admin';
     EstaBaneado?: boolean;
     UsuarioEstado?: string; 
-
+    EsAmigo?: boolean;
   }

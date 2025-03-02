@@ -1,1 +1,42 @@
-<p>perfil works!</p>
+<div *ngIf="usuario">
+    <div>
+      <img [src]="usuario.UsuarioFotoPerfil" alt="Avatar" width="100">
+    </div>
+  
+    <form [formGroup]="perfilForm" (ngSubmit)="onSubmit()">  
+      <div>
+        <label for="apodo">Apodo:</label>
+        <input type="text" id="apodo" formControlName="apodo" [readonly]="!esPropioPerfil">
+        <div *ngIf="perfilForm.get('apodo')?.invalid && perfilForm.get('apodo')?.touched">
+            <small class="text-danger">El apodo es requerido.</small>
+          </div>
+      </div>
+  
+      <div>
+        <label for="email">Correo electrónico:</label>
+        <input type="email" id="email" formControlName="email" [readonly]="!esPropioPerfil">
+        <small class="text-danger" *ngIf="perfilForm.get('email')?.errors?.['required']">
+            El correo electrónico es requerido.
+          </small>
+          <small class="text-danger" *ngIf="perfilForm.get('email')?.errors?.['email']">
+            El correo electrónico no es válido.
+          </small>
+      </div>
+  
+      <div *ngIf="esPropioPerfil">
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" formControlName="password">
+      </div>
+  
+      <div *ngIf="esPropioPerfil">
+        <label for="confirmPassword">Confirmar Contraseña:</label>
+        <input type="password" id="confirmPassword" formControlName="confirmPassword">
+      </div>
+  
+      <button type="submit" *ngIf="esPropioPerfil">Guardar Cambios</button>
+    </form>
+  
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+  </div>

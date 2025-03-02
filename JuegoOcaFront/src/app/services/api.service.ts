@@ -21,8 +21,6 @@ export class ApiService {
     return this.http.get<User[]>(`${this.BASE_URL}/api/Usuario/usuarios`);
   }
 
-
-
   getFriendsList(usuarioId: number): Observable<User[]> {
     return this.http.get<User[]>(`${this.BASE_URL}/api/FriendRequest/friends/${usuarioId}`);
   }
@@ -52,6 +50,22 @@ export class ApiService {
       headers: this.getHeader(),
       params: { amistadId: amistadId.toString() }
     });
+  }
+
+  getUsuarioById(userId: number): Observable<User> {
+    return this.http.get<User>(`${this.BASE_URL}/api/Usuario/usuarios/${userId}`);
+  }
+
+  actualizarUsuario(userId: number, datos: any): Observable<any> {
+    return this.http.put(`${this.BASE_URL}/api/Usuario/usuarios/${userId}`, datos);
+  }
+
+  subirAvatar(userId: number, formData: FormData): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/api/Usuario/usuarios/${userId}/avatar`, formData);
+  }
+
+  eliminarAvatar(userId: number): Observable<any> {
+    return this.http.delete(`${this.BASE_URL}/api/Usuario/usuarios/${userId}/avatar`);
   }
   
   // Métodos existentes (get, post, put, delete, sendRequest, getHeader)
