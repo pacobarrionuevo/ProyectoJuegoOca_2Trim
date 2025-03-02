@@ -265,7 +265,10 @@ private handleMessage(message: string): void {
           this.handleMoveResult(normalizedMessage);
       } else if (normalizedMessage.type === 'skipTurn') {
           this.handleSkipTurn(normalizedMessage);
-      } else if (normalizedMessage.type === 'turnTimeout') {
+      }else if (normalizedMessage.type === 'gameReady') {
+        this.handleGameReady(normalizedMessage);
+    }
+       else if (normalizedMessage.type === 'turnTimeout') {
         console.log('Tiempo de turno agotado:', normalizedMessage);
         this.messageReceived.next({
           type: 'turnTimeout',
@@ -329,6 +332,15 @@ private handleMessage(message: string): void {
         inviterId: message.fromUserId
     };
     this.sendRxjs(JSON.stringify(response));
+  }
+  private handleGameReady(message: any): void {
+    this.ngZone.run(() => {
+      this.messageReceived.next({
+        type: 'gameReady',
+        gameId: message.gameId,
+        opponentId: message.opponentId
+      });
+    });
   }
 
   // Maneja el número de conexiones activas

@@ -7,6 +7,7 @@ import { MatchmakingComponent } from './pages/matchmaking/matchmaking.component'
 import { PerfilComponent } from './pages/perfil/perfil.component';
 import { GameComponent } from './pages/game/game.component';
 import { AdminComponent } from './pages/admin/admin.component';
+import { GameOnlineComponent } from './pages/online-game/online-game.component';
 
 export const routes: Routes = 
 [
@@ -37,6 +38,9 @@ export const routes: Routes =
     },{ 
         path: 'admin', 
         component: AdminComponent
+    },{ 
+        path: 'game-online', 
+        component: GameOnlineComponent
     }
 ];
 

@@ -51,7 +51,7 @@ export class MatchmakingComponent implements OnDestroy {
     this.oponenteId = msg.opponentId;
   
     // Navegar inmediatamente sin delay
-    this.router.navigate(['/game'], {
+    this.router.navigate(['/game-online'], {
       state: {
         gameId: this.gameId,
         opponentId: this.oponenteId
