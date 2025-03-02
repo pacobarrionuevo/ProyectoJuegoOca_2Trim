@@ -66,7 +66,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private async void NotifyActiveConnectionsChanged(int count)
         {
-            var message = new { Type = "activeConnections", Count = count };
+            var message = new
+            {
+                Type = "activeConnections",
+                Count = count
+            };
+
             var handlersSnapshot = _handlers.ToList();
             foreach (var handler in handlersSnapshot)
             {
@@ -213,45 +218,19 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         private async Task CleanupDisconnectedPlayer(WebSocketHandler handler)
         {
-            await _semaphore.WaitAsync();
             await _connectedSemaphore.WaitAsync();
             await _waitingSemaphore.WaitAsync();
-
             try
             {
-                if (!_connectedUsers.ContainsKey(handler.Id))
-                {
-                    Console.WriteLine($"Usuario {handler.Id} ya fue eliminado.");
-                    return;
-                }
+                // Eliminar el handler de las listas
+                _handlers.Remove(handler);
+                _connectedPlayers.Remove(handler);
+                _waitingPlayers.Remove(handler);
 
-                if (handler.IsOpen)
-                {
-                    Console.WriteLine($"Cerrando WebSocket para el usuario {handler.Id}.");
-                    await handler.CloseAsync();
-                }
-
-                _connectedPlayers.RemoveAll(p => p.Id == handler.Id);
-                _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
-                _handlers.RemoveAll(p => p.Id == handler.Id);
-
-                if (_connectedUsers.ContainsKey(handler.Id))
-                {
-                    _connectedUsers.Remove(handler.Id);
-                    Console.WriteLine($"Usuario {handler.Id} eliminado de _connectedUsers.");
-                }
-
-                await UpdateUserStatusAsync(handler, "Desconectado");
-                await NotifyFriendsAsync(handler, false);
-
-                Interlocked.Decrement(ref _activeConnections);
-                OnActiveConnectionsChanged?.Invoke(_activeConnections);
-
-                Console.WriteLine($"Usuario {handler.Id} limpiado correctamente.");
+                Console.WriteLine($"Cliente desconectado. ID: {handler.Id}, Total de clientes: {_handlers.Count}");
             }
             finally
             {
-                _semaphore.Release();
                 _connectedSemaphore.Release();
                 _waitingSemaphore.Release();
             }
@@ -271,7 +250,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     return;
                 }
 
-                switch (baseMsg.Type?.ToLower())
+                switch (baseMsg.Type.ToLower())
                 {
                     case "playrandom":
                         var playRandomMessage = JsonSerializer.Deserialize<PlayRandomMessage>(message);
@@ -380,16 +359,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         public class WebSocketMessage
         {
-            [JsonPropertyName("type")]                                                                                          
+            [JsonPropertyName("type")] // Asegúrate de que coincida con el JSON
             public string Type { get; set; }
         }
 
         public class MovePlayerMessage : WebSocketMessage
         {
-            [JsonPropertyName("playerId")] 
+            [JsonPropertyName("playerId")] // Asegúrate de que coincida con el JSON
             public int PlayerId { get; set; }
 
-            [JsonPropertyName("diceResult")] 
+            [JsonPropertyName("diceResult")] // Asegúrate de que coincida con el JSON
             public int DiceResult { get; set; }
         }
 
@@ -453,10 +432,10 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public class RollDiceMessage : WebSocketMessage
         {
-            [JsonPropertyName("playerId")]
+            [JsonPropertyName("playerId")] // Asegúrate de que coincida con el JSON
             public int PlayerId { get; set; }
 
-            [JsonPropertyName("gameId")]
+            [JsonPropertyName("gameId")] // Asegúrate de que coincida con el JSON
             public string GameId { get; set; }
         }
 
