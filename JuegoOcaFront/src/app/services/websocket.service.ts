@@ -164,8 +164,8 @@ export class WebsocketService {
 
   // Actualizar el jugador en el servicio
   setCurrentPlayer(player: any): void {
-    console.log('Jugador actual actualizado en WebsocketService:', player);
     this.currentPlayer = player;
+    console.log('Jugador actual actualizado en el servicio:', this.currentPlayer);
   }
 
   // Método para obtener el resultado del dado
@@ -203,17 +203,11 @@ export class WebsocketService {
     console.log('Juego terminado. Resultados:', message);
     alert(`El juego ha terminado. El ganador es: ${message.winnerName}`);
     this.router.navigate(['/matchmaking']);
-}
+  }
 
 // Maneja todos los posibles mensajes recibidos del websockets
 private handleMessage(message: string): void {
   try {
-      // Ignorar mensajes "ping" y "pong"
-      if (message === 'ping' || message === 'pong') {
-          console.log('WebSocketService: Mensaje de keep-alive recibido:', message);
-          return;
-      }
-
       // Intentar parsear el mensaje como JSON
       const parsedMessage = JSON.parse(message);
       console.log('WebSocketService: Mensaje recibido:', parsedMessage);
@@ -233,11 +227,11 @@ private handleMessage(message: string): void {
       } else if (normalizedMessage.type === 'waitingForOpponent') {
           this.handleWaitingForOpponent(normalizedMessage);
       } else if (normalizedMessage.type === 'friendConnected') {
-          this.addOnlineUser(normalizedMessage.friendId); // Añadir usuario conectado
+          this.addOnlineUser(normalizedMessage.friendId);
       } else if (normalizedMessage.type === 'friendDisconnected') {
-          this.removeOnlineUser(normalizedMessage.friendId); // Eliminar usuario desconectado
+          this.removeOnlineUser(normalizedMessage.friendId);
       } else if (normalizedMessage.type === 'onlineUsers') {
-          this.handleOnlineUsers(normalizedMessage); // Manejar lista de usuarios en línea
+          this.handleOnlineUsers(normalizedMessage);
       } else if (normalizedMessage.type === 'friendRequest') {
           // Manejar solicitud de amistad
           console.log('Solicitud de amistad recibida:', normalizedMessage);
@@ -273,41 +267,41 @@ private handleMessage(message: string): void {
       } else {
           console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
       }
-  } catch (error) {
-      console.error('Error al parsear el mensaje:', error);
+    } catch (error) {
+        console.error('Error al parsear el mensaje:', error);
+    }
   }
-}
 
-// Maneja una invitación de amigo
-private handleFriendInvitation(message: any): void {
-  console.log('Invitación recibida de:', message.fromUserNickname);
-  // Podrías poner un confirm(...) para aceptar o rechazar
-  // Por ahora, aceptamos de inmediato:
-  const response = {
-      type: 'acceptInvitation',
-      inviterId: message.fromUserId
-  };
-  this.sendRxjs(JSON.stringify(response));
-}
+  // Maneja una invitación de amigo
+  private handleFriendInvitation(message: any): void {
+    console.log('Invitación recibida de:', message.fromUserNickname);
+    // Podrías poner un confirm(...) para aceptar o rechazar
+    // Por ahora, aceptamos de inmediato:
+    const response = {
+        type: 'acceptInvitation',
+        inviterId: message.fromUserId
+    };
+    this.sendRxjs(JSON.stringify(response));
+  }
 
-// Maneja el número de conexiones activas
-private handleActiveConnections(parsedMessage: any): void {
-  console.log(`WebSocketService: Recibido activeConnections. Count: ${parsedMessage.count}`);
-  this.activeConnections.next(parsedMessage.count);
-}
+  // Maneja el número de conexiones activas
+  private handleActiveConnections(parsedMessage: any): void {
+    console.log(`WebSocketService: Recibido activeConnections. Count: ${parsedMessage.count}`);
+    this.activeConnections.next(parsedMessage.count);
+  }
 
-// Manejar que se salte un turno
-private handleSkipTurn(message: any): void {
+  // Manejar que se salte un turno
+  private handleSkipTurn(message: any): void {
     console.log('Turno perdido:', message);
     this.messageReceived.next({
         type: 'skipTurn',
         playerName: message.playerName,
         turnsToSkip: message.turnsToSkip
     });
-}
+  }
 
-// Manejar el mensaje que salta al hacer una tirada
-private handleMoveResult(message: any): void {
+  // Manejar el mensaje que salta al hacer una tirada
+  private handleMoveResult(message: any): void {
     console.log('Resultado del movimiento:', message);
     this.messageReceived.next({
         type: 'moveResult',
@@ -317,7 +311,7 @@ private handleMoveResult(message: any): void {
         cellType: message.cellType,
         specialMessage: message.specialMessage
     });
-}
+  }
 
   // Maneja la actualización del estado del juego
   private handleGameUpdate(message: any): void {
@@ -336,41 +330,51 @@ private handleMoveResult(message: any): void {
         isMoving: false,
         targetPosition: player.position,
       }));
-      console.log('Jugadores actualizados en WebsocketService:', this.players);
+  
+      console.log('Jugadores actualizados:', this.players);
+    } else {
+      console.warn('No se recibieron jugadores en la actualización del juego.');
     }
   
     // Verifica si el jugador actual está en el mensaje
     if (message.currentPlayer) {
-      this.currentPlayer = { ...message.currentPlayer };
-      console.log('Jugador actual actualizado en WebsocketService:', this.currentPlayer);
+      console.log('Jugador actual recibido:', message.currentPlayer);
+      this.currentPlayer = message.currentPlayer;
+      console.log('Jugador actual actualizado:', this.currentPlayer);
+    } else {
+      console.warn('No se recibió el jugador actual en la actualización del juego.');
     }
   
     // Verifica si el resultado del dado está en el mensaje
     if (message.diceResult !== undefined) {
+      console.log('Resultado del dado recibido:', message.diceResult);
       this.diceResult = message.diceResult;
-      console.log('Resultado del dado actualizado en WebsocketService:', this.diceResult);
+      console.log('Resultado del dado actualizado:', this.diceResult);
+    } else {
+      console.warn('No se recibió el resultado del dado en la actualización del juego.');
     }
   
     // Notifica a los suscriptores que el estado del juego ha cambiado
     this.notifyGameStateUpdate();
   }
 
+
   // Maneja la entrada de un nuevo jugador
   private handlePlayerJoined(message: any): void {
-      console.log('WebSocketService: Jugador unido:', message);
-      this.players = message.players;
-      this.notifyGameStateUpdate();
+    console.log('WebSocketService: Jugador unido:', message);
+    this.players = message.players;
+    this.notifyGameStateUpdate();
   }
 
   // Maneja el movimiento automático del bot
   private handleBotMove(message: any): void {
-      console.log('WebSocketService: Movimiento del bot:', message);
-      const bot = this.players.find(player => player.id === message.playerId);
-      if (bot) {
-          bot.position = message.newPosition;
-      }
-      this.notifyGameStateUpdate();
-  }
+    console.log('WebSocketService: Movimiento del bot:', message);
+    const bot = this.players.find(player => player.id === message.playerId);
+    if (bot) {
+        bot.position = message.newPosition;
+    }
+    this.notifyGameStateUpdate();
+}
 
   // Maneja el inicio de la partida
   private handleGameStarted(message: any): void {
@@ -405,11 +409,7 @@ private handleMoveResult(message: any): void {
   // Maneja errores en la conexión websocket
   private onError(error: any) {
     console.error('WebSocketService: Error en la conexión WebSocket:', error);
-    if (error instanceof CloseEvent) {
-      console.error(`Código de cierre: ${error.code}, Razón: ${error.reason}`);
-    }
     this.disconnected.next();
-    this.reconnectIfNeeded(); // Intentar reconectar automáticamente
   }
 
   // Normaliza las claves de un objeto a camelCase
@@ -446,13 +446,11 @@ private handleMoveResult(message: any): void {
   }
 
   // Intenta reconectar el websocket si hay un token almacenado
-  private reconnectIfNeeded(): void {
+  private reconnectIfNeeded() {
     const storedToken = sessionStorage.getItem(this.tokenKey);
     if (storedToken) {
       console.log('WebSocketService: Reconectando WebSocket con token almacenado');
-      setTimeout(() => {
-        this.connectRxjs(storedToken);
-      }, 3000); // Reintenta después de 3 segundos
+      this.connectRxjs(storedToken); // Intentar reconectar
     } else {
       console.log('WebSocketService: No hay token almacenado, no se puede reconectar');
     }

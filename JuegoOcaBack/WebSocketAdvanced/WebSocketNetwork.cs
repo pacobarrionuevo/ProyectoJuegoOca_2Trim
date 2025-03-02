@@ -620,18 +620,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         public async Task BroadcastMessage(string message)
         {
-            // Asegúrate de que _semaphore y _handlers existan en tu clase
             await _semaphore.WaitAsync();
             try
             {
-                // Crear una copia de la lista de handlers
-                var handlersSnapshot = _handlers.ToList();
-
+                var handlersSnapshot = _handlers.ToList(); // Crear una copia de la lista para evitar problemas de concurrencia
+                Console.WriteLine($"Enviando mensaje a {handlersSnapshot.Count} clientes: {message}");
                 foreach (var handler in handlersSnapshot)
                 {
-                    if (handler.IsOpen)
+                    if (handler.IsOpen) // Verificar si el WebSocket está abierto
                     {
-                        await handler.SendAsync(message);
+                        await handler.SendAsync(message); // Enviar el mensaje a cada cliente conectado
                     }
                 }
             }

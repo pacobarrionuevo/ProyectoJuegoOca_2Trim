@@ -218,10 +218,10 @@ validarUrlImagen(fotoPerfil: string | null): string {
   }
 
   cargarInfoUsuario(): void {
-    const userInfo = this.authService.getUserData();
+    const userInfo = this.authService.getUserDataFromToken();
     if (userInfo) {
-      this.usuarioApodo = userInfo.apodo;
-      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.fotoPerfil);
+      this.usuarioApodo = userInfo.name;
+      this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture);
       this.usuarioId = userInfo.id;
     } else {
       console.error('No se pudo obtener la información del usuario. ¿El token está disponible?');
