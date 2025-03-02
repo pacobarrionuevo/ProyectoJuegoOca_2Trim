@@ -16,6 +16,7 @@ export class MainComponent implements OnInit {
   tablero: string;
   fondo: string;
   isLoggedIn: boolean = false;
+  isAdmin: boolean = false;
 
   constructor(private imageService: ImageService, private authService: AuthService, private router: Router) {
     this.cubileteDados = this.imageService.getImageUrl('CubileteDados.png');
@@ -26,6 +27,9 @@ export class MainComponent implements OnInit {
   ngOnInit(): void {
     this.authService.isLoggedIn$.subscribe(loggedIn => {
       this.isLoggedIn = loggedIn;
+    });
+    this.authService.isAdmin$.subscribe(admin => {
+      this.isAdmin = admin;
     });
   }
 

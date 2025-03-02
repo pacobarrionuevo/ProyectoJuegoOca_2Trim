@@ -56,7 +56,7 @@ namespace JuegoOcaBack.Controllers
             };
         }
 
-        [HttpGet("ListaUsuario")]
+        [HttpGet("usuarios")]
         public async Task<ActionResult<IEnumerable<UsuarioDTO>>> GetUsuarios()
         {
             return await _context.Usuarios
@@ -140,7 +140,9 @@ namespace JuegoOcaBack.Controllers
                     {"id", newUser.UsuarioId},
                     {"Nombre", newUser.UsuarioApodo},
                     {"Email", newUser.UsuarioEmail},
-                    {"FotoPerfil", newUser.UsuarioFotoPerfil}
+                    {"FotoPerfil", newUser.UsuarioFotoPerfil},
+                    {"Rol", newUser.Rol}, 
+                    {"EstaBaneado", newUser.EstaBaneado}
                 },
                 Expires = DateTime.UtcNow.AddDays(5),
                 SigningCredentials = new SigningCredentials(
@@ -189,7 +191,9 @@ namespace JuegoOcaBack.Controllers
             {"id", user.UsuarioId},
             {"Apodo", user.UsuarioApodo},
             {"Email", user.UsuarioEmail},
-            {"FotoPerfil",user.UsuarioFotoPerfil}
+            {"FotoPerfil",user.UsuarioFotoPerfil},
+            {"Rol",user.Rol},
+            {"EstaBaneado",user.EstaBaneado}
 
         },
                 Expires = DateTime.UtcNow.AddDays(5),

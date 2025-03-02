@@ -20,14 +20,14 @@ export class AuthService {
   }
 
   private checkAdmin(): boolean {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (!token) return false;
     
     try {
       const payload = this.decodeToken(token);
-      return payload.esAdmin === true;
+      return payload.Rol === 'admin';
     } catch (e) {
-      console.error('Error decoding token:', e);
+      console.error('Error decodificando el token:', e);
       return false;
     }
   }
@@ -47,35 +47,35 @@ export class AuthService {
   }
 
   login(authData: AuthRequest, rememberMe: boolean): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseURL}/login`, authData).pipe(
+    return this.http.post<AuthResponse>(`${this.baseURL}/api/Usuario/login`, authData).pipe(
       tap((response: AuthResponse) => {
-        // Borra ambos Storage antes de guardar el token y la información del admin
+        // Limpiar storages
         localStorage.removeItem('accessToken');
         sessionStorage.removeItem('accessToken');
-        localStorage.removeItem('isAdmin');
-        sessionStorage.removeItem('isAdmin');
-  
-        // Guarda el token y la información del admin según la opción de recuerdame
+        
+        // Guardar token según rememberMe
         if (rememberMe) {
           localStorage.setItem('accessToken', response.stringToken);
-          localStorage.setItem('isAdmin', JSON.stringify(response.isadmin)); // Guarda si es admin
         } else {
           sessionStorage.setItem('accessToken', response.stringToken);
-          sessionStorage.setItem('isAdmin', JSON.stringify(response.isadmin)); // Guarda si es admin
         }
+        
+        // Actualizar estados
         this.loggedIn.next(true);
+        this.isAdminSubject.next(this.checkAdmin()); 
       })
     );
   }
 
   logout(): void {
     localStorage.removeItem('accessToken');
+    sessionStorage.removeItem('accessToken');
     this.loggedIn.next(false);
     this.isAdminSubject.next(false);
   }
 
   register(formData: FormData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseURL}/Registro`, formData, { headers: {} });
+    return this.http.post<AuthResponse>(`${this.baseURL}/api/Usuario/Registro`, formData, { headers: {} });
   }
 
   updateAuthState(): void {
@@ -125,7 +125,7 @@ export class AuthService {
         apodo: payload.Apodo,
         email: payload.Email,
         fotoPerfil: payload.FotoPerfil,
-        esAdmin: payload.esAdmin
+        esAdmin: payload.Rol === 'admin'
       };
     } catch (e) {
       console.error('Error obteniendo datos del usuario:', e);
