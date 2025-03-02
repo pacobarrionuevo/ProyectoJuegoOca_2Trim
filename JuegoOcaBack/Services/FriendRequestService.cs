@@ -74,7 +74,23 @@ namespace JuegoOcaBack.Services
                 SenderName = sender?.UsuarioApodo
             };
         }
-
+        public async Task<FriendRequestDetails> GetRequestDetails(int requestId)
+        {
+            return await _context.Friendships
+                .Include(a => a.AmistadUsuario)
+                .Where(a => a.AmistadId == requestId)
+                .Select(a => new FriendRequestDetails
+                {
+                    SenderId = a.AmistadUsuario.First(ua => ua.esQuienMandaSolicitud).UsuarioId,
+                    ReceiverId = a.AmistadUsuario.First(ua => !ua.esQuienMandaSolicitud).UsuarioId
+                })
+                .FirstOrDefaultAsync();
+        }
+        public class FriendRequestDetails
+        {
+            public int SenderId { get; set; }
+            public int ReceiverId { get; set; }
+        }
 
         // Acepta una solicitud de amistad
         // receiverId se obtiene del token (usuario autenticado) para mayor seguridad

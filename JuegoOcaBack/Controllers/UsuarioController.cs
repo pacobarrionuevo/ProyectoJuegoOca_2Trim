@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore;
 
 namespace JuegoOcaBack.Controllers
 {
@@ -55,11 +56,46 @@ namespace JuegoOcaBack.Controllers
             };
         }
 
-        [HttpGet("ListaUsuario")]
-        public IEnumerable<UsuarioDTO> GetUser()
+        [HttpGet("usuarios")]
+        public async Task<ActionResult<IEnumerable<UsuarioDTO>>> GetUsuarios()
         {
-            return _context.Usuarios.Select(ToDto);
+            return await _context.Usuarios
+                .Select(u => new UsuarioDTO
+                {
+                    UsuarioId = u.UsuarioId,
+                    UsuarioApodo = u.UsuarioApodo,
+                    UsuarioEmail = u.UsuarioEmail,
+                    UsuarioFotoPerfil = u.UsuarioFotoPerfil,
+                    Rol = u.Rol,
+                    EstaBaneado = u.EstaBaneado
+                })
+                .ToListAsync();
         }
+
+        [HttpPatch("usuarios/{id}/rol")]
+        public async Task<IActionResult> ActualizarRol(int id, [FromBody] ActualizarRolDTO dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+
+            usuario.Rol = dto.NuevoRol;
+            await _context.SaveChangesAsync();
+
+            return Ok(usuario);
+        }
+
+        [HttpPatch("usuarios/{id}/baneo")]
+        public async Task<IActionResult> ToggleBaneo(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+
+            usuario.EstaBaneado = !usuario.EstaBaneado;
+            await _context.SaveChangesAsync();
+
+            return Ok(usuario);
+        }
+
 
         [HttpPost("Registro")]  
         public async Task<IActionResult> Register([FromForm] UsuarioRegistrarseDTO usuario)

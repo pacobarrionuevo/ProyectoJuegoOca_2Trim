@@ -1,12 +1,10 @@
-import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { environment } from '../../environments/environment';
-import { Observable } from 'rxjs';
-import { of } from 'rxjs';
+import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, catchError } from 'rxjs/operators'; 
 import { Router } from '@angular/router';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { Subject, BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -19,11 +17,16 @@ export class WebsocketService {
   disconnected = new Subject<void>();
   activeConnections = new Subject<number>();
 
+  friendNotAvailable = new Subject<string>();
+  public onlineUsers$ = new BehaviorSubject<Set<number>>(new Set());
+
   // Clave para almacenar el token en sessionStorage
   private tokenKey = 'websocket_token'; 
 
   // Conexion ws
   private rxjsSocket: WebSocketSubject<string>;
+
+  private baseURL = environment.apiUrl;
 
   // Variables para listaJugadores, usuario actual, jugador actual(no son lo mismo) (turnos, tal), id de la partida y resultado del dado
   private players: any[] = [];
@@ -38,7 +41,7 @@ export class WebsocketService {
   // Se encarga de notificar cambios en el estado del juego
   gameStateUpdated = new Subject<{ players: any[], currentPlayer: any, diceResult: number | null }>();
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, private ngZone: NgZone) {
     // Imaginando que fallase la conexión, este método intenta reconectar al iniciar el servicio
     this.reconnectIfNeeded(); 
   }
@@ -142,6 +145,13 @@ export class WebsocketService {
     );
   }
 
+  fetchOnlineUsers(): Observable<number[]> {
+    return this.http.get<{ onlineUsers: number[] }>(`${this.baseURL}/ws/online-users`).pipe(
+      map(response => Array.isArray(response?.onlineUsers) ? response.onlineUsers : []),
+      catchError(() => of([]))
+    );
+  }
+
   // Establece el usuario real cuando se une a la partida
   setCurrentUser(user: any): void {
     console.log('Estableciendo usuario real:', user);
@@ -155,8 +165,8 @@ export class WebsocketService {
 
   // Actualizar el jugador en el servicio
   setCurrentPlayer(player: any): void {
+    console.log('Jugador actual actualizado en WebsocketService:', player);
     this.currentPlayer = player;
-    console.log('Jugador actual actualizado en el servicio:', this.currentPlayer);
   }
 
   // Método para obtener el resultado del dado
@@ -174,8 +184,7 @@ export class WebsocketService {
         gameId: this.gameId,
         playerId: this.currentPlayer.id
     }));
-}
-
+  }
 
   // Notifica a los suscriptores que el estado del juego ha cambiado
   private notifyGameStateUpdate(): void {
@@ -279,28 +288,19 @@ private handleMoveResult(message: any): void {
         isMoving: false,
         targetPosition: player.position,
       }));
-  
-      console.log('Jugadores actualizados:', this.players);
-    } else {
-      console.warn('No se recibieron jugadores en la actualización del juego.');
+      console.log('Jugadores actualizados en WebsocketService:', this.players);
     }
   
     // Verifica si el jugador actual está en el mensaje
     if (message.currentPlayer) {
-      console.log('Jugador actual recibido:', message.currentPlayer);
-      this.currentPlayer = message.currentPlayer;
-      console.log('Jugador actual actualizado:', this.currentPlayer);
-    } else {
-      console.warn('No se recibió el jugador actual en la actualización del juego.');
+      this.currentPlayer = { ...message.currentPlayer };
+      console.log('Jugador actual actualizado en WebsocketService:', this.currentPlayer);
     }
   
     // Verifica si el resultado del dado está en el mensaje
     if (message.diceResult !== undefined) {
-      console.log('Resultado del dado recibido:', message.diceResult);
       this.diceResult = message.diceResult;
-      console.log('Resultado del dado actualizado:', this.diceResult);
-    } else {
-      console.warn('No se recibió el resultado del dado en la actualización del juego.');
+      console.log('Resultado del dado actualizado en WebsocketService:', this.diceResult);
     }
   
     // Notifica a los suscriptores que el estado del juego ha cambiado
@@ -383,20 +383,36 @@ private handleMoveResult(message: any): void {
   // Normaliza las claves de un objeto a camelCase
   private normalizeKeys(obj: any): any {
     if (typeof obj !== 'object' || obj === null) return obj;
+  }
 
-    return Object.keys(obj).reduce((acc: any, key) => {
-      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
-      acc[camelKey] = this.normalizeKeys(obj[key]);
-      return acc;
-    }, {});
+  private addOnlineUser(userId: number): void {
+    this.ngZone.run(() => {
+      const updated = new Set(this.onlineUsers$.value);
+      updated.add(userId);
+      this.onlineUsers$.next(updated);
+    });
+  }
+
+  private removeOnlineUser(userId: number): void {
+    this.ngZone.run(() => {
+      const updated = new Set(this.onlineUsers$.value);
+      updated.delete(userId);
+      this.onlineUsers$.next(updated);
+    });
+  }
+
+  private handleOnlineUsers(message: { users: number[] }): void {
+    this.ngZone.run(() => {
+      this.onlineUsers$.next(new Set(message.users));
+    });
   }
 
   // Intenta reconectar el websocket si hay un token almacenado
-  private reconnectIfNeeded() {
+  private reconnectIfNeeded(): void {
     const storedToken = sessionStorage.getItem(this.tokenKey);
     if (storedToken) {
       console.log('WebSocketService: Reconectando WebSocket con token almacenado');
-      this.connectRxjs(storedToken); // Intentar reconectar
+      this.connectRxjs(storedToken);
     } else {
       console.log('WebSocketService: No hay token almacenado, no se puede reconectar');
     }

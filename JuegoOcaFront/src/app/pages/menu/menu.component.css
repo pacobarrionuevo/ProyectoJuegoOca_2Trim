@@ -136,8 +136,39 @@ input[type="text"]:focus-visible {
   padding: 1%;
   border-radius: 10px;
 }
+.error-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px;
+  background: #ff4444;
+  color: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
 
+.estado-conectado {
+  color: #28a745; /* Verde para conectado */
+  font-size: 0.9em;
+}
 
+.estado-desconectado {
+  color: #6c757d; /* Gris para desconectado */
+  font-size: 0.9em;
+}
+
+.online-badge {
+  color: #28a745; /* Verde para en línea */
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+
+.offline-badge {
+  color: #6c757d; /* Gris para desconectado */
+  font-size: 0.8em;
+  margin-left: 8px;
+}
 @media (max-width: 768px) {
   .menu-grid {
     grid-template-columns: 1fr; 

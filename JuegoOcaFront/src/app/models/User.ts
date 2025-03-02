@@ -5,5 +5,8 @@ export interface User {
     UsuarioFotoPerfil?: string; 
     UsuarioContrasena?: string; 
     UsuarioConfirmarContrasena?: string;
+    Rol?: 'usuario' | 'admin';
+    EstaBaneado?: boolean;
     UsuarioEstado?: string; 
+
   }

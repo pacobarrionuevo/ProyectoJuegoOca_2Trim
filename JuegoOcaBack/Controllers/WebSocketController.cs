@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using JuegoOcaBack.WebSocketAdvanced;
+using System.Security.Claims;
 
 namespace JuegoOcaBack.Controllers
 {
@@ -22,13 +23,26 @@ namespace JuegoOcaBack.Controllers
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
+                // Obtener userId del token JWT
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
                 WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await _websocketNetwork.HandleAsync(webSocket);
+                await _websocketNetwork.HandleAsync(webSocket, userId); // Pasar userId
             }
             else
             {
                 HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             }
+        }
+        [HttpGet("online-users")]
+        public IActionResult GetOnlineUsers()
+        {
+            var connectedUsers = _websocketNetwork.GetConnectedUsers();
+            return Ok(new
+            {
+                onlineUsers = connectedUsers, // Propiedad "onlineUsers"
+                total = connectedUsers.Count
+            });
         }
     }
 }

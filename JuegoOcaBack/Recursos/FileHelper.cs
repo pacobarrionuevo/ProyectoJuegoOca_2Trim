@@ -1,27 +1,21 @@
 ﻿namespace JuegoOcaBack.Recursos
 {
-    public class FileHelper
+    public static class FileHelper
     {
-        // Made by Jose aka nuestro profe favorito
-        private const string WWWROOT_FOLDER = "wwwroot";
+        public static string WwwrootPath { get; } = Path.Combine(AppContext.BaseDirectory, "wwwroot");
 
         public static async Task SaveAsync(byte[] bytes, string relativePath)
         {
-            string directory = Path.GetDirectoryName(relativePath);
-            string absoluteDirectory = Path.Combine(WWWROOT_FOLDER, directory);
-            Directory.CreateDirectory(absoluteDirectory);
-
-            string absolutePath = Path.Combine(WWWROOT_FOLDER, relativePath);
+            string absolutePath = Path.Combine(WwwrootPath, relativePath);
+            Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
             await File.WriteAllBytesAsync(absolutePath, bytes);
         }
 
         public static async Task SaveAsync(Stream stream, string relativePath)
         {
-            using MemoryStream streamAux = new MemoryStream();
-            await stream.CopyToAsync(streamAux);
-            byte[] bytes = streamAux.ToArray();
-
-            await SaveAsync(bytes, relativePath);
+            using MemoryStream ms = new();
+            await stream.CopyToAsync(ms);
+            await SaveAsync(ms.ToArray(), relativePath);
         }
     }
 }

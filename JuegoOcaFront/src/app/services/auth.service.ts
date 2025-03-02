@@ -1,44 +1,67 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
+import { User } from '../models/User';
 import { AuthRequest } from '../models/auth-request';
 import { AuthResponse } from '../models/auth-response';
-import { environment } from '../../environments/environment';
-import { WebsocketService } from './websocket.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  private URL = `${environment.apiUrl}`; 
+  private baseURL = `${environment.apiUrl}/api/Usuario`;
   private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
+  private isAdminSubject = new BehaviorSubject<boolean>(this.checkAdmin());
 
-  constructor(private http: HttpClient, private websocketService: WebsocketService,) {}
+  constructor(private http: HttpClient) { }
 
   private hasToken(): boolean {
-    return !!localStorage.getItem('accessToken') || !!sessionStorage.getItem('accessToken');
+    return !!localStorage.getItem('accessToken');
   }
 
-  get isLoggedIn() {
+  private checkAdmin(): boolean {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return false;
+    
+    try {
+      const payload = this.decodeToken(token);
+      return payload.esAdmin === true;
+    } catch (e) {
+      console.error('Error decoding token:', e);
+      return false;
+    }
+  }
+
+  private decodeToken(token: string): any {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
+  }
+
+  get isLoggedIn$(): Observable<boolean> {
     return this.loggedIn.asObservable();
   }
 
-  register(formData: FormData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}/api/Usuario/Registro`, formData, { headers: {} });
+  get isAdmin$(): Observable<boolean> {
+    return this.isAdminSubject.asObservable();
   }
 
   login(authData: AuthRequest, rememberMe: boolean): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.URL}/api/Usuario/login`, authData).pipe(
+    return this.http.post<AuthResponse>(`${this.baseURL}/api/Usuario/login`, authData).pipe(
       tap((response: AuthResponse) => {
-        // Borra ambos Storage antes de guardar el token
+        // Borra ambos Storage antes de guardar el token y la información del admin
         localStorage.removeItem('accessToken');
         sessionStorage.removeItem('accessToken');
-
-        // Guarda el token según la opción de recuerdame
+        localStorage.removeItem('isAdmin');
+        sessionStorage.removeItem('isAdmin');
+  
+        // Guarda el token y la información del admin según la opción de recuerdame
         if (rememberMe) {
           localStorage.setItem('accessToken', response.stringToken);
+          localStorage.setItem('isAdmin', JSON.stringify(response.isadmin)); // Guarda si es admin
         } else {
           sessionStorage.setItem('accessToken', response.stringToken);
+          sessionStorage.setItem('isAdmin', JSON.stringify(response.isadmin)); // Guarda si es admin
         }
         this.loggedIn.next(true);
       })
@@ -47,10 +70,23 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem('accessToken');
-    sessionStorage.removeItem('accessToken');
     this.loggedIn.next(false);
+    this.isAdminSubject.next(false);
   }
 
+  register(userData: User): Observable<{ StringToken: string }> {
+    return this.http.post<{ StringToken: string }>(`${this.baseURL}/Registro`, userData).pipe(
+      tap(response => {
+        localStorage.setItem('accessToken', response.StringToken);
+        this.updateAuthState();
+      })
+    );
+  }
+
+  updateAuthState(): void {
+    this.loggedIn.next(this.hasToken());
+    this.isAdminSubject.next(this.checkAdmin());
+  }
   getUserDataFromToken(): any {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -76,5 +112,29 @@ export class AuthService {
       }
     }
     return null;
+  }
+  getUserData(): { 
+    id: number, 
+    apodo: string, 
+    email: string, 
+    fotoPerfil: string,
+    esAdmin: boolean 
+  } | null {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return null;
+
+    try {
+      const payload = this.decodeToken(token);
+      return {
+        id: payload.id,
+        apodo: payload.Apodo,
+        email: payload.Email,
+        fotoPerfil: payload.FotoPerfil,
+        esAdmin: payload.esAdmin
+      };
+    } catch (e) {
+      console.error('Error obteniendo datos del usuario:', e);
+      return null;
+    }
   }
 }

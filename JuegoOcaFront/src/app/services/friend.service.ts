@@ -11,7 +11,7 @@ import { SendFriendRequest } from '../models/send-friend-request';
 })
 export class FriendService {
   private apiUrl = `${environment.apiUrl}/api/FriendRequest`;
-
+  
   constructor(private http: HttpClient) { }
 
   // Método para obtener la lista de amigos (el backend toma el usuario desde el token)

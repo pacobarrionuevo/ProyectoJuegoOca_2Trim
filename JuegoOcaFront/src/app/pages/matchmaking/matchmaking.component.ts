@@ -4,7 +4,7 @@ import { WebsocketService } from '../../services/websocket.service';
 import { CommonModule } from '@angular/common';
 import { ImageService } from '../../services/image.service';
 import { RouterModule } from '@angular/router';
-
+import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-matchmaking',
   standalone: true,
@@ -49,15 +49,14 @@ export class MatchmakingComponent implements OnDestroy {
     this.estado = 'enPartida';
     this.gameId = msg.gameId;
     this.oponenteId = msg.opponentId;
-    
-    setTimeout(() => {
-      this.router.navigate(['/game'], { 
-        state: { 
-          gameId: this.gameId,
-          opponentId: this.oponenteId 
-        }
-      });
-    }, 3000);
+  
+    // Navegar inmediatamente sin delay
+    this.router.navigate(['/game'], {
+      state: {
+        gameId: this.gameId,
+        opponentId: this.oponenteId
+      }
+    });
   }
 
   // Actualizar estado de la cola
