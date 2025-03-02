@@ -21,8 +21,6 @@
 
   <br>
 
-  
-
   <div class="elementosMenu">
     <p class="titulo">Solicitudes de Amistad</p>
     <div *ngFor="let solicitud of solicitudesPendientes" class="solicitud-container">
@@ -31,22 +29,15 @@
         <button class="perfilButton" (click)="aceptarSolicitud(solicitud)"><b>Aceptar</b></button>
         <button class="cerrar-sesion-btn" (click)="rechazarSolicitud(solicitud)"><b>Rechazar</b></button>
       </div>
-    <div *ngFor="let solicitud of solicitudesPendientes" class="solicitud-container">
-      <span>{{ solicitud.usuarioApodo }} quiere ser tu amigo</span>&nbsp;
-      <div class="botones-solicitud">
-        <button class="perfilButton" (click)="aceptarSolicitud(solicitud)"><b>Aceptar</b></button>
-        <button class="cerrar-sesion-btn" (click)="rechazarSolicitud(solicitud)"><b>Rechazar</b></button>
-      </div>
     </div>
   </div>
-  
-  
 
   <br>
 
   <div class="elementosMenu">
     <p class="titulo">Solicitudes de Partidas</p>
   </div>
+  
 
   <br>
 
@@ -64,8 +55,6 @@
         <button [routerLink]="'/perfil'">Ver perfil</button>&nbsp;
         <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
     </div>
-  </div>
-
   </div>
 
 

@@ -24,7 +24,7 @@ export class MainComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.authService.isLoggedIn.subscribe(loggedIn => {
+    this.authService.isLoggedIn$.subscribe(loggedIn => {
       this.isLoggedIn = loggedIn;
     });
   }

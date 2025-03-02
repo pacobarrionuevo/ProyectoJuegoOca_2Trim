@@ -18,7 +18,7 @@ export class ApiService {
   constructor(private http: HttpClient) { }
 
   getUsuarios(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.BASE_URL}/api/Usuario/ListaUsuario`);
+    return this.http.get<User[]>(`${this.BASE_URL}/api/Usuario/usuarios`);
   }
 
 

@@ -17,7 +17,7 @@ namespace JuegoOcaBack.Controllers
         }
 
         [HttpPost("add-player")]
-        public IActionResult AgregarJugador( String name)
+        public IActionResult AgregarJugador(String name)
         {
             _gameService.AddPlayer(name);
             return Ok();

@@ -57,6 +57,14 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.obtenerSolicitudesPendientes();
     this.inicializarWebSockets();
     this.inicializarActualizaciones();
+
+    this.webSocketService.messageReceived.subscribe((message: any) => {
+      console.log("Mensaje recibido de WebSocket:", message);
+      if (message.FriendId) {
+        console.log(`MenuComponent: Actualizando estado del amigo ${message.FriendId} a ${message.Estado}`);
+        this.actualizarEstadoAmigo(message.FriendId, message.Estado);
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -119,6 +127,17 @@ export class MenuComponent implements OnInit, OnDestroy {
       UsuarioEstado: this.onlineUserIds.has(amigo.UsuarioId) ? 'Conectado' : 'Desconectado'
     }));
     this.amigosFiltrados = [...this.amigos];
+  }
+
+  actualizarEstadoAmigo(friendId: number, estado: string) {
+    console.log(`MenuComponent: actualizarEstadoAmigo() llamado con friendId=${friendId}, estado=${estado}`);
+    const amigo = this.amigos.find(a => a.UsuarioId === friendId);
+    if (amigo) {
+      console.log(`MenuComponent: Amigo encontrado, actualizando estado a de ${amigo.UsuarioEstado} a ${estado}`);
+      amigo.UsuarioEstado = estado;
+    } else {
+      console.warn(`MenuComponent: No se encontró el amigo con ID ${friendId}`);
+    }
   }
 
   private actualizarUsuariosConectados(): void {
@@ -209,13 +228,14 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
-  private obtenerUsuarios(): void {
-    this.apiService.getUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = usuarios.map(usuario => this.mapearUsuario(usuario));
-        this.usuariosFiltrados = [...this.usuarios];
-      },
-      error: (err) => console.error('Error cargando usuarios:', err)
+  obtenerUsuarios(): void {
+    this.apiService.getUsuarios().subscribe(usuarios => {
+      this.usuarios = usuarios.map(usuario => ({
+        UsuarioId: usuario.usuarioId, 
+        UsuarioApodo: usuario.usuarioApodo,
+        UsuarioFotoPerfil: this.validarUrlImagen(usuario.usuarioFotoPerfil)
+      }));
+      this.usuariosFiltrados = [...this.usuarios];
     });
   }
 
