@@ -18,11 +18,10 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public event Func<WebSocketHandler, string, Task> MessageReceived;
         public event Func<WebSocketHandler, Task> Disconnected;
-        public WebSocketHandler(int userId, WebSocket webSocket, string username)
+        public WebSocketHandler(int userId, WebSocket webSocket)
         {
             Id = userId;
             _webSocket = webSocket;
-            Username = username;
 
             LastActivity = DateTime.UtcNow;
             _buffer = new byte[BufferSize];
@@ -34,7 +33,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             {
                 try
                 {
-                    var message = await ReceiveMessageAsync();
+                    string message = await ReadAsync();
                     LastActivity = DateTime.UtcNow;
 
                     if (!string.IsNullOrWhiteSpace(message) && MessageReceived != null)
@@ -57,30 +56,25 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         private async Task<string> ReadAsync()
         {
-            using (var memoryStream = new MemoryStream()) // Usar bloque using con paréntesis
+            using var memoryStream = new MemoryStream();
+            WebSocketReceiveResult receiveResult;
+
+            do
             {
-                WebSocketReceiveResult receiveResult;
-
-                do
+                receiveResult = await _webSocket.ReceiveAsync(_buffer, CancellationToken.None);
+                if (receiveResult.MessageType == WebSocketMessageType.Text)
                 {
-                    receiveResult = await _webSocket.ReceiveAsync(_buffer, CancellationToken.None);
-                    if (receiveResult.MessageType == WebSocketMessageType.Text)
-                    {
-                        memoryStream.Write(_buffer, 0, receiveResult.Count);
-                    }
-                    else if (receiveResult.CloseStatus.HasValue)
-                    {
-                        await _webSocket.CloseAsync(
-                            receiveResult.CloseStatus.Value,
-                            receiveResult.CloseStatusDescription,
-                            CancellationToken.None
-                        );
-                    }
-                } while (!receiveResult.EndOfMessage);
+                    memoryStream.Write(_buffer, 0, receiveResult.Count);
+                }
+                else if (receiveResult.CloseStatus.HasValue)
+                {
+                    await _webSocket.CloseAsync(receiveResult.CloseStatus.Value, receiveResult.CloseStatusDescription, CancellationToken.None);
+                }
+            } while (!receiveResult.EndOfMessage);
 
-                return Encoding.UTF8.GetString(memoryStream.ToArray());
-            }
+            return Encoding.UTF8.GetString(memoryStream.ToArray());
         }
+
         public async Task SendAsync(string message)
         {
             if (IsOpen)

@@ -82,25 +82,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
-        // (Opcional) Cerrar conexiones por inactividad
-        private async Task CheckInactiveConnections()
-        {
-            while (true)
-            {
-                await Task.Delay(60000);
-                var now = DateTime.UtcNow;
-                foreach (var userId in _connectedUsers.Keys.ToList())
-                {
-                    var handler = _connectedUsers[userId];
-                    if ((now - handler.LastActivity).TotalMinutes > 1.5)
-                    {
-                        await RemoveUser(userId);
-                        Console.WriteLine($"Usuario {userId} desconectado por inactividad.");
-                    }
-                }
-            }
-        }
-
         private async Task RemoveUser(int userId)
         {
             await _semaphore.WaitAsync();
@@ -123,7 +104,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             Interlocked.Increment(ref _activeConnections);
             OnActiveConnectionsChanged?.Invoke(_activeConnections);
 
-            var handler = await CreateHandlerAsync(webSocket, userId);
+            var handler = await CreateHandlerAsync(webSocket);
             await AddUser(userId, handler);
 
             try
@@ -147,28 +128,27 @@ namespace JuegoOcaBack.WebSocketAdvanced
             Console.WriteLine($"Usuario {userId} conectado.");
         }
 
-        private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket, int userId)
+        private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket)
         {
-            using var scope = _serviceProvider.CreateScope();
-            var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
-            var user = await wsMethods.GetUserById(userId);
-
-            var handler = new WebSocketHandler(userId, webSocket, username: user?.UsuarioApodo ?? "Usuario desconocido");
-
-            await _semaphore.WaitAsync();
+            await _connectedSemaphore.WaitAsync();
             try
             {
-                handler.Disconnected -= OnDisconnectedHandler;
+                var handler = new WebSocketHandler(Interlocked.Increment(ref _idCounter), webSocket);
                 handler.Disconnected += OnDisconnectedHandler;
                 handler.MessageReceived += OnMessageReceivedHandler;
 
-                _connectedUsers[userId] = handler;
-                Console.WriteLine($"Usuario {userId} conectado y suscrito correctamente.");
+                // Agregar el handler a la lista de handlers
+                _handlers.Add(handler);
+
+                // Agregar el handler a la lista de jugadores conectados
+                _connectedPlayers.Add(handler);
+
+                Console.WriteLine($"Nuevo cliente conectado. ID: {handler.Id}, Total de clientes: {_handlers.Count}");
                 return handler;
             }
             finally
             {
-                _semaphore.Release();
+                _connectedSemaphore.Release();
             }
         }
 
