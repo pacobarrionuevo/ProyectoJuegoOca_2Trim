@@ -12,6 +12,7 @@ using JuegoOcaBack.Models.DTO;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
 using JuegoOcaBack.Services;
+using static JuegoOcaBack.WebSocketAdvanced.WebSocketNetwork;
 
 namespace JuegoOcaBack.WebSocketAdvanced
 {
@@ -35,9 +36,32 @@ namespace JuegoOcaBack.WebSocketAdvanced
         {
             _serviceProvider = serviceProvider;
             OnActiveConnectionsChanged += count => NotifyActiveConnectionsChanged(count);
+        }
 
-            // Si deseas iniciar un proceso para cerrar conexiones inactivas:
-            // Task.Run(CheckInactiveConnections);
+        private GameService GetGameService()
+        {
+            return _serviceProvider.GetRequiredService<GameService>();
+        }
+
+        public async Task BroadcastMessage(string message)
+        {
+            await _semaphore.WaitAsync();
+            try
+            {
+                var handlersSnapshot = _handlers.ToList(); // Crear una copia de la lista para evitar problemas de concurrencia
+                Console.WriteLine($"Enviando mensaje a {handlersSnapshot.Count} clientes: {message}");
+                foreach (var handler in handlersSnapshot)
+                {
+                    if (handler.IsOpen) // Verificar si el WebSocket está abierto
+                    {
+                        await handler.SendAsync(message); // Enviar el mensaje a cada cliente conectado
+                    }
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         private async void NotifyActiveConnectionsChanged(int count)
@@ -356,16 +380,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
         public class WebSocketMessage
         {
-            [JsonPropertyName("type")] // Asegúrate de que coincida con el JSON
+            [JsonPropertyName("type")]                                                                                          
             public string Type { get; set; }
         }
 
         public class MovePlayerMessage : WebSocketMessage
         {
-            [JsonPropertyName("playerId")] // Asegúrate de que coincida con el JSON
+            [JsonPropertyName("playerId")] 
             public int PlayerId { get; set; }
 
-            [JsonPropertyName("diceResult")] // Asegúrate de que coincida con el JSON
+            [JsonPropertyName("diceResult")] 
             public int DiceResult { get; set; }
         }
 
@@ -402,41 +426,40 @@ namespace JuegoOcaBack.WebSocketAdvanced
             [JsonPropertyName("requestId")]
             public int RequestId { get; set; }
         }
-        private async Task HandleRollDice(string json)
+
+
+        // Clases con propiedades opcionales para evitar problemas de herencia y constructores
+       
+
+        public class GameReadyMessage
         {
-            var rollMsg = JsonSerializer.Deserialize<RollDiceMessage>(json);
-            var gameService = GetGameService();
-
-            if (!gameService.IsGameStarted())
-            {
-                Console.WriteLine("Error: La partida no ha sido iniciada.");
-                return;
-            }
-
-            if (gameService.ObtainPlayers().Count == 0)
-            {
-                Console.WriteLine("Error: No hay jugadores en la partida.");
-                return;
-            }
-
-            int diceResult = new Random().Next(1, 7);
-            gameService.PlayerMove(rollMsg.PlayerId, diceResult);
+            [JsonPropertyName("type")]
+            public string Type { get; set; }
+            [JsonPropertyName("gameId")]
+            public string GameId { get; set; }
+            [JsonPropertyName("opponentId")]
+            public int OpponentId { get; set; }
         }
 
-        private async Task HandleMovePlayer(string json)
+        public class WaitlistMessage
         {
-            var moveMsg = JsonSerializer.Deserialize<MovePlayerMessage>(json);
-            Console.WriteLine($"Moviendo al jugador {moveMsg.PlayerId} con dado {moveMsg.DiceResult}");
-            var gameService = GetGameService();
-            gameService.HandleMovePlayer(moveMsg.PlayerId, moveMsg.DiceResult);
+            [JsonPropertyName("type")]
+            public string Type { get; set; }
+            [JsonPropertyName("playersInQueue")]
+            public int PlayersInQueue { get; set; }
+            [JsonPropertyName("totalPlayers")]
+            public int TotalPlayers { get; set; }
         }
 
-        private GameService GetGameService()
+        public class RollDiceMessage : WebSocketMessage
         {
-            return _serviceProvider.GetRequiredService<GameService>();
+            [JsonPropertyName("playerId")]
+            public int PlayerId { get; set; }
+
+            [JsonPropertyName("gameId")]
+            public string GameId { get; set; }
         }
 
-        // ====================== Matchmaking ======================
         private async Task ProcessMatchmaking(WebSocketHandler handler)
         {
             await _waitingSemaphore.WaitAsync();
@@ -506,7 +529,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
             await handler.SendAsync(JsonSerializer.Serialize(statusMsg));
         }
 
-        // ====================== Invitaciones privadas ======================
         private async Task CreatePrivateGameRoom(WebSocketHandler acceptor, int inviterId)
         {
             _connectedUsers.TryGetValue(inviterId, out var inviter);
@@ -538,7 +560,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }));
         }
 
-        // ====================== Solicitudes de amistad ======================
         private async Task ProcessFriendRequest(WebSocketHandler handler, int receiverId)
         {
             using var scope = _serviceProvider.CreateScope();
@@ -605,7 +626,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
-        // ====================== Actualización de estado y amigos ======================
         private async Task UpdateUserStatusAsync(WebSocketHandler handler, string status)
         {
             using var scope = _serviceProvider.CreateScope();
@@ -618,26 +638,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 await wsMethods.UpdateUserAsync(user);
             }
         }
-        public async Task BroadcastMessage(string message)
-        {
-            await _semaphore.WaitAsync();
-            try
-            {
-                var handlersSnapshot = _handlers.ToList(); // Crear una copia de la lista para evitar problemas de concurrencia
-                Console.WriteLine($"Enviando mensaje a {handlersSnapshot.Count} clientes: {message}");
-                foreach (var handler in handlersSnapshot)
-                {
-                    if (handler.IsOpen) // Verificar si el WebSocket está abierto
-                    {
-                        await handler.SendAsync(message); // Enviar el mensaje a cada cliente conectado
-                    }
-                }
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
-        }
+        
 
         private async Task NotifyFriendsAsync(WebSocketHandler handler, bool isConnected)
         {
@@ -658,7 +659,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
-        // ====================== Otros ======================
         public List<int> GetConnectedUsers() => _connectedUsers.Keys.ToList();
 
         public int GetActiveConnections() => _activeConnections;
@@ -670,7 +670,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
         }
     }
 
-    // Clases con propiedades opcionales para evitar problemas de herencia y constructores
     public class MatchmakingMessage
     {
         [JsonPropertyName("type")]
@@ -689,42 +688,4 @@ namespace JuegoOcaBack.WebSocketAdvanced
         public int? RequestId { get; set; }
     }
 
-    public class GameReadyMessage
-    {
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
-        [JsonPropertyName("gameId")]
-        public string GameId { get; set; }
-        [JsonPropertyName("opponentId")]
-        public int OpponentId { get; set; }
-    }
-
-    public class WaitlistMessage
-    {
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
-        [JsonPropertyName("playersInQueue")]
-        public int PlayersInQueue { get; set; }
-        [JsonPropertyName("totalPlayers")]
-        public int TotalPlayers { get; set; }
-    }
-
-    // Ejemplos de clases para la lógica de juego
-    public class RollDiceMessage : MatchmakingMessage
-    {
-        [JsonPropertyName("playerId")]
-        public int PlayerId { get; set; }
-
-        [JsonPropertyName("gameId")]
-        public string GameId { get; set; }
-    }
-
-    public class MovePlayerMessage : MatchmakingMessage
-    {
-        [JsonPropertyName("playerId")]
-        public int PlayerId { get; set; }
-
-        [JsonPropertyName("diceResult")]
-        public int DiceResult { get; set; }
-    }
 }

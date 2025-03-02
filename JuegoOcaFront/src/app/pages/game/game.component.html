@@ -56,7 +56,7 @@
         <span *ngFor="let player of getPlayersInCell(cell.number)" 
               class="player" 
               [style.background-color]="player.color"
-              [class.moving]="player.isMoving">
+              [class.moving]="player.isMoving"> <!-- Aplica la clase de animación -->
           {{ player.name }}
         </span>
       </div>
