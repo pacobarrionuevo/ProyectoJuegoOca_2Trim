@@ -1,42 +1,54 @@
-<div *ngIf="usuario">
-    <div>
-      <img [src]="usuario.UsuarioFotoPerfil" alt="Avatar" width="100">
-    </div>
+<div class="general">
+    <div class="cuadradoFuera">
+      <div class="cajita">
+        <h2 id="registrarse">Perfil de Usuario</h2>
+      </div>
   
-    <form [formGroup]="perfilForm" (ngSubmit)="onSubmit()">  
-      <div>
-        <label for="apodo">Apodo:</label>
-        <input type="text" id="apodo" formControlName="apodo" [readonly]="!esPropioPerfil">
-        <div *ngIf="perfilForm.get('apodo')?.invalid && perfilForm.get('apodo')?.touched">
-            <small class="text-danger">El apodo es requerido.</small>
+      <div *ngIf="usuario">
+        <div>
+          <img [src]="usuario.UsuarioFotoPerfil" alt="Avatar" width="100">
+        </div>
+  
+        <form [formGroup]="perfilForm" (ngSubmit)="onSubmit()" class="formulario">
+          <div>
+            <label for="apodo" class="label">Apodo:</label>
+            <input type="text" id="apodo" formControlName="apodo" [readonly]="!esPropioPerfil">
+            <div *ngIf="perfilForm.get('apodo')?.invalid && perfilForm.get('apodo')?.touched">
+              <small class="text-danger">El apodo es requerido.</small>
+            </div>
           </div>
+  
+          <div>
+            <label for="email" class="label">Correo electrónico:</label>
+            <input type="email" id="email" formControlName="email" [readonly]="!esPropioPerfil">
+            <div *ngIf="perfilForm.get('email')?.invalid && perfilForm.get('email')?.touched">
+              <small class="text-danger" *ngIf="perfilForm.get('email')?.errors?.['required']">
+                El correo electrónico es requerido.
+              </small>
+              <small class="text-danger" *ngIf="perfilForm.get('email')?.errors?.['email']">
+                El correo electrónico no es válido.
+              </small>
+            </div>
+          </div>
+
+          <div *ngIf="esPropioPerfil">
+            <label for="password" class="label">Contraseña:</label>
+            <input type="password" id="password" formControlName="password">
+          </div>
+  
+          <div *ngIf="esPropioPerfil">
+            <label for="confirmPassword" class="label">Confirmar Contraseña:</label>
+            <input type="password" id="confirmPassword" formControlName="confirmPassword">
+          </div>
+  
+          <div *ngIf="esPropioPerfil">
+            <input type="submit" value="Guardar Cambios">
+          </div>
+        </form>
+  
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
       </div>
-  
-      <div>
-        <label for="email">Correo electrónico:</label>
-        <input type="email" id="email" formControlName="email" [readonly]="!esPropioPerfil">
-        <small class="text-danger" *ngIf="perfilForm.get('email')?.errors?.['required']">
-            El correo electrónico es requerido.
-          </small>
-          <small class="text-danger" *ngIf="perfilForm.get('email')?.errors?.['email']">
-            El correo electrónico no es válido.
-          </small>
-      </div>
-  
-      <div *ngIf="esPropioPerfil">
-        <label for="password">Contraseña:</label>
-        <input type="password" id="password" formControlName="password">
-      </div>
-  
-      <div *ngIf="esPropioPerfil">
-        <label for="confirmPassword">Confirmar Contraseña:</label>
-        <input type="password" id="confirmPassword" formControlName="confirmPassword">
-      </div>
-  
-      <button type="submit" *ngIf="esPropioPerfil">Guardar Cambios</button>
-    </form>
-  
-    <div *ngIf="errorMessage" class="error-message">
-      {{ errorMessage }}
     </div>
   </div>

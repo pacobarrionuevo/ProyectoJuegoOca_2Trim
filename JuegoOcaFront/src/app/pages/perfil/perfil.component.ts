@@ -7,6 +7,7 @@
   import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   import { User } from '../../models/User';
 import { UsuarioServerResponse } from '../../models/user-server-response';
+import { environment } from '../../../environments/environment';
 
   @Component({
     selector: 'app-perfil',
@@ -20,6 +21,8 @@ import { UsuarioServerResponse } from '../../models/user-server-response';
     esPropioPerfil: boolean = false;
     perfilForm: FormGroup;
     errorMessage: string | null = null;
+
+    private BASE_URL = environment.apiUrl;
 
     constructor(
       private route: ActivatedRoute,
@@ -47,12 +50,11 @@ import { UsuarioServerResponse } from '../../models/user-server-response';
           next: (response: UsuarioServerResponse) => {
             console.log('Respuesta del servidor:', response);
     
-            // Mapea la respuesta del servidor a la interfaz User
             this.usuario = {
               UsuarioId: response.usuarioId,
               UsuarioApodo: response.usuarioApodo,
               UsuarioEmail: response.usuarioEmail,
-              UsuarioFotoPerfil: response.usuarioFotoPerfil,
+              UsuarioFotoPerfil: this.validarUrlImagen(response.usuarioFotoPerfil),
               UsuarioEstado: response.usuarioEstado,
               Rol: response.rol,
               EstaBaneado: response.estaBaneado,
@@ -60,7 +62,6 @@ import { UsuarioServerResponse } from '../../models/user-server-response';
             };
     
             this.perfilForm.patchValue({
-              avatar: this.usuario.UsuarioFotoPerfil,
               apodo: this.usuario.UsuarioApodo,
               email: this.usuario.UsuarioEmail
             });
@@ -149,5 +150,9 @@ import { UsuarioServerResponse } from '../../models/user-server-response';
           }
         });
       }
+    }
+
+    validarUrlImagen(fotoPerfil: string | null): string {
+      return fotoPerfil ? `${this.BASE_URL}/fotos/${fotoPerfil}` : 'nada';
     }
   }
