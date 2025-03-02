@@ -78,9 +78,8 @@ export class WebsocketService {
       this.disconnectRxjs();
     }
 
-    // Crear una nueva conexión websocket (ou que trabajito)
+    // Crear una nueva conexión websocket
     this.rxjsSocket = webSocket({
-      // Llamada al controlador del servidor
       url: `wss://localhost:7077/ws/connect?token=${token}`,
       openObserver: { next: () => this.onConnected() },
       serializer: (value: string) => value,
@@ -109,7 +108,7 @@ export class WebsocketService {
   disconnectRxjs() {
     if (this.rxjsSocket) {
       console.log('WebSocketService: Desconectando WebSocket...');
-      this.onDisconnected(); 
+      this.onDisconnected();
       this.rxjsSocket.complete();
       this.rxjsSocket.unsubscribe();
     }
@@ -279,6 +278,24 @@ private handleMessage(message: string): void {
   }
 }
 
+// Maneja una invitación de amigo
+private handleFriendInvitation(message: any): void {
+  console.log('Invitación recibida de:', message.fromUserNickname);
+  // Podrías poner un confirm(...) para aceptar o rechazar
+  // Por ahora, aceptamos de inmediato:
+  const response = {
+      type: 'acceptInvitation',
+      inviterId: message.fromUserId
+  };
+  this.sendRxjs(JSON.stringify(response));
+}
+
+// Maneja el número de conexiones activas
+private handleActiveConnections(parsedMessage: any): void {
+  console.log(`WebSocketService: Recibido activeConnections. Count: ${parsedMessage.count}`);
+  this.activeConnections.next(parsedMessage.count);
+}
+
 // Manejar que se salte un turno
 private handleSkipTurn(message: any): void {
     console.log('Turno perdido:', message);
@@ -355,26 +372,6 @@ private handleMoveResult(message: any): void {
       this.notifyGameStateUpdate();
   }
 
-
-  // Maneja una invitación de amigo
-  private handleFriendInvitation(message: any) {
-    const accept = confirm(`${message.fromUserNickname} te ha invitado a jugar. ¿Aceptas?`);
-    if (accept) {
-      const response = {
-        type: 'acceptInvitation',
-        hostId: message.fromUserId
-      };
-      this.sendRxjs(JSON.stringify(response));
-    }
-  }
-
-  // Maneja el número de conexiones activas
-
-  private handleActiveConnections(message: any) {
-    console.log(`WebSocketService: Recibido activeConnections. Count recibido: ${message.count}`);
-    this.activeConnections.next(message.count);
-  }
-
   // Maneja el inicio de la partida
   private handleGameStarted(message: any): void {
     console.log('WebSocketService: Partida iniciada:', message);
@@ -408,12 +405,22 @@ private handleMoveResult(message: any): void {
   // Maneja errores en la conexión websocket
   private onError(error: any) {
     console.error('WebSocketService: Error en la conexión WebSocket:', error);
+    if (error instanceof CloseEvent) {
+      console.error(`Código de cierre: ${error.code}, Razón: ${error.reason}`);
+    }
     this.disconnected.next();
+    this.reconnectIfNeeded(); // Intentar reconectar automáticamente
   }
 
   // Normaliza las claves de un objeto a camelCase
   private normalizeKeys(obj: any): any {
     if (typeof obj !== 'object' || obj === null) return obj;
+
+    return Object.keys(obj).reduce((acc: any, key) => {
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      acc[camelKey] = this.normalizeKeys(obj[key]);
+      return acc;
+    }, {});
   }
 
   private addOnlineUser(userId: number): void {
@@ -443,7 +450,9 @@ private handleMoveResult(message: any): void {
     const storedToken = sessionStorage.getItem(this.tokenKey);
     if (storedToken) {
       console.log('WebSocketService: Reconectando WebSocket con token almacenado');
-      this.connectRxjs(storedToken);
+      setTimeout(() => {
+        this.connectRxjs(storedToken);
+      }, 3000); // Reintenta después de 3 segundos
     } else {
       console.log('WebSocketService: No hay token almacenado, no se puede reconectar');
     }

@@ -102,8 +102,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 await UpdateUserStatusAsync(handler, "Conectado");
                 await NotifyFriendsAsync(handler, true);
 
-                _ = StartHeartbeat(handler);
-
                 await handler.HandleAsync();
             }
             finally
@@ -118,23 +116,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
         {
             _connectedUsers[userId] = handler;
             Console.WriteLine($"Usuario {userId} conectado.");
-        }
-
-        private async Task StartHeartbeat(WebSocketHandler handler)
-        {
-            while (handler.IsOpen)
-            {
-                try
-                {
-                    await handler.SendAsync("ping");
-                    await Task.Delay(30000);
-                }
-                catch
-                {
-                    await CleanupDisconnectedPlayer(handler);
-                    break;
-                }
-            }
         }
 
         private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket, int userId)
@@ -256,99 +237,99 @@ namespace JuegoOcaBack.WebSocketAdvanced
         {
             Console.WriteLine($"Mensaje recibido de {handler.Id}: {message}");
 
-            if (message == "pong")
-            {
-                Console.WriteLine("Heartbeat recibido: pong");
-                handler.LastActivity = DateTime.UtcNow;
-                return;
-            }
-
             try
             {
                 // Deserializar a un objeto base con la propiedad Type
-                var baseMsg = JsonSerializer.Deserialize<MatchmakingMessage>(message);
+                var baseMsg = JsonSerializer.Deserialize<WebSocketMessage>(message);
                 if (baseMsg == null)
                 {
-                    switch (baseMsg.Type?.ToLower())
-                    {
-                        case "playrandom":
-                            await ProcessMatchmaking(handler);
-                            break;
-
-                        case "invitefriend":
-                            await ProcessInvitation(handler, baseMsg.FriendId ?? 0);
-                            break;
-
-                        case "acceptinvitation":
-                            await CreatePrivateGameRoom(handler, baseMsg.InviterId ?? 0);
-                            break;
-
-                        case "cancelsearch":
-                            await _waitingSemaphore.WaitAsync();
-                            _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
-                            _waitingSemaphore.Release();
-                            break;
-
-                        case "chatmessage":
-                            var chatMessage = JsonSerializer.Deserialize<ChatMessage>(message);
-                            await BroadcastMessage(JsonSerializer.Serialize(new
-                            {
-                                Type = "chatMessage",
-                                Sender = chatMessage.Sender,
-                                Text = chatMessage.Text
-                            }));
-                            break;
-
-                        case "sendfriendrequest":
-                            await ProcessFriendRequest(handler, baseMsg.ReceiverId ?? 0);
-                            break;
-
-                        case "acceptfriendrequest":
-                            await ProcessAcceptFriendRequest(handler, baseMsg.RequestId ?? 0);
-                            break;
-
-                        case "rejectfriendrequest":
-                            await ProcessRejectFriendRequest(handler, baseMsg.RequestId ?? 0);
-                            break;
-
-                        case "moveplayer":
-                            var movePlayerMessage = JsonSerializer.Deserialize<MovePlayerMessage>(message);
-                            Console.WriteLine($"Moviendo al jugador {movePlayerMessage.PlayerId} con dado {movePlayerMessage.DiceResult}");
-                            var gameService = GetGameService();
-                            gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
-                            break;
-
-                        case "rolldice":
-                            var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);
-                            Console.WriteLine($"Tirando dado para el jugador {rollDiceMessage.PlayerId}");
-                            gameService = GetGameService();
-
-                            // Verificar que la partida esté iniciada
-                            if (!gameService.IsGameStarted())
-                            {
-                                Console.WriteLine("Error: La partida no ha sido iniciada.");
-                                break;
-                            }
-
-                            // Verificar que haya jugadores
-                            if (gameService.ObtainPlayers().Count == 0)
-                            {
-                                Console.WriteLine("Error: No hay jugadores en la partida.");
-                                break;
-                            }
-
-                            int diceResult = new Random().Next(1, 7);
-                            gameService.PlayerMove(rollDiceMessage.PlayerId, diceResult);
-                            break;
-                            Console.WriteLine("No se pudo deserializar el mensaje o es nulo.");
-                            return;
-
-                        default:
-                            Console.WriteLine($"Tipo de mensaje no reconocido: {baseMsg.Type}");
-                            break;
-                    }
+                    Console.WriteLine("No se pudo deserializar el mensaje o es nulo.");
+                    return;
                 }
-                
+
+                switch (baseMsg.Type?.ToLower())
+                {
+                    case "playrandom":
+                        var playRandomMessage = JsonSerializer.Deserialize<PlayRandomMessage>(message);
+                        await ProcessMatchmaking(handler);
+                        break;
+
+                    case "invitefriend":
+                        var inviteFriendMessage = JsonSerializer.Deserialize<InviteFriendMessage>(message);
+                        await ProcessInvitation(handler, inviteFriendMessage.FriendId);
+                        break;
+
+                    case "acceptinvitation":
+                        var acceptInvitationMessage = JsonSerializer.Deserialize<AcceptInvitationMessage>(message);
+                        await CreatePrivateGameRoom(handler, acceptInvitationMessage.InviterId);
+                        break;
+
+                    case "cancelsearch":
+                        var cancelSearchMessage = JsonSerializer.Deserialize<CancelSearchMessage>(message);
+                        await _waitingSemaphore.WaitAsync();
+                        _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
+                        _waitingSemaphore.Release();
+                        break;
+
+                    case "chatmessage":
+                        var chatMessage = JsonSerializer.Deserialize<ChatMessage>(message);
+                        await BroadcastMessage(JsonSerializer.Serialize(new
+                        {
+                            Type = "chatMessage",
+                            Sender = chatMessage.Sender,
+                            Text = chatMessage.Text
+                        }));
+                        break;
+
+                    case "sendfriendrequest":
+                        var sendFriendRequestMessage = JsonSerializer.Deserialize<SendFriendRequestMessage>(message);
+                        await ProcessFriendRequest(handler, sendFriendRequestMessage.ReceiverId);
+                        break;
+
+                    case "acceptfriendrequest":
+                        var acceptFriendRequestMessage = JsonSerializer.Deserialize<AcceptFriendRequestMessage>(message);
+                        await ProcessAcceptFriendRequest(handler, acceptFriendRequestMessage.RequestId);
+                        break;
+
+                    case "rejectfriendrequest":
+                        var rejectFriendRequestMessage = JsonSerializer.Deserialize<RejectFriendRequestMessage>(message);
+                        await ProcessRejectFriendRequest(handler, rejectFriendRequestMessage.RequestId);
+                        break;
+
+                    case "moveplayer":
+                        var movePlayerMessage = JsonSerializer.Deserialize<MovePlayerMessage>(message);
+                        Console.WriteLine($"Moviendo al jugador {movePlayerMessage.PlayerId} con dado {movePlayerMessage.DiceResult}");
+                        var gameService = GetGameService();
+                        gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
+                        break;
+
+                    case "rolldice":
+                        var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);
+                        Console.WriteLine($"Tirando dado para el jugador {rollDiceMessage.PlayerId}");
+                        gameService = GetGameService();
+
+                        // Verificar que la partida esté iniciada
+                        if (!gameService.IsGameStarted())
+                        {
+                            Console.WriteLine("Error: La partida no ha sido iniciada.");
+                            break;
+                        }
+
+                        // Verificar que haya jugadores
+                        if (gameService.ObtainPlayers().Count == 0)
+                        {
+                            Console.WriteLine("Error: No hay jugadores en la partida.");
+                            break;
+                        }
+
+                        int diceResult = new Random().Next(1, 7);
+                        gameService.PlayerMove(rollDiceMessage.PlayerId, diceResult);
+                        break;
+
+                    default:
+                        Console.WriteLine($"Tipo de mensaje no reconocido: {baseMsg.Type}");
+                        break;
+                }
             }
             catch (Exception ex)
             {
@@ -365,11 +346,62 @@ namespace JuegoOcaBack.WebSocketAdvanced
             [JsonPropertyName("text")]
             public string Text { get; set; }
         }
+
+        public class MatchmakingMessageDTO : WebSocketMessage
+        {
+            public string Type { get; set; } // Tipo de mensaje (inviteFriend, acceptInvitation, playWithBot, playRandom)
+            public int FriendId { get; set; } // ID del amigo (para invitaciones)
+            public int HostId { get; set; }
+            public string RoomId { get; set; }
+        }
         public class WebSocketMessage
         {
             [JsonPropertyName("type")] // Asegúrate de que coincida con el JSON
             public string Type { get; set; }
-        } 
+        }
+
+        public class MovePlayerMessage : WebSocketMessage
+        {
+            [JsonPropertyName("playerId")] // Asegúrate de que coincida con el JSON
+            public int PlayerId { get; set; }
+
+            [JsonPropertyName("diceResult")] // Asegúrate de que coincida con el JSON
+            public int DiceResult { get; set; }
+        }
+
+        public class PlayRandomMessage : WebSocketMessage { }
+
+        public class CancelSearchMessage : WebSocketMessage { }
+
+        public class InviteFriendMessage : WebSocketMessage
+        {
+            [JsonPropertyName("friendId")]
+            public int FriendId { get; set; }
+        }
+
+        public class AcceptInvitationMessage : WebSocketMessage
+        {
+            [JsonPropertyName("inviterId")]
+            public int InviterId { get; set; }
+        }
+
+        public class SendFriendRequestMessage : WebSocketMessage
+        {
+            [JsonPropertyName("receiverId")]
+            public int ReceiverId { get; set; }
+        }
+
+        public class AcceptFriendRequestMessage : WebSocketMessage
+        {
+            [JsonPropertyName("requestId")]
+            public int RequestId { get; set; }
+        }
+
+        public class RejectFriendRequestMessage : WebSocketMessage
+        {
+            [JsonPropertyName("requestId")]
+            public int RequestId { get; set; }
+        }
         private async Task HandleRollDice(string json)
         {
             var rollMsg = JsonSerializer.Deserialize<RollDiceMessage>(json);
