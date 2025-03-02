@@ -15,7 +15,9 @@ export class AdminService {
   }
 
   actualizarRol(usuarioId: number, nuevoRol: string): Observable<User> {
-    return this.http.patch<User>(`${this.baseURL}/usuarios/${usuarioId}/rol`, { rol: nuevoRol });
+    return this.http.patch<User>(`${this.baseURL}/usuarios/${usuarioId}/rol`, { 
+      NuevoRol: nuevoRol 
+    });
   }
 
   toggleBaneo(usuarioId: number): Observable<User> {

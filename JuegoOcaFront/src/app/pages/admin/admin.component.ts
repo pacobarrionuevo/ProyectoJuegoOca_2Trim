@@ -36,7 +36,10 @@ export class AdminComponent implements OnInit {
 
   private cargarUsuarios(): void {
     this.adminService.getUsuarios().subscribe({
-      next: (usuarios) => this.usuarios = usuarios,
+      next: (usuarios) => {
+        console.log('Usuarios recibidos:', usuarios); 
+        this.usuarios = usuarios;
+      },
       error: (err) => console.error('Error cargando usuarios:', err)
     });
   }
