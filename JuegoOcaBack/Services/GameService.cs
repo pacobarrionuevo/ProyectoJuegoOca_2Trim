@@ -10,6 +10,10 @@ public class GameService
     private int _currentPlayerIndex = 0;
 
     private readonly IServiceProvider _serviceProvider;
+    public enum GameType { Bot, Multiplayer }
+    private GameType _currentGameType;
+    private string _currentGameId;
+    private List<string> _rematchRequests = new List<string>();
 
     public GameService(IServiceProvider serviceProvider)
     {
@@ -27,23 +31,34 @@ public class GameService
 
     private bool _gameStarted = false;
 
-    public void StartGame(string gameId, string playerName)
+    public void StartGame(string gameId, string playerName, GameType gameType, List<string> additionalPlayers = null)
     {
         // Reiniciar el estado del juego
         _players.Clear();
         _currentPlayerIndex = 0;
-
+        _currentGameId = gameId;
+        _currentGameType = gameType;
         // Agregar al jugador humano
         AddPlayer(playerName);
 
-        // Agregar al bot
-        AddBot();
+        if (gameType == GameType.Bot)
+        {
+            AddBot();
+        }
+        else if (additionalPlayers != null)
+        {
+            foreach (var player in additionalPlayers)
+            {
+                AddPlayer(player);
+            }
+        }
 
-        _gameStarted = true; // Marcar la partida como iniciada
+        _gameStarted = true; 
 
-        Console.WriteLine($"Partida iniciada con ID: {gameId}");
+        Console.WriteLine($"Partida {gameType} iniciada con ID: {gameId}");
         Console.WriteLine($"Jugadores: {string.Join(", ", _players.Select(p => p.Name))}");
         Console.WriteLine($"Número de jugadores: {_players.Count}");
+        NotifyGameState();
     }
 
     public bool IsGameStarted()
@@ -114,6 +129,7 @@ public class GameService
                 case "Dados":
                     // Repetir turno
                     player.TurnsToSkip = -1; // -1 indica que debe repetir turno
+                    if (_currentGameType == GameType.Bot) NotifyBotTurn();
                     break;
                 case "Posada":
                     // Pierde un turno
@@ -154,9 +170,25 @@ public class GameService
         var moveMessageJson = JsonSerializer.Serialize(moveMessage);
         GetWebSocketNetwork().BroadcastMessage(moveMessageJson);
 
+        NotifyGameState();
         return newPosition;
-    }
 
+    }
+    private void NotifyGameState()
+    {
+        var stateMessage = new
+        {
+            type = "gameState",
+            gameId = _currentGameId,
+            players = _players,
+            currentPlayer = CurrentPlayer,
+            diceResult = (int?)null,
+            gameType = _currentGameType.ToString()
+        };
+
+        var messageJson = JsonSerializer.Serialize(stateMessage);
+        GetWebSocketNetwork().BroadcastMessage(messageJson);
+    }
     private string GetSpecialMessage(string cellType)
     {
         switch (cellType)
@@ -234,9 +266,54 @@ public class GameService
 
         // Cambiar al siguiente jugador
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
-        Console.WriteLine($"Siguiente turno: Jugador actual es {CurrentPlayer.Name}");
-    }
+        Console.WriteLine($"[{_currentGameId}] Turno de {CurrentPlayer.Name}");
+        // Si es modo bot y es el turno del bot, mover automáticamente
+        if (_currentGameType == GameType.Bot && CurrentPlayer.Name == "Bot")
+        {
+            Task.Delay(2000).ContinueWith(_ => BotMove()); // Espera 2 segundos antes de mover
+        }
 
+        NotifyGameState();
+    
+}
+    private void NotifyBotTurn()
+    {
+        if (_currentGameType == GameType.Bot)
+        {
+            var botTurnMessage = new
+            {
+                type = "botTurn",
+                gameId = _currentGameId
+            };
+
+            var messageJson = JsonSerializer.Serialize(botTurnMessage);
+            GetWebSocketNetwork().BroadcastMessage(messageJson);
+        }
+    }
+    public void HandleTurnTimeout(string gameId, int playerId)
+    {
+        var player = _players.FirstOrDefault(p => p.Id == playerId);
+        if (player != null)
+        {
+            player.TurnsToSkip = 1;
+            Console.WriteLine($"Tiempo agotado para {player.Name}");
+            NextTurn();
+        }
+    }
+    public void RestartGame(string gameId)
+    {
+        // Reiniciar posiciones y estados
+        foreach (var player in _players)
+        {
+            player.Position = 0;
+            player.TurnsToSkip = 0;
+        }
+        _currentPlayerIndex = 0;
+        _gameStarted = true;
+
+        Console.WriteLine($"Juego {gameId} reiniciado");
+        NotifyGameState();
+    }
     public void PlayerMove(int playerId, int diceResult)
     {
         Console.WriteLine($"Intentando mover al jugador {playerId} con dado {diceResult}");
@@ -257,6 +334,7 @@ public class GameService
 
     public void BotMove()
     {
+        if (_currentGameType != GameType.Bot) return;
         var bot = _players.FirstOrDefault(p => p.Name == "Bot");
         if (bot != null)
         {
@@ -265,17 +343,95 @@ public class GameService
 
             var moveMessage = new
             {
-                type = "gameUpdate",
-                players = _players,
-                currentPlayer = CurrentPlayer,
-                diceResult = diceResult
+                type = "botMove",
+                playerId = bot.Id,
+                diceResult = diceResult,
+                newPosition = newPosition
             };
             // Enviar el mensaje a través del WebSocket
-
+            var messageJson = JsonSerializer.Serialize(moveMessage);
+            GetWebSocketNetwork().BroadcastMessage(messageJson);
             NextTurn();
         }
     }
+    public void HandlePlayerDisconnect(int playerId)
+    {
+        var player = _players.FirstOrDefault(p => p.Id == playerId);
+        if (player != null)
+        {
+            if (_currentGameType == GameType.Multiplayer)
+            {
+                // Lógica específica para multiplayer
+                _players.Remove(player);
+                Console.WriteLine($"Jugador {player.Name} desconectado");
 
+                if (_players.Count == 1)
+                {
+                    DeclareWinner(_players[0].Id);
+                }
+            }
+            else
+            {
+                // En partidas con bot, terminar el juego
+                DeclareWinner(_players.First(p => p.Name == "Bot").Id);
+            }
+        }
+    }
+    public void DeclareWinner(int winnerId) // Solo recibe winnerId
+    {
+        var winner = _players.FirstOrDefault(p => p.Id == winnerId);
+        if (winner == null) return;
+
+        var gameOverMessage = new
+        {
+            type = "gameOver",
+            gameId = _currentGameId, // Usa la variable de instancia
+            winnerId = winner.Id,
+            winnerName = winner.Name
+        };
+
+        var messageJson = JsonSerializer.Serialize(gameOverMessage);
+        GetWebSocketNetwork().BroadcastMessage(messageJson);
+
+        _gameStarted = false;
+    }
+    public void HandleRematchRequest(string playerId)
+    {
+        if (!_rematchRequests.Contains(playerId))
+        {
+            _rematchRequests.Add(playerId);
+
+            if (_rematchRequests.Count >= _players.Count)
+            {
+                StartRematch();
+            }
+        }
+    }
+    private void StartRematch()
+    {
+        Console.WriteLine($"Iniciando revancha para partida {_currentGameId}");
+
+        // Resetear estado de jugadores
+        foreach (var player in _players)
+        {
+            player.Position = 0;
+            player.TurnsToSkip = 0;
+        }
+
+        _currentPlayerIndex = 0;
+        _rematchRequests.Clear();
+
+        NotifyGameState();
+
+        var rematchMessage = new
+        {
+            type = "rematchStarted",
+            gameId = _currentGameId
+        };
+
+        var messageJson = JsonSerializer.Serialize(rematchMessage);
+        GetWebSocketNetwork().BroadcastMessage(messageJson);
+    }
     public List<PlayerDTO> ObtainPlayers()
     {
         return _players;

@@ -18,6 +18,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public event Func<WebSocketHandler, string, Task> MessageReceived;
         public event Func<WebSocketHandler, Task> Disconnected;
+        public string MessageType { get; set; }
         public WebSocketHandler(int userId, WebSocket webSocket)
         {
             Id = userId;

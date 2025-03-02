@@ -27,6 +27,7 @@ export class WebsocketService {
   private rxjsSocket: WebSocketSubject<string>;
 
   private baseURL = environment.apiUrl;
+  public currentGameId: string | null = null;
 
   // Variables para listaJugadores, usuario actual, jugador actual(no son lo mismo) (turnos, tal), id de la partida y resultado del dado
   private players: any[] = [];
@@ -264,7 +265,53 @@ private handleMessage(message: string): void {
           this.handleMoveResult(normalizedMessage);
       } else if (normalizedMessage.type === 'skipTurn') {
           this.handleSkipTurn(normalizedMessage);
-      } else {
+      } else if (normalizedMessage.type === 'turnTimeout') {
+        console.log('Tiempo de turno agotado:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'turnTimeout',
+          playerId: normalizedMessage.playerId,
+          gameId: normalizedMessage.gameId
+        });
+        if (this.currentPlayer?.id === normalizedMessage.playerId) {
+          this.handleSkipTurn({ playerId: normalizedMessage.playerId, turnsToSkip: 1 });
+        }
+      } 
+      else if (normalizedMessage.type === 'abandonGame') {
+        console.log('Jugador abandonó la partida:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'abandonGame',
+          playerId: normalizedMessage.playerId,
+          gameId: normalizedMessage.gameId
+        });
+        if (this.currentPlayer?.id === normalizedMessage.playerId) {
+          this.router.navigate(['/menu']);
+        } else {
+          this.handleGameOver({ winnerId: this.currentPlayer?.id });
+        }
+      } 
+      else if (normalizedMessage.type === 'rematchRequest') {
+        console.log('Solicitud de revancha recibida:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'rematchRequest',
+          gameId: normalizedMessage.gameId,
+          senderId: normalizedMessage.senderId
+        });
+      } 
+      else if (normalizedMessage.type === 'rematchResponse') {
+        console.log('Respuesta a revancha:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'rematchResponse',
+          gameId: normalizedMessage.gameId,
+          accepted: normalizedMessage.accepted
+        });
+        if (normalizedMessage.accepted) {
+          this.currentGameId = normalizedMessage.gameId;
+          this.messageReceived.next({
+            type: 'gameRestart',
+            gameId: normalizedMessage.gameId
+          });
+        }
+      }else {
           console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
       }
     } catch (error) {
@@ -298,6 +345,53 @@ private handleMessage(message: string): void {
         playerName: message.playerName,
         turnsToSkip: message.turnsToSkip
     });
+  }
+  private handleTurnTimeout(message: any): void {
+    this.messageReceived.next({
+      type: 'turnTimeout',
+      playerId: message.playerId
+    });
+  }
+
+  private handleAbandonGame(message: any): void {
+    this.messageReceived.next({
+      type: 'abandonGame',
+      playerId: message.playerId,
+      gameId: message.gameId
+    });
+  }
+
+  private handleRematchRequest(message: any): void {
+    this.messageReceived.next({
+      type: 'rematchRequest',
+      gameId: message.gameId,
+      senderId: message.senderId
+    });
+  }
+
+  private handleRematchResponse(message: any): void {
+    this.messageReceived.next({
+      type: 'rematchResponse',
+      gameId: message.gameId,
+      accepted: message.accepted
+    });
+  }
+
+  // Método para enviar solicitud de revancha
+  public sendRematchRequest(gameId: string): void {
+    this.sendRxjs(JSON.stringify({
+      type: 'rematchRequest',
+      gameId: gameId
+    }));
+  }
+
+  // Método para responder a revancha
+  public respondRematch(gameId: string, accepted: boolean): void {
+    this.sendRxjs(JSON.stringify({
+      type: 'rematchResponse',
+      gameId: gameId,
+      accepted: accepted
+    }));
   }
 
   // Manejar el mensaje que salta al hacer una tirada
