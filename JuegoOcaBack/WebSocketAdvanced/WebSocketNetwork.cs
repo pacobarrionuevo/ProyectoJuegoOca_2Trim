@@ -194,7 +194,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                             break;
                         }
 
-                        int diceResult = new Random().Next(1, 7); // Generar un número aleatorio entre 1 y 6
+                        int diceResult = new Random().Next(1, 7);
                         gameService.PlayerMove(rollDiceMessage.PlayerId, diceResult);
                         break;
 
@@ -210,6 +210,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         _waitingSemaphore.Release();
                         break;
 
+                    case "chatmessage":
+                        var chatMessage = JsonSerializer.Deserialize<ChatMessage>(message);
+                        await BroadcastMessage(JsonSerializer.Serialize(new
+                        {
+                            Type = "chatMessage",
+                            Sender = chatMessage.Sender,
+                            Text = chatMessage.Text
+                        }));
+                        break;
+
                     default:
                         Console.WriteLine($"Tipo de mensaje no reconocido: {baseMessage.Type}");
                         break;
@@ -219,6 +229,15 @@ namespace JuegoOcaBack.WebSocketAdvanced
             {
                 Console.WriteLine($"Error procesando mensaje: {ex.Message}");
             }
+        }
+
+        public class ChatMessage : WebSocketMessage
+        {
+            [JsonPropertyName("sender")]
+            public string Sender { get; set; }
+
+            [JsonPropertyName("text")]
+            public string Text { get; set; }
         }
         public class WebSocketMessage
         {

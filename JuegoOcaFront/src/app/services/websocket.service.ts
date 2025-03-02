@@ -12,52 +12,51 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class WebsocketService {
-  connected = new Subject<void>(); // Notifica cuando se conecta el WebSocket
-  messageReceived = new Subject<any>(); // Notifica cuando se recibe un mensaje
-  disconnected = new Subject<void>(); // Notifica cuando se desconecta el WebSocket
-  activeConnections = new Subject<number>(); // Notifica el número de conexiones activas
 
-  private tokenKey = 'websocket_token'; // Clave para almacenar el token en sessionStorage
-  private rxjsSocket: WebSocketSubject<string>; // Conexión WebSocket
+  // Variables para gestionar la conexión, si se ha recibido el mensaje, si se ha desconectado o si hay alguna conexión activa
+  connected = new Subject<void>(); 
+  messageReceived = new Subject<any>();
+  disconnected = new Subject<void>();
+  activeConnections = new Subject<number>();
 
-  // ===================================================================================================
-  // PARTE DEL CÓDIGO RELACIONADA CON EL JUEGO
-  private players: any[] = []; // Lista de jugadores
-  private currentPlayer: any = null; // Jugador actual
-  private gameId: string | null = null; // ID de la partida
-  private diceResult: number | null = null; // Resultado del dado
+  // Clave para almacenar el token en sessionStorage
+  private tokenKey = 'websocket_token'; 
 
+  // Conexion ws
+  private rxjsSocket: WebSocketSubject<string>;
+
+  // Variables para listaJugadores, usuario actual, jugador actual(no son lo mismo) (turnos, tal), id de la partida y resultado del dado
+  private players: any[] = [];
+  private currentPlayer: any = null;
+  private currentUser: any = null;  
+  private gameId: string | null = null; 
+  private diceResult: number | null = null; 
+
+  // Guarda los mensajes que se van enviando por el chat
   messages: string[] = [];
 
-  // Subject para notificar cambios en el estado del juego
+  // Se encarga de notificar cambios en el estado del juego
   gameStateUpdated = new Subject<{ players: any[], currentPlayer: any, diceResult: number | null }>();
 
-  // ===================================================================================================
-
   constructor(private http: HttpClient, private router: Router) {
-    this.reconnectIfNeeded(); // Intentar reconectar al iniciar el servicio
+    // Imaginando que fallase la conexión, este método intenta reconectar al iniciar el servicio
+    this.reconnectIfNeeded(); 
   }
 
-  /**
-   * Método para manejar la conexión del WebSocket.
-   */
+  // Método para asegurar la conexión del websocket
   private onConnected() {
     console.log('WebSocketService: Socket connected');
     this.connected.next();
   }
 
-  /**
-   * Verifica si el WebSocket está conectado.
-   */
+  // Verifica si el websocket está conectado.
   isConnectedRxjs(): boolean {
     const isConnected = this.rxjsSocket && !this.rxjsSocket.closed;
     console.log(`WebSocketService: isConnectedRxjs() -> ${isConnected}`);
     return isConnected;
   }
 
-  /**
-   * Conecta el WebSocket usando un token de autenticación.
-   */
+  // Conecta el websocket usando el token de autenticación del usuario que inició sesión.
   connectRxjs(token: string) {
     console.log('WebSocketService: Conectando WebSocket con token:', token);
 
@@ -67,24 +66,25 @@ export class WebsocketService {
       return;
     }
 
-    // Almacenar el token para reconexiones futuras
+    // Almacenar el token para reconexiones futuras --> recargas de páginas
     sessionStorage.setItem(this.tokenKey, token);
 
     // Cerrar la conexión existente si hay una
     if (this.rxjsSocket && !this.rxjsSocket.closed) {
       console.log('WebSocketService: Cerrando conexión WebSocket existente...');
-      this.disconnectRxjs(); // Cerrar la conexión anterior
+      this.disconnectRxjs();
     }
 
-    // Crear una nueva conexión WebSocket
+    // Crear una nueva conexión websocket (ou que trabajito)
     this.rxjsSocket = webSocket({
+      // Llamada al controlador del servidor
       url: `wss://localhost:7077/ws/connect?token=${token}`,
       openObserver: { next: () => this.onConnected() },
       serializer: (value: string) => value,
       deserializer: (event: MessageEvent) => event.data
     });
 
-    // Suscribirse a los mensajes del WebSocket
+    // Suscribirse a los mensajes del websocket
     this.rxjsSocket.subscribe({
       next: (message: string) => this.handleMessage(message),
       error: (error) => this.onError(error),
@@ -92,9 +92,7 @@ export class WebsocketService {
     });
   }
 
-  /**
-   * Envía un mensaje a través del WebSocket.
-   */
+  // Envía un mensaje a través del websocket
   sendRxjs(message: string) {
     if (this.rxjsSocket && !this.rxjsSocket.closed) {
       console.log('WebSocketService: Enviando mensaje:', message);
@@ -104,29 +102,25 @@ export class WebsocketService {
     }
   }
 
-  /**
-   * Desconecta el WebSocket.
-   */
+  // Desconecta el websocket
   disconnectRxjs() {
     if (this.rxjsSocket) {
       console.log('WebSocketService: Desconectando WebSocket...');
-      this.onDisconnected(); // Llamar el evento de desconexión
-      this.rxjsSocket.complete(); // Finalizar la conexión
-      this.rxjsSocket.unsubscribe(); // Cerrar la suscripción
+      this.onDisconnected(); 
+      this.rxjsSocket.complete();
+      this.rxjsSocket.unsubscribe();
     }
   }
 
-  /**
-   * Maneja la desconexión del WebSocket.
-   */
+  // Muestra que se ha desconectado el websocket
   private onDisconnected() {
     console.log('WebSocketService: Desconectado del WebSocket');
     this.disconnected.next();
   }
 
-  // ===================================================================================================
+  // Método que llama al endpoint del servidor para empezar el juego
   startGame(gameId: string, playerName: string): Observable<any> {
-    this.gameId = gameId; // Asignar el gameId al servicio
+    this.gameId = gameId;
     const body = { GameId: gameId, PlayerName: playerName };
     return this.http.post<any>(`${environment.apiUrl}/api/Game/start-game`, body).pipe(
         catchError((error) => {
@@ -136,51 +130,41 @@ export class WebsocketService {
     );
   }
 
-  /**
-   * Obtiene la lista de jugadores.
-   */
+  // Obtiene la lista de jugadores que hay dentro de una partida
   getPlayers(): Observable<any[]> {
     console.log('Obteniendo jugadores desde el servidor...');
     return this.http.get<any[]>(`${environment.apiUrl}/api/Game/players`).pipe(
       catchError((error) => {
+        // Si hay error recogiendo los datos de los jugadores, muestra una lista vacía
         console.error('Error al obtener los jugadores:', error);
-        return of([]); // Devuelve una lista vacía en caso de error
+        return of([]);
       })
     );
   }
 
-  private currentUser: any = null; // Almacena el usuario real
-
-  /**
-   * Establece el usuario real cuando se une a la partida.
-   */
+  // Establece el usuario real cuando se une a la partida
   setCurrentUser(user: any): void {
     console.log('Estableciendo usuario real:', user);
     this.currentUser = user;
   }
 
-  /**
-   * Obtiene el usuario real.
-   */
+  // Método para obtener al usuario real
   getCurrentUser(): any {
     return this.currentUser;
   }
 
+  // Actualizar el jugador en el servicio
   setCurrentPlayer(player: any): void {
     this.currentPlayer = player;
     console.log('Jugador actual actualizado en el servicio:', this.currentPlayer);
   }
 
-  /**
-   * Obtiene el resultado del dado.
-   */
+  // Método para obtener el resultado del dado
   getDiceResult(): number | null {
     return this.diceResult;
   }
 
-  /**
-   * Lanza los dados y mueve al jugador.
-   */
+  //Método para lanzar los dados y mover al jugador
   rollDice(): void {
     console.log('Solicitando tirada de dado al servidor...');
     console.log('Game ID:', this.gameId);
@@ -193,9 +177,7 @@ export class WebsocketService {
 }
 
 
-  /**
-   * Notifica a los suscriptores que el estado del juego ha cambiado.
-   */
+  // Notifica a los suscriptores que el estado del juego ha cambiado
   private notifyGameStateUpdate(): void {
     console.log('Notificando actualización del estado del juego...');
     console.log('Jugadores actuales:', this.players);
@@ -208,32 +190,26 @@ export class WebsocketService {
     });
   }
 
-  /**
-   * Maneja el fin del juego.
-   */
+  // Maneja el fin de la partida
   private handleGameOver(message: any): void {
     console.log('Juego terminado. Resultados:', message);
-    // Aquí puedes mostrar un modal con los resultados
     alert(`El juego ha terminado. El ganador es: ${message.winnerName}`);
-    
-    // Redirigir al usuario a la vista '/matchmaking'
     this.router.navigate(['/matchmaking']);
 }
-  // ===================================================================================================
 
-  /**
-   * Maneja los mensajes recibidos del WebSocket.
-   */
+  // Maneja todos los posibles mensajes recibidos del websockets
   private handleMessage(message: string): void {
     try {
         const parsedMessage = JSON.parse(message);
         console.log('WebSocketService: Mensaje recibido:', parsedMessage);
-
+  
         // Convertir propiedades a camelCase si es necesario
         const normalizedMessage = this.normalizeKeys(parsedMessage);
-
+  
         // Procesar el mensaje según su tipo
-        if (normalizedMessage.type === 'friendInvitation') {
+        if (normalizedMessage.type === 'chatMessage') {
+            this.messageReceived.next(normalizedMessage);
+        } else if (normalizedMessage.type === 'friendInvitation') {
             this.handleFriendInvitation(normalizedMessage);
         } else if (normalizedMessage.type === 'activeConnections') {
             this.handleActiveConnections(normalizedMessage);
@@ -254,18 +230,16 @@ export class WebsocketService {
         } else if (normalizedMessage.type === 'moveResult') {
             this.handleMoveResult(normalizedMessage);
         } else if (normalizedMessage.type === 'skipTurn') {
-            this.handleSkipTurn(normalizedMessage); // Manejar el mensaje de turno perdido
+            this.handleSkipTurn(normalizedMessage);
         } else {
             console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
         }
-
-        // Notificar a los suscriptores que se ha recibido un mensaje
-        this.messageReceived.next(normalizedMessage);
     } catch (error) {
         console.error('Error al parsear el mensaje:', error);
     }
-}
+  }
 
+// Manejar que se salte un turno
 private handleSkipTurn(message: any): void {
     console.log('Turno perdido:', message);
     this.messageReceived.next({
@@ -275,6 +249,7 @@ private handleSkipTurn(message: any): void {
     });
 }
 
+// Manejar el mensaje que salta al hacer una tirada
 private handleMoveResult(message: any): void {
     console.log('Resultado del movimiento:', message);
     this.messageReceived.next({
@@ -287,26 +262,22 @@ private handleMoveResult(message: any): void {
     });
 }
 
-  /**
- * Maneja la actualización del estado del juego.
- */
+  // Maneja la actualización del estado del juego
   private handleGameUpdate(message: any): void {
     console.log('WebSocketService: Actualización del estado del juego recibida:', message);
   
-    // Verificar si los jugadores están presentes en el mensaje
     if (message.players) {
       console.log('Jugadores recibidos:', message.players);
   
-      // Convertir players en un arreglo si es un objeto
+      // Convierte a los jugadores en un arreglo si es un objeto para que se puedan leer bien
       const playersArray = Array.isArray(message.players) 
         ? message.players 
         : Object.values(message.players);
   
-      // Añadir propiedades isMoving y targetPosition a cada jugador
       this.players = playersArray.map((player: any) => ({
         ...player,
-        isMoving: false, // Añadir propiedad isMoving
-        targetPosition: player.position, // Añadir propiedad targetPosition
+        isMoving: false,
+        targetPosition: player.position,
       }));
   
       console.log('Jugadores actualizados:', this.players);
@@ -314,7 +285,7 @@ private handleMoveResult(message: any): void {
       console.warn('No se recibieron jugadores en la actualización del juego.');
     }
   
-    // Verificar si el jugador actual está presente en el mensaje
+    // Verifica si el jugador actual está en el mensaje
     if (message.currentPlayer) {
       console.log('Jugador actual recibido:', message.currentPlayer);
       this.currentPlayer = message.currentPlayer;
@@ -323,7 +294,7 @@ private handleMoveResult(message: any): void {
       console.warn('No se recibió el jugador actual en la actualización del juego.');
     }
   
-    // Verificar si el resultado del dado está presente en el mensaje
+    // Verifica si el resultado del dado está en el mensaje
     if (message.diceResult !== undefined) {
       console.log('Resultado del dado recibido:', message.diceResult);
       this.diceResult = message.diceResult;
@@ -332,22 +303,18 @@ private handleMoveResult(message: any): void {
       console.warn('No se recibió el resultado del dado en la actualización del juego.');
     }
   
-    // Notificar a los suscriptores que el estado del juego ha cambiado
+    // Notifica a los suscriptores que el estado del juego ha cambiado
     this.notifyGameStateUpdate();
   }
 
-  /**
-   * Maneja la entrada de un nuevo jugador.
-   */
+  // Maneja la entrada de un nuevo jugador
   private handlePlayerJoined(message: any): void {
       console.log('WebSocketService: Jugador unido:', message);
       this.players = message.players;
       this.notifyGameStateUpdate();
   }
 
-  /**
-   * Maneja el movimiento del bot.
-   */
+  // Maneja el movimiento automático del bot
   private handleBotMove(message: any): void {
       console.log('WebSocketService: Movimiento del bot:', message);
       const bot = this.players.find(player => player.id === message.playerId);
@@ -358,9 +325,7 @@ private handleMoveResult(message: any): void {
   }
 
 
-  /**
-   * Maneja una invitación de amigo.
-   */
+  // Maneja una invitación de amigo
   private handleFriendInvitation(message: any) {
     const accept = confirm(`${message.fromUserNickname} te ha invitado a jugar. ¿Aceptas?`);
     if (accept) {
@@ -372,28 +337,23 @@ private handleMoveResult(message: any): void {
     }
   }
 
-  /**
-   * Maneja el número de conexiones activas.
-   */
+  // Maneja el número de conexiones activas
+
   private handleActiveConnections(message: any) {
     console.log(`WebSocketService: Recibido activeConnections. Count recibido: ${message.count}`);
     this.activeConnections.next(message.count);
   }
 
-  /**
-   * Maneja el inicio de un juego.
-   */
+  // Maneja el inicio de la partida
   private handleGameStarted(message: any): void {
     console.log('WebSocketService: Partida iniciada:', message);
   
-    // Actualizar la lista de jugadores
     if (message.players) {
       this.players = message.players;
-      this.currentPlayer = this.players[0]; // Asignar el primer jugador como currentPlayer
-      this.notifyGameStateUpdate(); // Notificar a los suscriptores
+      this.currentPlayer = this.players[0]; 
+      this.notifyGameStateUpdate();
     }
   
-    // Notificar al componente que la partida ha comenzado
     this.messageReceived.next({
       type: 'gameStarted',
       gameId: message.gameId,
@@ -401,34 +361,26 @@ private handleMoveResult(message: any): void {
     });
   }
 
-  /**
-   * Maneja la espera de un oponente.
-   */
+  // Maneja la espera de un oponente
   private handleWaitingForOpponent(message: any) {
     this.messageReceived.next({
       type: 'waitingForOpponent'
     });
   }
 
-  /**
-   * Maneja el estado de conexión de un amigo.
-   */
+  // Maneja el estado de conexión de un amigo
   private handleFriendStatus(message: any) {
     console.log(`WebSocketService: Evento de amigo ${message.type} recibido para el ID: ${message.friendId}`);
     this.messageReceived.next(message);
   }
 
-  /**
-   * Maneja errores en la conexión WebSocket.
-   */
+  // Maneja errores en la conexión websocket
   private onError(error: any) {
     console.error('WebSocketService: Error en la conexión WebSocket:', error);
     this.disconnected.next();
   }
 
-  /**
-   * Normaliza las claves de un objeto a camelCase.
-   */
+  // Normaliza las claves de un objeto a camelCase
   private normalizeKeys(obj: any): any {
     if (typeof obj !== 'object' || obj === null) return obj;
 
@@ -439,9 +391,7 @@ private handleMoveResult(message: any): void {
     }, {});
   }
 
-  /**
-   * Intenta reconectar el WebSocket si hay un token almacenado.
-   */
+  // Intenta reconectar el websocket si hay un token almacenado
   private reconnectIfNeeded() {
     const storedToken = sessionStorage.getItem(this.tokenKey);
     if (storedToken) {
@@ -452,9 +402,7 @@ private handleMoveResult(message: any): void {
     }
   }
 
-  /**
-   * Elimina el token almacenado (por ejemplo, al cerrar sesión).
-   */
+  // Elimina el token almacenado (por ejemplo, al cerrar sesión)
   clearToken() {
     sessionStorage.removeItem(this.tokenKey);
     console.log('WebSocketService: Token eliminado');

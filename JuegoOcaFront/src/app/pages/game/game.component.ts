@@ -1,17 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { WebsocketService } from '../../services/websocket.service'; // Importa el WebsocketService
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ImageService } from '../../services/image.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.css'],
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule, CommonModule, FormsModule],
 })
 export class GameComponent implements OnInit {
   // inicializamos fotos
@@ -44,6 +45,12 @@ export class GameComponent implements OnInit {
 
   moveMessage: string = '';
   showMoveMessage: boolean = false;
+
+  messages: { sender: string, text: string }[] = [];
+  newMessage: string = '';
+  @ViewChild('chatMessages') private chatMessagesContainer!: ElementRef;
+
+  isSending: boolean = false;
 
   // Inyecta el WebsocketService
   constructor(private websocketService: WebsocketService, private imageService: ImageService, private authService: AuthService,
@@ -141,6 +148,37 @@ export class GameComponent implements OnInit {
           this.showGameOverModal(message.winnerName);
         }
     });
+
+    // Subscribirse al evento del chat de la partida
+    this.websocketService.messageReceived.subscribe((message: any) => {
+      console.log("MENSAJE")
+      if (message.type === 'chatMessage') {
+          this.messages.push({ sender: message.sender, text: message.text });
+          this.scrollChatToBottom();
+      }
+  });
+}
+
+sendMessage(): void {
+  if (this.isSending || !this.newMessage.trim()) return; // Evitar duplicados
+
+  this.isSending = true; // Bloquear el envío
+
+  const sender = this.usuarioApodo; // Obtén el nombre del usuario actual
+  this.websocketService.sendRxjs(JSON.stringify({
+    type: 'chatMessage',
+    sender: sender,
+    text: this.newMessage
+  }));
+
+  this.newMessage = ''; // Limpiar el input
+  this.isSending = false; // Desbloquear el envío
+}
+
+scrollChatToBottom(): void {
+  try {
+    this.chatMessagesContainer.nativeElement.scrollTop = this.chatMessagesContainer.nativeElement.scrollHeight;
+  } catch(err) { }
 }
 
 showGameOverModal(winnerName: string): void {

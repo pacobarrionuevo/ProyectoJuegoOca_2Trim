@@ -71,7 +71,6 @@ export class MenuComponent implements OnInit {
     this.cargarAmigos();
     this.obtenerSolicitudesPendientes();
 
-    // no se está llamando porque no se están recibiendo estos mensajes desde el websocket.service.ts
     this.webSocketService.messageReceived.subscribe((message: any) => {
       console.log("Mensaje recibido de WebSocket:", message);
       if (message.FriendId) {
