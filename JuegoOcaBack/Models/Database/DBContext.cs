@@ -22,16 +22,24 @@ namespace JuegoOcaBack.Models.Database
 
         // Configuramos el EntityFramework para crear un archivo de BBDD Sqlite
 
+        /*
         public DBContext(IOptions<Settings> options)
         {
             _settings = options.Value;
         }
+        */
 
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            options.UseSqlite($"DataSource={baseDir}{DATABASE_PATH}");
-            //options.UseSqlite(_settings.DatabaseConnection);
+            string connection = "Server=db14832.databaseasp.net; Database=db14832; Uid=db14832; Pwd=c?3M7nZ%D6#z";
+
+            #if DEBUG
+                        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            optionsBuilder.UseSqlite($"DataSource={baseDir}{DATABASE_PATH}");
+#else
+                        
+                        optionsBuilder.UseMySql(connection, ServerVersion.AutoDetect(connection));
+#endif
         }
     }
 
