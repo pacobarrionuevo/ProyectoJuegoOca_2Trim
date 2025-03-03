@@ -38,6 +38,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             public GameService.GameType Type { get; set; }
             public List<WebSocketHandler> Players { get; set; } = new List<WebSocketHandler>();
             public List<string> RematchRequests { get; set; } = new List<string>();
+
         }
         public WebSocketNetwork(IServiceProvider serviceProvider)
         {
@@ -237,6 +238,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             {
                 // Deserializar a un objeto base con la propiedad Type
                 var baseMsg = JsonSerializer.Deserialize<WebSocketMessage>(message);
+                var gameService = GetGameService();
                 if (baseMsg == null)
                 {
                     Console.WriteLine("No se pudo deserializar el mensaje o es nulo.");
@@ -266,7 +268,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
                         _waitingSemaphore.Release();
                         break;
-
+                    
                     case "chatmessage":
                         var chatMessage = JsonSerializer.Deserialize<ChatMessage>(message);
                         await BroadcastMessage(JsonSerializer.Serialize(new
@@ -295,8 +297,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     case "moveplayer":
                         var movePlayerMessage = JsonSerializer.Deserialize<MovePlayerMessage>(message);
                         Console.WriteLine($"Moviendo al jugador {movePlayerMessage.PlayerId} con dado {movePlayerMessage.DiceResult}");
-                        var gameService = GetGameService();
+                        
                         gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
+                        break;
+                    case "botTurn":
+                        Console.WriteLine("Mensaje botTurn recibido. Moviendo al bot...");
+                        gameService.BotMove();
                         break;
                     case "turnTimeout":
                         var timeoutMsg = JsonSerializer.Deserialize<TurnTimeoutMessage>(message);
@@ -317,6 +323,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         var rematchResMsg = JsonSerializer.Deserialize<RematchResponseMessage>(message);
                         await HandleRematchResponse(handler, rematchResMsg);
                         break;
+                    
 
                     case "rolldice":
                         var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);

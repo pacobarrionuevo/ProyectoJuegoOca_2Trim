@@ -45,8 +45,13 @@ public class GameService
         // Agregar jugador principal
         AddPlayer(playerName);
 
+        // Agregar bot si el tipo de juego es Bot
+        if (gameType == GameType.Bot)
+        {
+            AddBot();
+        }
         // Agregar jugadores adicionales para multiplayer
-        if (gameType == GameType.Multiplayer && additionalPlayers != null)
+        else if (gameType == GameType.Multiplayer && additionalPlayers != null)
         {
             foreach (var player in additionalPlayers)
             {
@@ -61,7 +66,6 @@ public class GameService
             Console.WriteLine($"- {player.Name} (ID: {player.Id})");
         }
     }
-
     public bool IsGameStarted()
     {
         return _gameStarted;
@@ -81,7 +85,16 @@ public class GameService
 
     public void AddBot()
     {
-        _players.Add(new PlayerDTO { Id = _players.Count + 1, Name = "Bot", Position = 0 });
+        int newId = _players.Count > 0 ? _players.Max(p => p.Id) + 1 : 1;
+        _players.Add(new PlayerDTO
+        {
+            Id = newId,
+            Name = "Bot",
+            Position = 0,
+            TurnsToSkip = 0
+        });
+
+        Console.WriteLine($"Bot añadido: Bot (ID: {newId})");
     }
 
     public int MovePlayer(int playerId, int dices)
@@ -287,12 +300,13 @@ public class GameService
 
         NotifyGameState();
 
+        // Mover el bot automáticamente si es su turno
         if (_currentGameType == GameType.Bot && CurrentPlayer.Name == "Bot")
         {
             Console.WriteLine("Iniciando movimiento automático del bot");
-            Task.Delay(2000).ContinueWith(_ => BotMove());
+            BotMove();
         }
-    }   
+    }
     private void NotifyBotTurn()
     {
         if (_currentGameType == GameType.Bot)
@@ -351,13 +365,15 @@ public class GameService
 
     public void BotMove()
     {
-        if (_currentGameType != GameType.Bot) return;
+        if (_currentGameType != GameType.Bot || CurrentPlayer.Name != "Bot") return;
+
         var bot = _players.FirstOrDefault(p => p.Name == "Bot");
         if (bot != null)
         {
             int diceResult = new Random().Next(1, 7);
-            int newPosition = MovePlayer(bot.Id, diceResult);
+            int newPosition = MovePlayer(bot.Id, diceResult); // <- Esto actualiza la posición del bot
 
+            // Notificar a los clientes
             var moveMessage = new
             {
                 type = "botMove",
@@ -365,10 +381,10 @@ public class GameService
                 diceResult = diceResult,
                 newPosition = newPosition
             };
-            // Enviar el mensaje a través del WebSocket
             var messageJson = JsonSerializer.Serialize(moveMessage);
             GetWebSocketNetwork().BroadcastMessage(messageJson);
-            NextTurn();
+
+            NextTurn(); // Pasar al siguiente turno
         }
     }
     public void HandlePlayerDisconnect(int playerId)
