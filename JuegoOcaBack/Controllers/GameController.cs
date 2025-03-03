@@ -2,6 +2,7 @@
 using JuegoOcaBack.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using static GameService;
 
 namespace JuegoOcaBack.Controllers
 {
@@ -52,16 +53,15 @@ namespace JuegoOcaBack.Controllers
         [HttpPost("start-game")]
         public IActionResult StartGame([FromBody] StartGameRequest request)
         {
-            if (request == null || string.IsNullOrEmpty(request.PlayerName))
+            if (!Enum.TryParse<GameService.GameType>(request.GameType, out var gameType))
             {
-                return BadRequest("El nombre del jugador es obligatorio.");
+                return BadRequest("Tipo de juego no válido");
             }
 
-            // Iniciar la partida con el tipo de juego y jugadores adicionales
             _gameService.StartGame(
                 gameId: request.GameId,
                 playerName: request.PlayerName,
-                gameType: request.GameType,
+                gameType: gameType, // Ahora es el enum
                 additionalPlayers: request.AdditionalPlayers
             );
 
@@ -76,8 +76,8 @@ namespace JuegoOcaBack.Controllers
         {
             public string GameId { get; set; }
             public string PlayerName { get; set; }
-            public GameService.GameType GameType { get; set; } // Nuevo campo
-            public List<string> AdditionalPlayers { get; set; } = new List<string>(); // Nuevo campo
+            public string GameType { get; set; } 
+            public List<string> AdditionalPlayers { get; set; } = new List<string>();
         }
     }
 }

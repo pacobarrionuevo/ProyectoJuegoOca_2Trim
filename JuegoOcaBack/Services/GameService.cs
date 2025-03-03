@@ -178,12 +178,20 @@ public class GameService
     {
         var stateMessage = new
         {
-            type = "gameState",
+            type = "gameUpdate",
             gameId = _currentGameId,
-            players = _players,
-            currentPlayer = CurrentPlayer,
-            diceResult = (int?)null,
-            gameType = _currentGameType.ToString()
+            players = _players.Select(p => new {
+                id = p.Id,
+                name = p.Name,
+                position = p.Position,
+                turnsToSkip = p.TurnsToSkip,
+            }),
+            currentPlayer = new
+            {
+                id = CurrentPlayer.Id,
+                name = CurrentPlayer.Name
+            },
+            diceResult = (int?)null
         };
 
         var messageJson = JsonSerializer.Serialize(stateMessage);
@@ -260,14 +268,14 @@ public class GameService
 
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
         Console.WriteLine($"[{_currentGameId}] Turno de {CurrentPlayer.Name}");
+        NotifyGameState();
 
-        
         if (_currentGameType == GameType.Bot && CurrentPlayer.Name == "Bot")
         {
             Task.Delay(2000).ContinueWith(_ => BotMove()); // Esperar 2 segundos antes de mover
         }
 
-        NotifyGameState();
+       
     }
     private void NotifyBotTurn()
     {

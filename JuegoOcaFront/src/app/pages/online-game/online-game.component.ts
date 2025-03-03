@@ -113,7 +113,9 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
       // Actualiza la lista de jugadores, turno actual y resultado del dado
       const playersArray = Array.isArray(state.players) ? state.players : Object.values(state.players);
       this.players = [...playersArray];
-      this.currentPlayer = { ...state.currentPlayer };
+      this.currentPlayer = this.players.find(
+        p => p.id === (state.currentPlayer?.id || -1)
+      );
       this.diceResult = state.diceResult;
       // Reinicia el temporizador cada vez que cambia el turno
       this.startTurnTimer();
@@ -165,12 +167,10 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     }
   }
   getPlayersInCell(cellNumber: number): any[] {
-    if (!this.players) {
-      console.warn('La lista de jugadores no está inicializada.');
-      console.log('Salguero hijoputa');
-      return [];
-    }
-    return this.players.filter(player => player.position === cellNumber);
+    return this.players.filter(player => 
+      player.position === cellNumber && 
+      !player.isMoving
+    );
   }
   private handleGameStateUpdate(state: any): void {
     this.players = state.players;
@@ -182,18 +182,21 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     }
   }
   private startTurnTimer(): void {
-    this.timeRemaining = 120;
-    this.turnTimerSub = timer(0, 1000).subscribe(() => {
-      this.timeRemaining--;
-      if (this.timeRemaining <= 0) {
-        this.websocketService.sendRxjs(JSON.stringify({
-          type: 'turnTimeout',
-          gameId: this.websocketService.currentGameId
-        }));
+      // Cancelar temporizador anterior si existe
+      if (this.turnTimerSub) {
         this.turnTimerSub.unsubscribe();
       }
-    });
-  }
+    
+      this.timeRemaining = 120;
+      this.turnTimerSub = timer(0, 1000).subscribe(() => {
+        this.timeRemaining--;
+        
+        if (this.timeRemaining <= 0) {
+          this.turnTimerSub.unsubscribe();
+          this.onTurnTimeout();
+        }
+      });
+    }
   private handleTurnTimeout(playerId: number): void {
     if (playerId === this.currentPlayer?.id) {
       alert('Se te ha agotado el tiempo!');
@@ -216,7 +219,9 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     }));
   }
   get isCurrentPlayer(): boolean {
-    return this.currentPlayer && this.currentPlayer.id === this.usuarioId;
+    return this.currentPlayer && 
+         this.currentPlayer.id === this.usuarioId && 
+         this.currentPlayer.turnsToSkip <= 0;
   }
     
 

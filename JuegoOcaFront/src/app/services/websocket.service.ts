@@ -127,7 +127,7 @@ export class WebsocketService {
   // Método que llama al endpoint del servidor para empezar el juego
   startGame(gameId: string, playerName: string,gameType: string): Observable<any> {
     this.gameId = gameId;
-    const body = { GameId: gameId, PlayerName: playerName, GameType: gameType };
+    const body = { GameId: gameId, PlayerName: playerName, GameType: gameType, AdditionalPlayers: [] };
     return this.http.post<any>(`${environment.apiUrl}/api/Game/start-game`, body).pipe(
         catchError((error) => {
             console.error('Error al iniciar la partida:', error);
@@ -238,25 +238,34 @@ private handleMessage(message: string): void {
           this.handleOnlineUsers(normalizedMessage);
       } else if (normalizedMessage.type === 'friendRequest') {
           // Manejar solicitud de amistad
-          console.log('Solicitud de amistad recibida:', normalizedMessage);
-          this.messageReceived.next(normalizedMessage);
+          this.messageReceived.next({
+            type: 'friendRequest',
+            requestId: parsedMessage.requestId,
+            senderId: parsedMessage.senderId,
+            senderName: parsedMessage.senderName
+          });
       } else if (normalizedMessage.type === 'friendRequestAccepted') {
-          // Manejar aceptación de solicitud de amistad
-          console.log('Solicitud de amistad aceptada:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'friendRequestAccepted',
+          friendId: parsedMessage.friendId,
+          friendName: parsedMessage.friendName
+        });
           this.messageReceived.next(normalizedMessage);
       } else if (normalizedMessage.type === 'friendRequestRejected') {
-          // Manejar rechazo de solicitud de amistad
-          console.log('Solicitud de amistad rechazada:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'friendRequestRejected',
+          friendId: parsedMessage.friendId
+        });
           this.messageReceived.next(normalizedMessage);
       } else if (normalizedMessage.type === 'friendListUpdate') {
-          // Manejar actualización de la lista de amigos
+          
           console.log('Lista de amigos actualizada:', normalizedMessage);
           this.messageReceived.next(normalizedMessage);
-      } else if (normalizedMessage.type === 'friendNotAvailable') {
-          // Manejar amigo no disponible
-          console.log('Amigo no disponible:', normalizedMessage.message);
-          this.friendNotAvailable.next(normalizedMessage.message);
-      } else if (normalizedMessage.type === 'gameUpdate') {
+      }  else if (normalizedMessage.type === 'inviterNotAvailable') {
+
+        console.log('Invitador no disponible:', normalizedMessage.message);
+        this.friendNotAvailable.next(normalizedMessage.message);
+      }  else if (normalizedMessage.type === 'gameUpdate') {
           this.handleGameUpdate(normalizedMessage);
       } else if (normalizedMessage.type === 'playerJoined') {
           this.handlePlayerJoined(normalizedMessage);
@@ -328,8 +337,7 @@ private handleMessage(message: string): void {
   // Maneja una invitación de amigo
   private handleFriendInvitation(message: any): void {
     console.log('Invitación recibida de:', message.fromUserNickname);
-    // Podrías poner un confirm(...) para aceptar o rechazar
-    // Por ahora, aceptamos de inmediato:
+   
     const response = {
         type: 'acceptInvitation',
         inviterId: message.fromUserId
