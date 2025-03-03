@@ -42,6 +42,9 @@
            [class.cell-puente]="cell.type === 'Puente'"
            [class.cell-posada]="cell.type === 'Posada'"
            [class.cell-muerte]="cell.type === 'Muerte'"
+           [class.cell-muerte]="cell.type === 'Dados'"
+           [class.cell-muerte]="cell.type === 'Laberinto'"
+           [class.cell-muerte]="cell.type === 'Carcel'"
            [style.left.px]="getCellPosition(cell.number).x"
            [style.top.px]="getCellPosition(cell.number).y">
         <div class="cell-number">{{ cell.number }}</div>

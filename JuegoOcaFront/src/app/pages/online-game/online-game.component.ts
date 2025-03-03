@@ -70,10 +70,10 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     // Inicializar rutas de imágenes (modifica los nombres según tus assets)
     this.versus = this.imageService.getImageUrl('VersusOnline.png');
     this.fotoOca = this.imageService.getImageUrl('OcaFoto.jpg');
-    this.fotoPosada = this.imageService.getImageUrl('Posada.jpg');
+    this.fotoPosada = this.imageService.getImageUrl('RockingBeatas.jpg');
     this.fotoPuente = this.imageService.getImageUrl('Puente.jpeg');
-    this.fotoMuerte = this.imageService.getImageUrl('Muerte.png');
-    this.fotoDados = this.imageService.getImageUrl('Dados.png');
+    this.fotoMuerte = this.imageService.getImageUrl('verdaderamuerte.png');
+    this.fotoDados = this.imageService.getImageUrl('balatrodice.png');
     this.fotoCarcel = this.imageService.getImageUrl('Carcel.png');
     this.fotoLaberinto = this.imageService.getImageUrl('Laberinto.jpg');
     this.fotoPozo = this.imageService.getImageUrl('Pozo.jpg');
