@@ -92,7 +92,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     // Iniciar partida online (se debe obtener el gameId desde el matchmaking o de la navegación)
     const playerName = this.usuarioApodo;
     const gameId = 'game-online-id'; // Este valor se asigna dinámicamente según el flujo de matchmaking
-    this.websocketService.startGame(gameId, playerName).subscribe(response => {
+    this.websocketService.startGame(gameId, playerName, 'Multiplayer').subscribe(response => {
       if (response && response.players) {
         this.players = response.players;
         // Asumimos que el usuario autenticado se encuentra en la lista de jugadores

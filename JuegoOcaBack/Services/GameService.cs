@@ -53,7 +53,7 @@ public class GameService
             }
         }
 
-        _gameStarted = true; 
+        _gameStarted = true;
 
         Console.WriteLine($"Partida {gameType} iniciada con ID: {gameId}");
         Console.WriteLine($"Jugadores: {string.Join(", ", _players.Select(p => p.Name))}");
@@ -241,41 +241,34 @@ public class GameService
 
     public void NextTurn()
     {
-        if (_players.Count == 0)
-        {
-            Console.WriteLine("Error: No hay jugadores en la partida.");
-            return;
-        }
+        if (_players.Count == 0) return;
 
         var currentPlayer = _players[_currentPlayerIndex];
 
-        // Si el jugador debe repetir turno, no se cambia
         if (currentPlayer.TurnsToSkip == -1)
         {
-            currentPlayer.TurnsToSkip = 0; // Reinicia el contador de turnos perdidos
+            currentPlayer.TurnsToSkip = 0;
             Console.WriteLine($"El jugador {currentPlayer.Name} repite turno.");
             return;
         }
 
-        // Si el jugador tiene turnos para perder, no se cambia
         if (currentPlayer.TurnsToSkip > 0)
         {
             Console.WriteLine($"El jugador {currentPlayer.Name} pierde un turno.");
             return;
         }
 
-        // Cambiar al siguiente jugador
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
         Console.WriteLine($"[{_currentGameId}] Turno de {CurrentPlayer.Name}");
-        // Si es modo bot y es el turno del bot, mover automáticamente
+
+        
         if (_currentGameType == GameType.Bot && CurrentPlayer.Name == "Bot")
         {
-            Task.Delay(2000).ContinueWith(_ => BotMove()); // Espera 2 segundos antes de mover
+            Task.Delay(2000).ContinueWith(_ => BotMove()); // Esperar 2 segundos antes de mover
         }
 
         NotifyGameState();
-    
-}
+    }
     private void NotifyBotTurn()
     {
         if (_currentGameType == GameType.Bot)

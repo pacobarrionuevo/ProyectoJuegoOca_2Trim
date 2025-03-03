@@ -83,6 +83,7 @@ export class WebsocketService {
     this.rxjsSocket = webSocket({
       url: `wss://localhost:7077/ws/connect?token=${token}`,
       openObserver: { next: () => this.onConnected() },
+      closeObserver: { next: (event: CloseEvent) => this.onDisconnected() },
       serializer: (value: string) => value,
       deserializer: (event: MessageEvent) => event.data
     });
@@ -119,12 +120,14 @@ export class WebsocketService {
   private onDisconnected() {
     console.log('WebSocketService: Desconectado del WebSocket');
     this.disconnected.next();
+    alert('Te has desconectado del websocket');
+    this.router.navigate(['/']);
   }
 
   // Método que llama al endpoint del servidor para empezar el juego
-  startGame(gameId: string, playerName: string): Observable<any> {
+  startGame(gameId: string, playerName: string,gameType: string): Observable<any> {
     this.gameId = gameId;
-    const body = { GameId: gameId, PlayerName: playerName };
+    const body = { GameId: gameId, PlayerName: playerName, GameType: gameType };
     return this.http.post<any>(`${environment.apiUrl}/api/Game/start-game`, body).pipe(
         catchError((error) => {
             console.error('Error al iniciar la partida:', error);

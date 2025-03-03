@@ -81,7 +81,7 @@ export class GameComponent implements OnInit {
 
     // Iniciar la partida y obtener los jugadores
     const playerName = this.usuarioApodo; // Nombre del jugador humano
-    this.websocketService.startGame('12345', playerName).subscribe((response) => {
+    this.websocketService.startGame('12345', playerName,'Bot').subscribe((response) => {
         if (response && response.players) {
             console.log('Partida iniciada correctamente:', response);
             this.players = response.players;
