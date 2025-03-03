@@ -121,7 +121,6 @@ export class WebsocketService {
   private onDisconnected() {
     console.log('WebSocketService: Desconectado del WebSocket');
     this.disconnected.next();
-    alert('Te has desconectado del websocket');
   }
 
   // Método que llama al endpoint del servidor para empezar el juego
