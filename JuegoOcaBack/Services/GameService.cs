@@ -371,7 +371,7 @@ public class GameService
         if (bot != null)
         {
             int diceResult = new Random().Next(1, 7);
-            int newPosition = MovePlayer(bot.Id, diceResult); // <- Esto actualiza la posición del bot
+            int newPosition = MovePlayer(bot.Id, diceResult);
 
             // Notificar a los clientes
             var moveMessage = new

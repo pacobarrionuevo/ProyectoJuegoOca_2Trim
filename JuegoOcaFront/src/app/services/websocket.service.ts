@@ -229,8 +229,15 @@ private handleMessage(message: string): void {
       } else if (normalizedMessage.type === 'gameStarted') {
           this.handleGameStarted(normalizedMessage);
       } else if (normalizedMessage.type === 'waitingForOpponent') {
-          this.handleWaitingForOpponent(normalizedMessage);
-      } else if (normalizedMessage.type === 'friendConnected') {
+          this.handleWaitingForOpponent(normalizedMessage);}
+          else if (normalizedMessage.type === 'botTurn') {
+            console.log('Es el turno del bot. Moviendo al bot...');
+        this.sendRxjs(JSON.stringify({
+          type: 'botMove',
+          gameId: this.currentGameId,
+        }));
+        }
+       else if (normalizedMessage.type === 'friendConnected') {
           this.addOnlineUser(normalizedMessage.friendId);
       } else if (normalizedMessage.type === 'friendDisconnected') {
           this.removeOnlineUser(normalizedMessage.friendId);
