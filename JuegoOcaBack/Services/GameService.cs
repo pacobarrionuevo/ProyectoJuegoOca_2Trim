@@ -33,35 +33,32 @@ public class GameService
 
     public void StartGame(string gameId, string playerName, GameType gameType, List<string> additionalPlayers = null)
     {
-        // Reiniciar el estado del juego
+        // Validar si la partida ya está iniciada
+        if (_gameStarted)
+        {
+            Console.WriteLine("La partida ya está en curso.");
+            return;
+        }
+
         _players.Clear();
-        _currentPlayerIndex = 0;
-        _currentGameId = gameId;
-        _currentGameType = gameType;
-        // Agregar al jugador humano
+
+        // Agregar jugador principal
         AddPlayer(playerName);
 
-        if (gameType == GameType.Bot)
-        {
-            AddBot();
-        }
+        // Agregar jugadores adicionales para multiplayer
         if (gameType == GameType.Multiplayer && additionalPlayers != null)
         {
             foreach (var player in additionalPlayers)
             {
-                if (!_players.Any(p => p.Name == player))   
-                {
-                    AddPlayer(player);
-                }
-
+                AddPlayer(player);
             }
+        }
 
-            _gameStarted = true;
-
-            Console.WriteLine($"Partida {gameType} iniciada con ID: {gameId}");
-            Console.WriteLine($"Jugadores: {string.Join(", ", _players.Select(p => p.Name))}");
-            Console.WriteLine($"Número de jugadores: {_players.Count}");
-            NotifyGameState();
+        _gameStarted = true; // Marcar la partida como iniciada
+        Console.WriteLine($"Partida iniciada con {_players.Count} jugadores:");
+        foreach (var player in _players)
+        {
+            Console.WriteLine($"- {player.Name} (ID: {player.Id})");
         }
     }
 
@@ -72,7 +69,14 @@ public class GameService
 
     public void AddPlayer(string name)
     {
-        _players.Add(new PlayerDTO { Id = _players.Count + 1, Name = name, Position = 0 });
+        int newId = _players.Count > 0 ? _players.Max(p => p.Id) + 1 : 1;
+        _players.Add(new PlayerDTO
+        {
+            Id = newId,
+            Name = name,
+            Position = 0,
+            TurnsToSkip = 0
+        }); 
     }
 
     public void AddBot()
@@ -180,26 +184,29 @@ public class GameService
     }
     private void NotifyGameState()
     {
+        Console.WriteLine("\n--- ENVIANDO ESTADO ---");
+        Console.WriteLine($"Jugadores en estado:");
+        foreach (var player in _players)
+        {
+            Console.WriteLine($"- {player.Name} (ID: {player.Id}, Posición: {player.Position}, Saltos: {player.TurnsToSkip})");
+        }
+        Console.WriteLine($"Jugador actual: {CurrentPlayer.Name} (ID: {CurrentPlayer.Id})");
+
         var stateMessage = new
         {
             type = "gameUpdate",
-            gameId = _currentGameId,
-            players = _players.Select(p => new {
-                id = p.Id,
-                name = p.Name,
-                position = p.Position,
-                turnsToSkip = p.TurnsToSkip,
-            }),
+            players = _players,
             currentPlayer = new
             {
                 id = CurrentPlayer.Id,
-                name = CurrentPlayer.Name
+                name = CurrentPlayer.Name,
+                position = CurrentPlayer.Position,
+                turnsToSkip = CurrentPlayer.TurnsToSkip
             },
             diceResult = (int?)null
         };
 
-        var messageJson = JsonSerializer.Serialize(stateMessage);
-        GetWebSocketNetwork().BroadcastMessage(messageJson);
+        GetWebSocketNetwork().BroadcastMessage(JsonSerializer.Serialize(stateMessage));
     }
     private string GetSpecialMessage(string cellType)
     {
@@ -257,30 +264,35 @@ public class GameService
 
         var currentPlayer = _players[_currentPlayerIndex];
 
-        if (currentPlayer.TurnsToSkip == -1)
+        if (currentPlayer.TurnsToSkip == -1) // Repetir turno
         {
+            Console.WriteLine("Turno repetido por efecto especial");
             currentPlayer.TurnsToSkip = 0;
-            Console.WriteLine($"El jugador {currentPlayer.Name} repite turno.");
+            NotifyGameState();
             return;
         }
-
-        if (currentPlayer.TurnsToSkip > 0)
+        else if (currentPlayer.TurnsToSkip > 0) // Saltar turno
         {
-            Console.WriteLine($"El jugador {currentPlayer.Name} pierde un turno.");
+            Console.WriteLine($"Saltando turno. Turnos restantes: {currentPlayer.TurnsToSkip}");
+            currentPlayer.TurnsToSkip--;
+            _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
+            NotifyGameState();
+            NextTurn(); // Llamada recursiva
             return;
         }
 
+        // Cambiar al siguiente jugador
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
-        Console.WriteLine($"[{_currentGameId}] Turno de {CurrentPlayer.Name}");
+        Console.WriteLine($"Nuevo turno: Jugador {_currentPlayerIndex} ({CurrentPlayer.Name}, ID: {CurrentPlayer.Id})");
+
         NotifyGameState();
 
         if (_currentGameType == GameType.Bot && CurrentPlayer.Name == "Bot")
         {
-            Task.Delay(2000).ContinueWith(_ => BotMove()); // Esperar 2 segundos antes de mover
+            Console.WriteLine("Iniciando movimiento automático del bot");
+            Task.Delay(2000).ContinueWith(_ => BotMove());
         }
-
-       
-    }
+    }   
     private void NotifyBotTurn()
     {
         if (_currentGameType == GameType.Bot)
@@ -430,6 +442,7 @@ public class GameService
 
         var rematchMessage = new
         {
+
             type = "rematchStarted",
             gameId = _currentGameId
         };
