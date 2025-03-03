@@ -11,7 +11,7 @@ export class AdminService {
   constructor(private http: HttpClient) { }
 
   getUsuarios(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.baseURL}/Usuario/usuarios`);
+    return this.http.get<User[]>(`${this.baseURL}/usuarios`);
   }
 
   actualizarRol(usuarioId: number, nuevoRol: string): Observable<User> {
