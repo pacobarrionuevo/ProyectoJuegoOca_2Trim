@@ -543,7 +543,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         playerId = handler.Id
                     }));
                 }
-go
+
                 if (session.Type == GameService.GameType.Bot)
                 {
                     gameService.DeclareWinner(-1);
