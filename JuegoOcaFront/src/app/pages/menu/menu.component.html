@@ -46,11 +46,11 @@
     <input type="text" class="lista" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
       <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
-        <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
-        <p *ngIf="isUserOnline(amigo.UsuarioId)" class="estado-conectado">🟢 Conectado 🟢</p>
+      <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
+      <p *ngIf="isUserOnline(amigo.UsuarioId)" class="estado-conectado">🟢 Conectado 🟢</p>
       <p *ngIf="!isUserOnline(amigo.UsuarioId)" class="estado-desconectado">🔴 Desconectado 🔴</p>
-        <button [routerLink]="['/perfil', usuarioId]">Ver perfil</button>&nbsp;
-        <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
+      <button [routerLink]="['/perfil', amigo.UsuarioId]">Ver perfil</button>&nbsp;
+      <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
     </div>
   </div>
 
@@ -65,7 +65,7 @@
     <div *ngFor="let usuario of usuariosFiltrados">
       <img [src]="usuario.UsuarioFotoPerfil" alt="Foto de perfil" width="50" height="50">&nbsp;
       <span>{{ usuario.UsuarioApodo }}</span>&nbsp;
-      <button class="botonesListaUsuario" [routerLink]="'/perfil'">Ir al Perfil</button>&nbsp;
+      <button class="botonesListaUsuario" [routerLink]="['/perfil', usuario.UsuarioId]">Ir al Perfil</button>&nbsp;
       <button (click)="enviarSolicitud(usuario.UsuarioId)">Enviar Solicitud</button>
     </div>
   </div>

@@ -136,13 +136,11 @@ import { environment } from '../../../environments/environment';
     onFileChange(event: any): void {
       const file = event.target.files[0];
       if (file) {
-        const formData = new FormData();
-        formData.append('avatar', file);
-
-        this.apiService.subirAvatar(this.usuario!.UsuarioId!, formData).subscribe({
+        this.apiService.subirAvatar(this.usuario!.UsuarioId!, file).subscribe({
           next: (response) => {
-            this.usuario!.UsuarioFotoPerfil = response.fotoPerfil;
-            this.perfilForm.patchValue({ avatar: response.fotoPerfil });
+            // Actualiza la URL de la imagen del perfil
+            this.usuario!.UsuarioFotoPerfil = this.validarUrlImagen(response.UsuarioFotoPerfil);
+            this.perfilForm.patchValue({ avatar: this.usuario!.UsuarioFotoPerfil });
           },
           error: (err) => {
             console.error('Error subiendo el avatar:', err);
@@ -151,7 +149,6 @@ import { environment } from '../../../environments/environment';
         });
       }
     }
-
     validarUrlImagen(fotoPerfil: string | null): string {
       return fotoPerfil ? `${this.BASE_URL}/fotos/${fotoPerfil}` : 'nada';
     }

@@ -30,7 +30,7 @@
               </small>
             </div>
           </div>
-
+  
           <div *ngIf="esPropioPerfil">
             <label for="password" class="label">Contraseña:</label>
             <input type="password" id="password" formControlName="password">
@@ -42,10 +42,15 @@
           </div>
   
           <div *ngIf="esPropioPerfil">
+            <label for="avatar" class="label">Cambiar imagen de perfil:</label>
+            <input type="file" id="avatar" (change)="onFileChange($event)" accept="image/*">
+          </div>
+  
+          <div *ngIf="esPropioPerfil">
             <input type="submit" value="Guardar Cambios">
           </div>
         </form>
-  
+
         <div *ngIf="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>

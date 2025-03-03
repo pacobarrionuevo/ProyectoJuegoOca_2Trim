@@ -60,7 +60,10 @@ export class ApiService {
     return this.http.put(`${this.BASE_URL}/api/Usuario/usuarios/${userId}`, datos);
   }
 
-  subirAvatar(userId: number, formData: FormData): Observable<any> {
+  subirAvatar(userId: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+  
     return this.http.post(`${this.BASE_URL}/api/Usuario/usuarios/${userId}/avatar`, formData);
   }
 

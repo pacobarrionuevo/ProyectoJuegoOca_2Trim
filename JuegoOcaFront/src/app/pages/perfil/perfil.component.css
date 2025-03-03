@@ -88,3 +88,18 @@ input[type="submit"]:hover {
   height: 100px;
   border-radius: 50%;
 }
+
+input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #110e0e;
+  border-radius: 10px;
+  font-size: 16px;
+  background-color: #ffffff;
+  color: rgb(125, 24, 24);
+  cursor: pointer;
+}
+
+input[type="file"]:hover {
+  background-color: #f0f0f0;
+}
