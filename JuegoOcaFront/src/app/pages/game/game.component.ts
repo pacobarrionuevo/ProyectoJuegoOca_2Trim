@@ -77,8 +77,7 @@ export class GameComponent implements OnInit {
 
     this.cargarInfoUsuario();
 
-    // Iniciar la partida y obtener los jugadores
-    const playerName = this.usuarioApodo; // Nombre del jugador humano
+    const playerName = this.usuarioApodo;
     this.websocketService.startGame('12345', playerName,'Bot').subscribe((response) => {
         if (response && response.players) {
             console.log('Partida iniciada correctamente:', response);
@@ -220,7 +219,7 @@ validarUrlImagen(fotoPerfil: string | null): string {
   }
 
   get isCurrentPlayer(): boolean {
-    const currentUser = this.websocketService.getCurrentUser(); // Obtener el usuario real desde el servicio
+    const currentUser = this.websocketService.getCurrentUser();
     const isCurrent = this.currentPlayer && this.currentPlayer.id === currentUser?.id;
     return isCurrent;
   }

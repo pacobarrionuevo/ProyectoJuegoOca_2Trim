@@ -24,8 +24,6 @@ export class AdminComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // Si no eres admin, primeramente no puedes entrar a la vista.
-    // Pero si dejaras de serlo, te sacaría de la vista automáticamente
     this.authService.isAdmin$.subscribe(admin => {
       this.esAdmin = admin;
       if (!admin) {

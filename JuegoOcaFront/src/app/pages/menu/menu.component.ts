@@ -68,7 +68,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subs.forEach(sub => sub.unsubscribe());
+    // this.subs.forEach(sub => sub.unsubscribe());
   }
 
   private inicializarWebSockets(): void {
@@ -305,9 +305,9 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    this.authService.logout();
-    this.webSocketService.clearToken();
     this.webSocketService.disconnectRxjs();
+    this.webSocketService.clearToken();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

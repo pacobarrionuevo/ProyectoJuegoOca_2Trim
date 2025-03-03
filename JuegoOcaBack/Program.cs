@@ -33,7 +33,7 @@ builder.Services.AddScoped<FriendRequestRepository>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<WebSocketMethods>();
 
-// Servicios de aplicación
+// Servicios
 builder.Services.AddTransient<ImageService>();
 builder.Services.AddTransient<FriendRequestService>();
 builder.Services.AddTransient<ImageMapper>();
@@ -79,7 +79,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-// Pipeline de middlewares
 app.UseSwagger();
 app.UseSwaggerUI();
 

@@ -15,8 +15,6 @@
   <div class="elementosMenu">
     <p class="titulo"><i>SERVIDORES</i></p>
     <p>Jugadores conectados: {{ onlineUserIds.size }}</p>
-    <p>Partidas en juego: 0</p>
-    <p>Jugador en partida: 0</p>
   </div>
 
   <br>
@@ -30,14 +28,7 @@
         <button class="cerrar-sesion-btn" (click)="rechazarSolicitud(solicitud)"><b>Rechazar</b></button>
       </div>
     </div>
-  </div>
-
-  <br>
-
-  <div class="elementosMenu">
-    <p class="titulo">Solicitudes de Partidas</p>
-  </div>
-  
+  </div> 
 
   <br>
 
@@ -45,10 +36,10 @@
     <p class="titulo">Amigos</p>
     <input type="text" class="lista" [(ngModel)]="busquedaAmigos" placeholder="Buscar amigos..." />
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
-      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
+      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> &nbsp; 
         <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
-        <p *ngIf="isUserOnline(amigo.UsuarioId)" class="estado-conectado">🟢 Conectado 🟢</p>
-      <p *ngIf="!isUserOnline(amigo.UsuarioId)" class="estado-desconectado">🔴 Desconectado 🔴</p>
+        <p *ngIf="isUserOnline(amigo.UsuarioId)" class="estado-conectado">🟢 Conectado 🟢</p>&nbsp;
+      <p *ngIf="!isUserOnline(amigo.UsuarioId)" class="estado-desconectado">🔴 Desconectado 🔴</p>&nbsp;
       <button [routerLink]="['/perfil', amigo.UsuarioId]">Ver perfil</button>&nbsp;
       <button (click)="invitarAPartida(amigo.UsuarioId)" [disabled]="amigo.UsuarioEstado !== 'Conectado'">Invitar a partida</button>&nbsp;
     </div>

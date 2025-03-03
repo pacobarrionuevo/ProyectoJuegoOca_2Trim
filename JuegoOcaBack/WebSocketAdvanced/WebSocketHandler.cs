@@ -23,7 +23,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         {
             Id = userId;
             _webSocket = webSocket;
-            Username = username; // Asignamos el username recibido
+            Username = username;
             LastActivity = DateTime.UtcNow;
             _buffer = new byte[BufferSize];
         }

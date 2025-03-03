@@ -93,6 +93,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     const playerName = this.usuarioApodo;
     const gameId = 'game-online-id'; // Este valor se asigna dinámicamente según el flujo de matchmaking
     this.websocketService.startGame(gameId, playerName, 'Multiplayer').subscribe(response => {
+      
       if (response && response.players) {
         this.players = response.players;
         // Asumimos que el usuario autenticado se encuentra en la lista de jugadores
@@ -110,27 +111,35 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
 
     
     this.websocketService.gameStateUpdated.subscribe((state: any) => {
-      console.log('Estado recibido:', state); 
-    
+      console.log('\n--- RECIBIENDO ESTADO DEL JUEGO ---');
+      console.log('Estado crudo recibido:', state);
       
-      const players = Array.isArray(state.players) 
+      // Conversión de jugadores
+      const playersArray = Array.isArray(state.players) 
         ? state.players 
         : Object.values(state.players);
-  
-      this.players = players.map(p => ({
-        ...p,
+      
+      console.log('Jugadores convertidos:', playersArray);
+      
+      this.players = playersArray.map(p => ({
+        id: p.id ?? p.Id,
+        name: p.name ?? p.Name,
+        position: p.position ?? p.Position,
+        turnsToSkip: p.turnsToSkip ?? p.TurnsToSkip,
         isMoving: false,
+        
       }));
+      
+      console.log('Jugadores mapeados:', this.players);
     
-      console.log('Jugadores actualizados:', this.players); // Log para depuración
-    
-      // Actualizar jugador actual
-      this.currentPlayer = this.players.find(
-        p => p.id === (state.currentPlayer?.id || -1)
-      );
+      // Interpretar jugador actual
+      const currentPlayerId = state.currentPlayer?.id ?? state.currentPlayer?.Id;
+      console.log('ID de jugador actual recibido:', currentPlayerId);
+      
+      this.currentPlayer = this.players.find(p => p.id === currentPlayerId);
+      console.log('Jugador actual detectado:', this.currentPlayer);
     
       this.diceResult = state.diceResult;
-      // Reinicia el temporizador cada vez que cambia el turno
       this.startTurnTimer();
     });
 
@@ -195,20 +204,24 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     }
   }
   private startTurnTimer(): void {
-      // Cancelar temporizador anterior si existe
-      if (this.turnTimerSub) {
-        this.turnTimerSub.unsubscribe();
-      }
+    console.log('\n--- INICIANDO TEMPORIZADOR ---');
+    if (this.turnTimerSub) {
+      console.log('Cancelando temporizador anterior');
+      this.turnTimerSub.unsubscribe();
+    }
     
-      this.timeRemaining = 120;
-      this.turnTimerSub = timer(0, 1000).subscribe(() => {
-        this.timeRemaining--;
-        
-        if (this.timeRemaining <= 0) {
-          this.turnTimerSub.unsubscribe();
-          this.onTurnTimeout();
-        }
-      });
+    this.timeRemaining = 120;
+    console.log(`Temporizador iniciado para: ${this.currentPlayer?.name}`);
+    
+    this.turnTimerSub = timer(0, 1000).subscribe(() => {
+      this.timeRemaining--;
+      
+      if (this.timeRemaining <= 0) {
+        console.log('Tiempo agotado!');
+        this.turnTimerSub.unsubscribe();
+        this.onTurnTimeout();
+      }
+    });
     }
   private handleTurnTimeout(playerId: number): void {
     if (playerId === this.currentPlayer?.id) {
@@ -232,9 +245,19 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     }));
   }
   get isCurrentPlayer(): boolean {
-    return this.currentPlayer && 
-         this.currentPlayer.id === this.usuarioId && 
-         this.currentPlayer.turnsToSkip <= 0;
+    if (!this.currentPlayer || !this.usuarioId) {
+      console.log('No hay jugador actual o usuario no identificado');
+      return false;
+    }
+  
+    const isCurrent = this.currentPlayer.id === this.usuarioId && 
+                      this.currentPlayer.turnsToSkip <= 0;
+    
+    console.log(`Comprobando turno: ${isCurrent} 
+      (Usuario ID: ${this.usuarioId}, Current Player ID: ${this.currentPlayer.id}, 
+      TurnsToSkip: ${this.currentPlayer.turnsToSkip})`);
+    
+    return isCurrent;
   }
     
 
@@ -392,6 +415,5 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.turnTimerSub?.unsubscribe();
-  }
+  }
 }
-

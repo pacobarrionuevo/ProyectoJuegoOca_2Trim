@@ -16,7 +16,6 @@ namespace JuegoOcaBack.Services
             _context = context;
         }
 
-        // Envía una solicitud de amistad
         public class FriendRequestResult
         {
             public bool Success { get; set; }
@@ -26,11 +25,9 @@ namespace JuegoOcaBack.Services
 
         public async Task<FriendRequestResult> SendFriendRequest(int senderId, int receiverId)
         {
-            // Evitar solicitud a uno mismo
             if (senderId == receiverId)
                 return new FriendRequestResult { Success = false };
 
-            // Verificar que no exista ya una solicitud pendiente o amistad entre estos usuarios
             var exists = await _context.Friendships
                 .Include(a => a.AmistadUsuario)
                 .AnyAsync(a =>
@@ -41,12 +38,10 @@ namespace JuegoOcaBack.Services
             if (exists)
                 return new FriendRequestResult { Success = false };
 
-            // Crear la solicitud en estado pendiente
             var amistad = new Amistad() { IsAccepted = false };
             _context.Friendships.Add(amistad);
-            await _context.SaveChangesAsync(); // Para obtener el AmistadId generado
+            await _context.SaveChangesAsync();
 
-            // Crear la relación: sender es el requestor y receiver es el que recibe la solicitud
             var senderRelation = new UsuarioTieneAmistad()
             {
                 UsuarioId = senderId,
@@ -64,7 +59,6 @@ namespace JuegoOcaBack.Services
             _context.UsuarioTieneAmistad.AddRange(senderRelation, receiverRelation);
             await _context.SaveChangesAsync();
 
-            // Recuperar el nombre del sender
             var sender = await _context.Usuarios.FindAsync(senderId);
 
             return new FriendRequestResult
@@ -91,9 +85,6 @@ namespace JuegoOcaBack.Services
             public int SenderId { get; set; }
             public int ReceiverId { get; set; }
         }
-
-        // Acepta una solicitud de amistad
-        // receiverId se obtiene del token (usuario autenticado) para mayor seguridad
         public async Task<bool> AcceptFriendRequest(int amistadId, int receiverId)
         {
             var amistad = await _context.Friendships
@@ -103,7 +94,6 @@ namespace JuegoOcaBack.Services
             if (amistad == null)
                 return false;
 
-            // Verificar que el usuario que acepta es el receptor (no el requestor)
             var receiverRecord = amistad.AmistadUsuario
                 .FirstOrDefault(ua => ua.UsuarioId == receiverId && ua.esQuienMandaSolicitud == false);
 
@@ -116,7 +106,6 @@ namespace JuegoOcaBack.Services
             return true;
         }
 
-        // Rechaza (o cancela) una solicitud de amistad
         public async Task<bool> RejectFriendRequest(int amistadId, int receiverId)
         {
             var amistad = await _context.Friendships
@@ -132,15 +121,12 @@ namespace JuegoOcaBack.Services
             if (receiverRecord == null)
                 return false;
 
-            // Eliminar la solicitud y las relaciones asociadas
             _context.UsuarioTieneAmistad.RemoveRange(amistad.AmistadUsuario);
             _context.Friendships.Remove(amistad);
             await _context.SaveChangesAsync();
 
             return true;
         }
-
-        // Obtiene la lista de amigos (amistades aceptadas) del usuario
         public async Task<List<Usuario>> GetFriendsList(int usuarioId)
         {
             var friendships = await _context.Friendships
@@ -152,15 +138,12 @@ namespace JuegoOcaBack.Services
             List<Usuario> friends = new List<Usuario>();
             foreach (var amistad in friendships)
             {
-                // Se extrae el usuario que NO es el usuario logueado
                 var friendRelation = amistad.AmistadUsuario.FirstOrDefault(ua => ua.UsuarioId != usuarioId);
                 if (friendRelation != null && friendRelation.usuario != null)
                     friends.Add(friendRelation.usuario);
             }
             return friends;
         }
-
-        // Obtiene las solicitudes de amistad pendientes en las que el usuario es receptor
         public async Task<List<Amistad>> GetPendingFriendRequests(int usuarioId)
         {
             var pendingRequests = await _context.Friendships

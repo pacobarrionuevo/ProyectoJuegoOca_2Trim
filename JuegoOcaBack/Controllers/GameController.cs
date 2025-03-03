@@ -36,7 +36,6 @@ namespace JuegoOcaBack.Controllers
                 currentPlayer = _gameService.CurrentPlayer,
                 diceResult = request.Dices
             };
-            // Enviar el mensaje a través del WebSocket
 
             _gameService.NextTurn();
 
@@ -61,7 +60,7 @@ namespace JuegoOcaBack.Controllers
             _gameService.StartGame(
                 gameId: request.GameId,
                 playerName: request.PlayerName,
-                gameType: gameType, // Ahora es el enum
+                gameType: gameType,
                 additionalPlayers: request.AdditionalPlayers
             );
 

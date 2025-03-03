@@ -62,7 +62,6 @@ export class AuthService {
           sessionStorage.setItem('isAdmin', JSON.stringify(response.isadmin));
         }
         
-        // Actualizar estados
         this.loggedIn.next(true);
         this.isAdminSubject.next(this.checkAdmin()); 
       })
@@ -74,6 +73,7 @@ export class AuthService {
     sessionStorage.removeItem('accessToken');
     this.loggedIn.next(false);
     this.isAdminSubject.next(false);
+    console.log('AuthService: Sesión cerrada correctamente');
   }
 
   register(formData: FormData): Observable<AuthResponse> {

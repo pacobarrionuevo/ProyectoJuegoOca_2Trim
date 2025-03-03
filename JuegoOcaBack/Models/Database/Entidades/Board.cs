@@ -22,19 +22,19 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 if (i == 9 || i == 18 || i == 27 || i == 36 || i == 45 || i == 54 || i == 63) // Casillas de la oca
                 {
                     cell.Type = "Oca";
-                    cell.Effect = i + 5; // Avanza a la siguiente oca
+                    cell.Effect = i + 5;
                 }
                 else if (i == 5 || i == 14 || i == 23 || i == 32 || i == 41 || i == 50 || i == 59)
                 {
                     cell.Type = "Oca";
-                    cell.Effect = i + 4; // Avanza a la siguiente oca
+                    cell.Effect = i + 4;
                 }
                 else if (i == 6 ) // Puente1
                 {
                     cell.Type = "Puente";
                     cell.Effect = 12;
                 }
-                else if (i == 12) // Puente1
+                else if (i == 12) // Puente2
                 {
                     cell.Type = "Puente";
                     cell.Effect = 6;
@@ -42,12 +42,12 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 else if (i == 19) // Posada
                 {
                     cell.Type = "Posada";
-                    cell.Effect = i; // Vuelve al principio
+                    cell.Effect = i; 
                 }
                 else if (i == 26) // Dados
                 {
                     cell.Type = "Dados";
-                    cell.Effect = 53; // Te mueves a la casilla 53
+                    cell.Effect = 53; 
                 }
                 else if (i == 31) // Pozo
                 {
@@ -57,22 +57,22 @@ namespace JuegoOcaBack.Models.Database.Entidades
                 else if (i == 42) // Laberinto
                 {
                     cell.Type = "Laberinto";
-                    cell.Effect = i; // Vuelve al principio
+                    cell.Effect = i;
                 }
                 else if (i == 52) // Cárcel
                 {
                     cell.Type = "Carcel";
-                    cell.Effect = i; // Vuelve al principio
+                    cell.Effect = i; 
                 }
                 else if (i == 53) // Dados
                 {
                     cell.Type = "Dados";
-                    cell.Effect = 26; // Te mueves a la casilla 26
+                    cell.Effect = 26;
                 }
                 else if (i == 58) // Muerte
                 {
                     cell.Type = "Muerte";
-                    cell.Effect = 1; // Vuelve al inicio
+                    cell.Effect = 1; 
                 }
                 else if (i == 1)
                 {

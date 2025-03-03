@@ -24,15 +24,12 @@ namespace JuegoOcaBack.Services
         {
             IEnumerable<string> result;
 
-            // Si la consulta esta vacia o solo tiene espacios en blanco, devolvemos todos los items que debe
             if (string.IsNullOrWhiteSpace(query))
             {
                 result = ITEMS;
             }
-            // Sino pues realizamos la busqueda
             else
             {
-                // Limpiamos la query, las separamos por espacios y las guardamos
                 string[] queryKeys = GetKeys(ClearText(query));
                 List<string> matches = new List<string>();
 
