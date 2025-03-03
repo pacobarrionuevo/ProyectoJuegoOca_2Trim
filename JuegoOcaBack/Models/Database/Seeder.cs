@@ -26,13 +26,15 @@ namespace JuegoOcaBack.Models.Database
             Usuario usuario1 = new Usuario()
             {
                 UsuarioId = 1,
-                UsuarioApodo = "Paco",
-                UsuarioEmail = "paco@gmail.com",
-                UsuarioContrasena = PasswordHelper.Hash("paco33"),
-                UsuarioConfirmarContrasena = PasswordHelper.Hash("paco33"),
-                UsuarioFotoPerfil = "ea4c41d7-cc22-4900-8a82-60567c24af6c_d452af9f-1c53-4612-b014-6dc091974613.jpg",
+                UsuarioApodo = "Jose",
+                UsuarioEmail = "jose777@gmail.com",
+                UsuarioContrasena = PasswordHelper.Hash("jose777"),
+                UsuarioConfirmarContrasena = PasswordHelper.Hash("jose777"),
+                UsuarioFotoPerfil = "Perfil_Deffault.png",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
-                UsuarioEstado = "Desconectado"
+                UsuarioEstado = "Desconectado",
+                Rol = "admin",
+                EstaBaneado = false
             };
 
             Usuario usuario2 = new Usuario()
