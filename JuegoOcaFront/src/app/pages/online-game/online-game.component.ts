@@ -321,7 +321,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Determina el tipo de cada casilla
+  // Determina el tipo de cada casillaa
   getCellType(cellNumber: number): string {
     if (cellNumber === 1) return 'Inicio';
     if ([2, 3, 4, 28, 29, 30, 47, 48, 49, 60].includes(cellNumber)) return 'FlechaDerecha';
