@@ -11,7 +11,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private readonly byte[] _buffer;
         public string Username { get; set; }
         public MatchmakingMessage LastMessage { get; private set; }
-       
+
         public DateTime LastActivity { get; set; }
         public int Id { get; init; }
         public bool IsOpen => _webSocket.State == WebSocketState.Open;
@@ -43,14 +43,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
                 catch (WebSocketException)
                 {
-                    Console.WriteLine($"WebSocketException para el usuario {Id}. Cerrando conexión...");
                     Dispose();
                 }
             }
 
             if (Disconnected != null)
             {
-                Console.WriteLine($"Disparando evento de desconexión para el usuario {Id}.");
                 await Disconnected.Invoke(this);
             }
         }

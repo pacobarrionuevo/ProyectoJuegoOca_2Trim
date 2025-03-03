@@ -42,9 +42,6 @@ export class WebsocketService {
   // Se encarga de notificar cambios en el estado del juego
   gameStateUpdated = new Subject<{ players: any[], currentPlayer: any, diceResult: number | null }>();
 
-  private isReconnecting = false;
-  private isManualDisconnect = false;
-
   constructor(private http: HttpClient, private router: Router, private ngZone: NgZone) {
     // Imaginando que fallase la conexión, este método intenta reconectar al iniciar el servicio
     this.reconnectIfNeeded(); 
@@ -66,24 +63,22 @@ export class WebsocketService {
   // Conecta el websocket usando el token de autenticación del usuario que inició sesión.
   connectRxjs(token: string) {
     console.log('WebSocketService: Conectando WebSocket con token:', token);
-  
+
     // Verificar que el token sea una cadena válida
     if (typeof token !== 'string') {
       console.error('WebSocketService: El token no es una cadena válida:', token);
       return;
     }
-  
-    // Almacenar el token para reconexiones futuras
+
+    // Almacenar el token para reconexiones futuras --> recargas de páginas
     sessionStorage.setItem(this.tokenKey, token);
-  
-    // Cerrar la conexión existente solo si hay una y está abierta
-    /*
+
+    // Cerrar la conexión existente si hay una
     if (this.rxjsSocket && !this.rxjsSocket.closed) {
       console.log('WebSocketService: Cerrando conexión WebSocket existente...');
       this.disconnectRxjs();
     }
-      */
-  
+
     // Crear una nueva conexión websocket
     this.rxjsSocket = webSocket({
       url: `wss://localhost:7077/ws/connect?token=${token}`,
@@ -92,7 +87,7 @@ export class WebsocketService {
       serializer: (value: string) => value,
       deserializer: (event: MessageEvent) => event.data
     });
-  
+
     // Suscribirse a los mensajes del websocket
     this.rxjsSocket.subscribe({
       next: (message: string) => this.handleMessage(message),
@@ -113,14 +108,11 @@ export class WebsocketService {
 
   // Desconecta el websocket
   disconnectRxjs() {
-    if (this.rxjsSocket && !this.rxjsSocket.closed) {
+    if (this.rxjsSocket) {
       console.log('WebSocketService: Desconectando WebSocket...');
-      this.isManualDisconnect = true; // Indica que la desconexión es manual
       this.onDisconnected();
       this.rxjsSocket.complete();
       this.rxjsSocket.unsubscribe();
-    } else {
-      console.log('WebSocketService: No hay conexión activa para cerrar');
     }
   }
 
@@ -128,28 +120,8 @@ export class WebsocketService {
   private onDisconnected() {
     console.log('WebSocketService: Desconectado del WebSocket');
     this.disconnected.next();
-  
-    // Solo mostrar alerta y redirigir si la desconexión no fue manual
-    if (!this.isManualDisconnect) {
-      alert('Se ha perdido la conexión con el servidor. Serás redirigido a la página principal.');
-  
-      // Redirigir al usuario a la vista '/main' dentro del contexto de Angular
-      this.ngZone.run(() => {
-        this.router.navigate(['/']);
-      });
-    }
-  
-    // Restablecer la bandera después de manejar la desconexión
-    this.isManualDisconnect = false;
-  
-    // Intenta reconectar solo si no estamos ya en proceso de reconexión
-    if (!this.isReconnecting) {
-      this.isReconnecting = true;
-      setTimeout(() => {
-        this.reconnectIfNeeded();
-        this.isReconnecting = false; // Restablecer el estado después de intentar reconectar
-      }, 3000); // Intenta reconectar después de 3 segundos
-    }
+    alert('Te has desconectado del websocket');
+    this.router.navigate(['/']);
   }
 
   // Método que llama al endpoint del servidor para empezar el juego
@@ -556,15 +528,9 @@ private handleMessage(message: string): void {
   }
 
   // Maneja errores en la conexión websocket
-  onError(error: any) {
+  private onError(error: any) {
     console.error('WebSocketService: Error en la conexión WebSocket:', error);
-  
-    if (error.code === 1006) { // Código de error para conexión cerrada inesperadamente
-      console.error('WebSocketService: Conexión cerrada inesperadamente. Intentando reconectar...');
-      this.onDisconnected();
-    } else {
-      console.error('WebSocketService: Error no manejado:', error);
-    }
+    this.disconnected.next();
   }
 
   // Normaliza las claves de un objeto a camelCase
@@ -603,17 +569,17 @@ private handleMessage(message: string): void {
   // Intenta reconectar el websocket si hay un token almacenado
   private reconnectIfNeeded() {
     const storedToken = sessionStorage.getItem(this.tokenKey);
-    if (storedToken && !this.isConnectedRxjs()) { // Solo reconectar si no hay una conexión activa
+    if (storedToken) {
       console.log('WebSocketService: Reconectando WebSocket con token almacenado');
       this.connectRxjs(storedToken); // Intentar reconectar
     } else {
-      console.log('WebSocketService: No hay token almacenado o ya hay una conexión activa');
+      console.log('WebSocketService: No hay token almacenado, no se puede reconectar');
     }
   }
 
   // Elimina el token almacenado (por ejemplo, al cerrar sesión)
-  clearToken(): void {
+  clearToken() {
     sessionStorage.removeItem(this.tokenKey);
     console.log('WebSocketService: Token eliminado');
-  }
+  }
 }

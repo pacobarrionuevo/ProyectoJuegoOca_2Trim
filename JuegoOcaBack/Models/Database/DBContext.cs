@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Hosting.Server;
 
 namespace JuegoOcaBack.Models.Database
 {
@@ -31,14 +32,12 @@ namespace JuegoOcaBack.Models.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string connection = "Server=db14832.databaseasp.net; Database=db14832; Uid=db14832; Pwd=c?3M7nZ%D6#z";
-
-            #if DEBUG
-                        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+#if DEBUG
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             optionsBuilder.UseSqlite($"DataSource={baseDir}{DATABASE_PATH}");
 #else
-                        
-                        optionsBuilder.UseMySql(connection, ServerVersion.AutoDetect(connection));
+            string connection = "Server=db14832.databaseasp.net; Database=db14832; Uid=db14832; Pwd=c?3M7nZ%D6#z";
+            optionsBuilder.UseMySql(connection, ServerVersion.AutoDetect(connection));
 #endif
         }
     }

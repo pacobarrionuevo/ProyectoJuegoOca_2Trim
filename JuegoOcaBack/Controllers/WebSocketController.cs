@@ -23,13 +23,14 @@ namespace JuegoOcaBack.Controllers
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
+                // Obtener userId del token JWT
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                 var username = User.FindFirst("apodo")?.Value
                       ?? User.FindFirst("unique_name")?.Value
                       ?? "Desconocido";
 
                 WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await _websocketNetwork.HandleAsync(webSocket, userId, username); 
+                await _websocketNetwork.HandleAsync(webSocket, userId, username);
             }
             else
             {
@@ -42,7 +43,7 @@ namespace JuegoOcaBack.Controllers
             var connectedUsers = _websocketNetwork.GetConnectedUsers();
             return Ok(new
             {
-                onlineUsers = connectedUsers,
+                onlineUsers = connectedUsers, // Propiedad "onlineUsers"
                 total = connectedUsers.Count
             });
         }

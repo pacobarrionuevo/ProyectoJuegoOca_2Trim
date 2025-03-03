@@ -127,6 +127,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
         position: p.position ?? p.Position,
         turnsToSkip: p.turnsToSkip ?? p.TurnsToSkip,
         isMoving: false,
+       
       }));
       
       console.log('Jugadores mapeados:', this.players);
@@ -261,19 +262,16 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     
 
   onTurnTimeout(): void {
-    // Notificar al servidor que se ha agotado el tiempo del turno para el jugador actual
     this.websocketService.sendRxjs(JSON.stringify({
       type: 'turnTimeout',
       playerId: this.currentPlayer.id,
       gameId: this.websocketService.currentGameId
     }));
-    // Mostrar mensaje en la UI
     this.moveMessage = 'Tiempo agotado. Has perdido el turno.';
     this.showMoveMessage = true;
     setTimeout(() => { this.showMoveMessage = false; }, 5000);
   }
 
-  // Función para abandonar la partida online
   public abandonGame(): void {
     this.websocketService.sendRxjs(JSON.stringify({
       type: 'abandonGame',
@@ -286,7 +284,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     this.winnerName = this.usuarioApodo;
     alert('Tu oponente ha abandonado la partida!');
   }
-  // Función para lanzar el dado
+
   public rollDice(): void {
     if (this.isCurrentPlayer) {
       this.websocketService.rollDice();
@@ -294,7 +292,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Métodos del chat
+
   sendMessage(): void {
     if (!this.newMessage.trim()) return;
     const sender = this.usuarioApodo;
@@ -312,7 +310,6 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     } catch (err) { }
   }
 
-  // Inicializa el tablero con 63 casillas y asigna su tipo
   initializeBoard(): void {
     this.cells = [];
     for (let i = 1; i <= 63; i++) {

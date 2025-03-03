@@ -38,6 +38,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             public GameService.GameType Type { get; set; }
             public List<WebSocketHandler> Players { get; set; } = new List<WebSocketHandler>();
             public List<string> RematchRequests { get; set; } = new List<string>();
+
         }
         public WebSocketNetwork(IServiceProvider serviceProvider)
         {
@@ -55,13 +56,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
             await _semaphore.WaitAsync();
             try
             {
-                var handlersSnapshot = _handlers.ToList();
-                Console.WriteLine($"Enviando mensaje a {handlersSnapshot.Count} clientes: {message}");
+                var handlersSnapshot = _handlers.ToList(); // Crear una copia de la lista para evitar problemas de concurrencia
                 foreach (var handler in handlersSnapshot)
                 {
-                    if (handler.IsOpen)
+                    if (handler.IsOpen) // Verificar si el WebSocket está abierto
                     {
-                        await handler.SendAsync(message);
+                        await handler.SendAsync(message); // Enviar el mensaje a cada cliente conectado
                     }
                 }
             }
@@ -111,7 +111,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             Interlocked.Increment(ref _activeConnections);
             OnActiveConnectionsChanged?.Invoke(_activeConnections);
 
-            var handler = await CreateHandlerAsync( userId, webSocket, username);
+            var handler = await CreateHandlerAsync(userId, webSocket, username);
             await AddUser(userId, handler);
 
             try
@@ -132,7 +132,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private async Task AddUser(int userId, WebSocketHandler handler)
         {
             _connectedUsers[userId] = handler;
-            Console.WriteLine($"Usuario {userId} conectado.");
         }
 
         private async Task<WebSocketHandler> CreateHandlerAsync(int userId, WebSocket webSocket, string username)
@@ -141,6 +140,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             using var scope = _serviceProvider.CreateScope();
             var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
 
+            // Aquí sí podemos usar userId para buscar al usuario
             var user = await wsMethods.GetUserById(userId);
             try
             {
@@ -149,11 +149,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 handler.Disconnected += OnDisconnectedHandler;
                 handler.MessageReceived += OnMessageReceivedHandler;
 
+                // Agregar el handler a la lista de handlers
                 _handlers.Add(handler);
 
+                // Agregar el handler a la lista de jugadores conectados
                 _connectedPlayers.Add(handler);
 
-                Console.WriteLine($"Nuevo cliente conectado. ID: {handler.Id}, Total de clientes: {_handlers.Count}");
                 return handler;
             }
             finally
@@ -164,7 +165,6 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private async Task OnDisconnectedHandler(WebSocketHandler handler)
         {
-            Console.WriteLine($"Evento de desconexión disparado para el usuario {handler.Id}.");
             await CleanupDisconnectedPlayer(handler);
             await UpdateUserStatusAsync(handler, "Desconectado");
             await NotifyFriendsAsync(handler, false);
@@ -192,6 +192,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }));
                 return;
             }
+
             using var scope = _serviceProvider.CreateScope();
             var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
             var inviterUser = await wsMethods.GetUserById(inviter.Id);
@@ -210,11 +211,10 @@ namespace JuegoOcaBack.WebSocketAdvanced
             await _waitingSemaphore.WaitAsync();
             try
             {
+
                 _handlers.Remove(handler);
                 _connectedPlayers.Remove(handler);
                 _waitingPlayers.Remove(handler);
-
-                Console.WriteLine($"Cliente desconectado. ID: {handler.Id}, Total de clientes: {_handlers.Count}");
             }
             finally
             {
@@ -225,11 +225,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         private async Task OnMessageReceivedHandler(WebSocketHandler handler, string message)
         {
-            Console.WriteLine($"Mensaje recibido de {handler.Id}: {message}");
 
             try
             {
+                // Deserializar a un objeto base con la propiedad Type
                 var baseMsg = JsonSerializer.Deserialize<WebSocketMessage>(message);
+                var gameService = GetGameService();
                 if (baseMsg == null)
                 {
                     Console.WriteLine("No se pudo deserializar el mensaje o es nulo.");
@@ -287,9 +288,11 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
                     case "moveplayer":
                         var movePlayerMessage = JsonSerializer.Deserialize<MovePlayerMessage>(message);
-                        Console.WriteLine($"Moviendo al jugador {movePlayerMessage.PlayerId} con dado {movePlayerMessage.DiceResult}");
-                        var gameService = GetGameService();
+
                         gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
+                        break;
+                    case "botTurn":
+                        gameService.BotMove();
                         break;
                     case "turnTimeout":
                         var timeoutMsg = JsonSerializer.Deserialize<TurnTimeoutMessage>(message);
@@ -311,9 +314,9 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         await HandleRematchResponse(handler, rematchResMsg);
                         break;
 
+
                     case "rolldice":
                         var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);
-                        Console.WriteLine($"Tirando dado para el jugador {rollDiceMessage.PlayerId}");
                         gameService = GetGameService();
 
                         if (!gameService.IsGameStarted())
@@ -333,13 +336,11 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         break;
 
                     default:
-                        Console.WriteLine($"Tipo de mensaje no reconocido: {baseMsg.Type}");
                         break;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error procesando mensaje: {ex.Message}");
                 await CleanupDisconnectedPlayer(handler);
             }
         }
@@ -383,23 +384,23 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public class MatchmakingMessageDTO : WebSocketMessage
         {
-            public string Type { get; set; } 
-            public int FriendId { get; set; } 
+            public string Type { get; set; } // Tipo de mensaje (inviteFriend, acceptInvitation, playWithBot, playRandom)
+            public int FriendId { get; set; } // ID del amigo (para invitaciones)
             public int HostId { get; set; }
             public string RoomId { get; set; }
         }
         public class WebSocketMessage
         {
-            [JsonPropertyName("type")] 
+            [JsonPropertyName("type")] // Asegúrate de que coincida con el JSON
             public string Type { get; set; }
         }
 
         public class MovePlayerMessage : WebSocketMessage
         {
-            [JsonPropertyName("playerId")]
+            [JsonPropertyName("playerId")] // Asegúrate de que coincida con el JSON
             public int PlayerId { get; set; }
 
-            [JsonPropertyName("diceResult")]
+            [JsonPropertyName("diceResult")] // Asegúrate de que coincida con el JSON
             public int DiceResult { get; set; }
         }
 
@@ -570,7 +571,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                gameType: GameService.GameType.Multiplayer,
                additionalPlayers: new List<string> { p2.Username }
            );
-            
+
             var session = new GameSession
             {
                 GameId = roomId,
@@ -670,7 +671,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             public int PlayerId { get; set; }
         }
 
-    
+
         private async Task ProcessAcceptFriendRequest(WebSocketHandler handler, int requestId)
         {
             using var scope = _serviceProvider.CreateScope();
