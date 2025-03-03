@@ -587,7 +587,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                gameType: GameService.GameType.Multiplayer,
                additionalPlayers: new List<string> { p2.Username }
            );
-
+            
             var session = new GameSession
             {
                 GameId = roomId,

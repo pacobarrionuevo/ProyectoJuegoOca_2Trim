@@ -45,20 +45,24 @@ public class GameService
         {
             AddBot();
         }
-        else if (additionalPlayers != null)
+        if (gameType == GameType.Multiplayer && additionalPlayers != null)
         {
             foreach (var player in additionalPlayers)
             {
-                AddPlayer(player);
+                if (!_players.Any(p => p.Name == player))   
+                {
+                    AddPlayer(player);
+                }
+
             }
+
+            _gameStarted = true;
+
+            Console.WriteLine($"Partida {gameType} iniciada con ID: {gameId}");
+            Console.WriteLine($"Jugadores: {string.Join(", ", _players.Select(p => p.Name))}");
+            Console.WriteLine($"Número de jugadores: {_players.Count}");
+            NotifyGameState();
         }
-
-        _gameStarted = true;
-
-        Console.WriteLine($"Partida {gameType} iniciada con ID: {gameId}");
-        Console.WriteLine($"Jugadores: {string.Join(", ", _players.Select(p => p.Name))}");
-        Console.WriteLine($"Número de jugadores: {_players.Count}");
-        NotifyGameState();
     }
 
     public bool IsGameStarted()
