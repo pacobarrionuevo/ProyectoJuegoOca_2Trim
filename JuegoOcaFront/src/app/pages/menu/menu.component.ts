@@ -202,9 +202,10 @@ export class MenuComponent implements OnInit, OnDestroy {
     }));
   }
 
-  invitarAPartida(friendId: number): void {
+  invitarAPartida(friendId: number,idAmigo?: string): void {
+    console.log(`[INVITAR] Enviando invitación a ${idAmigo}`);
     if (!friendId || friendId === this.usuarioId) return;
-    
+   
     if (!this.webSocketService.isConnectedRxjs()) {
       const token = this.authService.getUserDataFromToken();
       if (token) this.webSocketService.connectRxjs(token);

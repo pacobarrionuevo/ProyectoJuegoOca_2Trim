@@ -336,14 +336,18 @@ private handleMessage(message: string): void {
 
   // Maneja una invitación de amigo
   private handleFriendInvitation(message: any): void {
-    console.log('Invitación recibida de:', message.fromUserNickname);
-   
+    const accept = confirm(`${message.fromUserNickname} te ha invitado a jugar. ¿Aceptas?`);
+  if (accept) {
     const response = {
-        type: 'acceptInvitation',
-        inviterId: message.fromUserId
+      type: 'acceptInvitation',
+      inviterId: message.fromUserId
     };
     this.sendRxjs(JSON.stringify(response));
+  } else {
+    // Opcional: puedes enviar una respuesta de rechazo o simplemente no hacer nada
+    console.log("El usuario ha rechazado la invitación.");
   }
+}
   private handleGameReady(message: any): void {
     this.ngZone.run(() => {
       this.messageReceived.next({

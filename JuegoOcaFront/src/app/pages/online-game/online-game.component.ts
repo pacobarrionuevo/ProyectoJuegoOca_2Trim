@@ -108,14 +108,27 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Suscribirse a actualizaciones del estado del juego
+    
     this.websocketService.gameStateUpdated.subscribe((state: any) => {
-      // Actualiza la lista de jugadores, turno actual y resultado del dado
-      const playersArray = Array.isArray(state.players) ? state.players : Object.values(state.players);
-      this.players = [...playersArray];
+      console.log('Estado recibido:', state); 
+    
+      
+      const players = Array.isArray(state.players) 
+        ? state.players 
+        : Object.values(state.players);
+  
+      this.players = players.map(p => ({
+        ...p,
+        isMoving: false,
+      }));
+    
+      console.log('Jugadores actualizados:', this.players); // Log para depuración
+    
+      // Actualizar jugador actual
       this.currentPlayer = this.players.find(
         p => p.id === (state.currentPlayer?.id || -1)
       );
+    
       this.diceResult = state.diceResult;
       // Reinicia el temporizador cada vez que cambia el turno
       this.startTurnTimer();
