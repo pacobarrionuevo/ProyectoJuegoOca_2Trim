@@ -1,5 +1,4 @@
 <div class="game-container">
-  <!-- Marcador y controles -->
   <div class="marker">
     <div class="player-info">
       <h2>{{usuarioApodo}}</h2>
@@ -29,7 +28,6 @@
     </div>
   </div>
 
-  <!-- Tablero -->
   <div class="board">
     <div *ngFor="let cell of cells" class="cell" 
          [class.cell-oca]="cell.type === 'Oca'"
@@ -56,7 +54,7 @@
         <span *ngFor="let player of getPlayersInCell(cell.number)" 
               class="player" 
               [style.background-color]="player.color"
-              [class.moving]="player.isMoving"> <!-- Aplica la clase de animación -->
+              [class.moving]="player.isMoving">
           {{ player.name }}
         </span>
       </div>

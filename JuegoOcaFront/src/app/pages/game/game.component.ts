@@ -34,7 +34,7 @@ export class GameComponent implements OnInit {
   players: any[] = [];
   currentPlayer: any;
   diceResult: number | null = null;
-  cells: any[] = []; // Casillas del tablero
+  cells: any[] = [];
 
   usuarioApodo: string = '';
   usuarioFotoPerfil: string = '';
@@ -52,7 +52,6 @@ export class GameComponent implements OnInit {
 
   isSending: boolean = false;
 
-  // Inyecta el WebsocketService
   constructor(private websocketService: WebsocketService, private imageService: ImageService, private authService: AuthService,
       private router: Router) {
     this.versus = this.imageService.getImageUrl('Street_Fighter_VS_logo.png');
@@ -74,18 +73,15 @@ export class GameComponent implements OnInit {
   ngOnInit(): void {
     console.log('Inicializando GameComponent...');
 
-    // Inicializar el tablero
     this.initializeBoard();
 
     this.cargarInfoUsuario();
 
-    // Iniciar la partida y obtener los jugadores
-    const playerName = this.usuarioApodo; // Nombre del jugador humano
+    const playerName = this.usuarioApodo;
     this.websocketService.startGame('12345', playerName).subscribe((response) => {
         if (response && response.players) {
             console.log('Partida iniciada correctamente:', response);
             this.players = response.players;
-            // Establecer el usuario real
             const currentUser = this.players.find(player => player.name !== "Bot");
             if (currentUser) {
                 console.log('Usuario real detectado:', currentUser);
@@ -93,8 +89,6 @@ export class GameComponent implements OnInit {
             } else {
                 console.warn('No se encontró un usuario real en la lista de jugadores.');
             }
-
-            // Asignar el primer jugador como currentPlayer
             this.currentPlayer = this.players[0];
             this.websocketService.setCurrentPlayer(this.currentPlayer);
             console.log('Jugador actual asignado:', this.currentPlayer);
@@ -103,28 +97,24 @@ export class GameComponent implements OnInit {
         }
     });
 
-    // Suscribirse a las actualizaciones del estado del juego
     this.websocketService.gameStateUpdated.subscribe((state: any) => {
       console.log('Actualización del estado del juego recibida en GameComponent:', state);
-  
-      // Convertir players en un arreglo si es un objeto
+
       const playersArray = Array.isArray(state.players) ? state.players : Object.values(state.players);
   
-      // Actualizar las propiedades del componente
-      this.players = [...playersArray]; // Crear una nueva instancia del arreglo
-      this.currentPlayer = { ...state.currentPlayer }; // Crear una nueva instancia del objeto
+      this.players = [...playersArray];
+      this.currentPlayer = { ...state.currentPlayer };
       this.diceResult = state.diceResult;
   
       console.log('Jugadores actualizados en GameComponent:', this.players);
       console.log('Jugador actual actualizado en GameComponent:', this.currentPlayer);
       console.log('Resultado del dado actualizado en GameComponent:', this.diceResult);
-  
-      // Si es el turno del bot, realizar una tirada automática
+
       if (this.currentPlayer && this.currentPlayer.name === "Bot") {
           console.log('Es el turno del bot. Realizando tirada automática...');
           setTimeout(() => {
               this.websocketService.rollDice();
-          }, 5000); // Esperar 5 segundo antes de que el bot tire el dado
+          }, 3000);
       }
     });
 
@@ -134,14 +124,12 @@ export class GameComponent implements OnInit {
       }
     });
 
-    // Subscribirse a que se envíen mensajes de los resultados del turno
     this.websocketService.messageReceived.subscribe((message: any) => {
       if (message.type === 'moveResult') {
           this.showMoveResult(message);
       }
     });
 
-    // Suscribirse al mensaje de fin de juego
     this.websocketService.messageReceived.subscribe((message: any) => {
         if (message.type === 'gameOver') {
           this.gameOver = true;
@@ -149,7 +137,6 @@ export class GameComponent implements OnInit {
         }
     });
 
-    // Subscribirse al evento del chat de la partida
     this.websocketService.messageReceived.subscribe((message: any) => {
       console.log("MENSAJE")
       if (message.type === 'chatMessage') {
@@ -160,19 +147,19 @@ export class GameComponent implements OnInit {
 }
 
 sendMessage(): void {
-  if (this.isSending || !this.newMessage.trim()) return; // Evitar duplicados
+  if (this.isSending || !this.newMessage.trim()) return;
 
-  this.isSending = true; // Bloquear el envío
+  this.isSending = true; 
 
-  const sender = this.usuarioApodo; // Obtén el nombre del usuario actual
+  const sender = this.usuarioApodo; 
   this.websocketService.sendRxjs(JSON.stringify({
     type: 'chatMessage',
     sender: sender,
     text: this.newMessage
   }));
 
-  this.newMessage = ''; // Limpiar el input
-  this.isSending = false; // Desbloquear el envío
+  this.newMessage = ''; 
+  this.isSending = false;
 }
 
 scrollChatToBottom(): void {
@@ -182,21 +169,16 @@ scrollChatToBottom(): void {
 }
 
 showGameOverModal(winnerName: string): void {
-    // Aquí puedes mostrar un modal con el resultado del juego
     alert(`El juego ha terminado. El ganador es: ${winnerName}`);
-    
-    // Redirigir al usuario a la vista '/matchmaking'
     this.router.navigate(['/matchmaking']);
 }
 
 showSkipTurnMessage(message: any): void {
   this.moveMessage = `${message.playerName} pierde ${message.turnsToSkip} turno(s).`;
   this.showMoveMessage = true;
-
-  // Ocultar el mensaje después de unos segundos
   setTimeout(() => {
       this.showMoveMessage = false;
-  }, 5000); // 5 segundos
+  }, 2000);
 }
 
 showMoveResult(message: any): void {
@@ -206,11 +188,9 @@ showMoveResult(message: any): void {
       this.moveMessage += message.specialMessage;
   }
   this.showMoveMessage = true;
-
-  // Ocultar el mensaje después de unos segundos
   setTimeout(() => {
       this.showMoveMessage = false;
-  }, 5000); // 5 segundos
+  }, 2000);
 }
 
 validarUrlImagen(fotoPerfil: string | null): string {
@@ -225,7 +205,7 @@ validarUrlImagen(fotoPerfil: string | null): string {
       this.usuarioId = userInfo.id;
     } else {
       console.error('No se pudo obtener la información del usuario. ¿El token está disponible?');
-      this.router.navigate(['/login']); // Redirigir al login si no hay token
+      this.router.navigate(['/login']); 
     }
   }
 
@@ -238,27 +218,18 @@ validarUrlImagen(fotoPerfil: string | null): string {
     return this.players.filter(player => player.position === cellNumber);
   }
 
-  /**
-   * Verifica si el jugador actual es el usuario real.
-   */
   get isCurrentPlayer(): boolean {
     const currentUser = this.websocketService.getCurrentUser(); // Obtener el usuario real desde el servicio
     const isCurrent = this.currentPlayer && this.currentPlayer.id === currentUser?.id;
     return isCurrent;
   }
 
-  /**
-   * Inicializa el tablero con 63 casillas.
-   */
   initializeBoard(): void {
     for (let i = 1; i <= 63; i++) {
       this.cells.push({ number: i, type: this.getCellType(i) });
     }
   }
 
-  /**
-   * Obtiene el tipo de casilla (Oca, Puente, Posada, Muerte, etc.).
-   */
   getCellType(cellNumber: number): string {
     if (cellNumber === 1) return 'Inicio';
     if (cellNumber === 2 || cellNumber === 3 || cellNumber === 4 || cellNumber === 28 || cellNumber === 29 
@@ -285,21 +256,18 @@ validarUrlImagen(fotoPerfil: string | null): string {
     return 'Normal';
   }
 
-  /**
-   * Calcula la posición (x, y) de una celda en el tablero en espiral invertida.
-   */
+  // Este es el método que calcula la posición (x, y) de una celda en el tablero del juego
   getCellPosition(cellNumber: number): { x: number, y: number } {
     // Tamaño de cada celda (ancho y alto)
-    const cellSize = 60; // Ajusta el tamaño de las celdas según sea necesario
+    const cellSize = 60;
 
-    // Número de casillas por lado del tablero
-    const boardSize = 9; // Tablero de 9x9 (centrado en la casilla 63)
+    const boardSize = 9; // Tablero de 9x9 centrado en la casilla 63 (no es el de la oca original pero close enough)
 
     // Coordenadas del centro del tablero
     const centerX = (boardSize * cellSize) / 2;
     const centerY = (boardSize * cellSize) / 2;
 
-    // Calcular la posición en espiral invertida
+    // Llamamos al método que calcula la posición en espiral invertida
     const spiralPosition = this.calculateInverseSpiralPosition(cellNumber, boardSize);
 
     // Calcular las coordenadas (x, y) basadas en la posición en espiral
@@ -309,20 +277,22 @@ validarUrlImagen(fotoPerfil: string | null): string {
     return { x, y };
   }
 
-  /**
-   * Calcula la posición en espiral invertida para una celda dada.
-   */
+  // Calcula la posición en espiral invertida para una celda dada, para cuando se tenga que mover una ficha a una casilla que no sea horizontal
   calculateInverseSpiralPosition(cellNumber: number, boardSize: number): { x: number, y: number } {
     // Invertir el número de la celda para comenzar desde el centro
-    const invertedCellNumber = 64 - cellNumber; // 63 -> 1, 62 -> 2, ..., 1 -> 63
+    const invertedCellNumber = 64 - cellNumber;
 
-    // Lógica para calcular la posición en espiral
+    // Variables
+
     let x = 0;
     let y = 0;
-    let direction = 0; // 0: derecha, 1: abajo, 2: izquierda, 3: arriba
-    let steps = 1; // Número de pasos en la dirección actual
-    let stepCount = 0; // Contador de pasos en la dirección actual
-    let stepSize = 1; // Tamaño del paso actual
+
+    // 0: derecha, 1: abajo, 2: izquierda, 3: arriba
+
+    let direction = 0;
+    let steps = 1;
+    let stepCount = 0;
+    let stepSize = 1;
 
     for (let i = 1; i < invertedCellNumber; i++) {
       // Mover en la dirección actual
@@ -346,11 +316,8 @@ validarUrlImagen(fotoPerfil: string | null): string {
     return { x, y };
   }
 
-  /**
-   * Lanza los dados.
-   */
   rollDice(): void {
     console.log('Lanzando dado...');
-    this.websocketService.rollDice(); // Llama al método rollDice del WebsocketService
+    this.websocketService.rollDice();
   }
 }

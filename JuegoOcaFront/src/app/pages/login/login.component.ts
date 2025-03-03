@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AuthRequest } from '../../models/auth-request';
-import { WebsocketService } from '../../services/websocket.service'; 
 
 @Component({
   selector: 'app-login',
@@ -52,8 +51,12 @@ export class LoginComponent {
       }
 
       this.router.navigate(['/menu']);
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
+    } catch (error: any) {
+      if (error.status === 400 && error.error.message === "Usuario baneado") {
+        alert("Usuario baneado: No puedes iniciar sesión.");
+      } else {
+        console.error("Error al iniciar sesión:", error);
+      }
     }
   }
 }

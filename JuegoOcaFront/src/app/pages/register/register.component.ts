@@ -58,7 +58,7 @@ export class RegisterComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    const image = event.target.files[0] as File; // Here we use only the first file (single file)
+    const image = event.target.files[0] as File;
     this.addOrEditForm.patchValue({ file: image });
   }
 

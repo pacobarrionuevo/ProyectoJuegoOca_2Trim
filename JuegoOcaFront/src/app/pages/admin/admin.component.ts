@@ -24,6 +24,8 @@ export class AdminComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    // Si no eres admin, primeramente no puedes entrar a la vista.
+    // Pero si dejaras de serlo, te sacaría de la vista automáticamente
     this.authService.isAdmin$.subscribe(admin => {
       this.esAdmin = admin;
       if (!admin) {
@@ -52,19 +54,21 @@ export class AdminComponent implements OnInit {
     });
   }
 
-  cambiarRol(usuario: User): void {
-    const nuevoRol = usuario.Rol === 'admin' ? 'usuario' : 'admin';
-    
+  cambiarRol(usuario: User, event: Event): void {
+    const selectElement = event.target as HTMLSelectElement;
+    const nuevoRol = selectElement.value;
+  
     if (confirm(`¿Cambiar rol de ${usuario.UsuarioApodo} a ${nuevoRol}?`)) {
       this.adminService.actualizarRol(usuario.UsuarioId!, nuevoRol).subscribe({
-        
         next: (actualizado) => {
-          usuario.Rol = actualizado.Rol;
+          console.log('Respuesta del servidor:', actualizado);
+          usuario.Rol = actualizado.Rol || actualizado.rol;
         },
         error: (err) => console.error('Error actualizando rol:', err)
       });
     }
   }
+  
 
   toggleBaneo(usuario: User): void {
     const accion = usuario.EstaBaneado ? 'desbanear' : 'banear';

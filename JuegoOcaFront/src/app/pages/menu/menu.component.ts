@@ -179,8 +179,7 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.errorMessage = message.reason || 'Solicitud rechazada';
     setTimeout(() => this.errorMessage = null, 5000);
   }
-
-  // Métodos de interacción del usuario
+  
   enviarSolicitud(receiverId: number): void {
     this.webSocketService.sendRxjs(JSON.stringify({
       type: 'sendFriendRequest',
@@ -216,7 +215,6 @@ export class MenuComponent implements OnInit, OnDestroy {
     }));
   }
 
-  // Métodos auxiliares
   private cargarInfoUsuario(): void {
     const userInfo = this.authService.getUserData();
     if (userInfo) {

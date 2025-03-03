@@ -19,10 +19,11 @@
         <td>{{ usuario.UsuarioApodo }}</td>
         <td>{{ usuario.UsuarioEmail }}</td>
         <td>
-          <select [(ngModel)]="usuario.Rol" (change)="cambiarRol(usuario)">
+          <select [(ngModel)]="usuario.Rol" (change)="cambiarRol(usuario, $event)">
             <option value="usuario">Usuario</option>
             <option value="admin">Administrador</option>
           </select>
+          
         </td>
         <td>
           <button class="ban-button" (click)="toggleBaneo(usuario)">

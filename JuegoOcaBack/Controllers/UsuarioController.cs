@@ -82,7 +82,16 @@ namespace JuegoOcaBack.Controllers
             usuario.Rol = dto.NuevoRol;
             await _context.SaveChangesAsync();
 
-            return Ok(usuario);
+            return Ok(new
+            {
+                UsuarioId = usuario.UsuarioId,
+                UsuarioApodo = usuario.UsuarioApodo,
+                UsuarioEmail = usuario.UsuarioEmail,
+                UsuarioFotoPerfil = usuario.UsuarioFotoPerfil,
+                Rol = usuario.Rol,
+                EstaBaneado = usuario.EstaBaneado
+            });
+
         }
 
         [HttpPatch("usuarios/{id}/baneo")]
@@ -179,6 +188,11 @@ namespace JuegoOcaBack.Controllers
             if (user == null)
             {
                 return Unauthorized("Usuario no existe");
+            }
+
+            if (user.EstaBaneado)
+            {
+                return BadRequest(new { message = "Usuario baneado" });
             }
 
             if (!PasswordHelper.Hash(usuarioLoginDto.UsuarioContrasena).Equals(user.UsuarioContrasena))

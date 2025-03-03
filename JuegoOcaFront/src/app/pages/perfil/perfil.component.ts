@@ -92,7 +92,7 @@ import { environment } from '../../../environments/environment';
           UsuarioConfirmarContrasena: formData.confirmPassword
         };
     
-        console.log('ID del usuario:', this.usuario.UsuarioId); // Usa usuarioId en minúscula
+        console.log('ID del usuario:', this.usuario.UsuarioId);
         if (!this.usuario.UsuarioId) {
           console.error('El ID del usuario es undefined');
           return;
@@ -105,7 +105,7 @@ import { environment } from '../../../environments/environment';
               this.router.navigate(['/login']);
             } else {
               this.errorMessage = null;
-              this.ngOnInit(); // Recargar el componente para reflejar los cambios
+              this.ngOnInit();
             }
           },
           error: (err) => {
@@ -138,7 +138,6 @@ import { environment } from '../../../environments/environment';
       if (file) {
         this.apiService.subirAvatar(this.usuario!.UsuarioId!, file).subscribe({
           next: (response) => {
-            // Actualiza la URL de la imagen del perfil
             this.usuario!.UsuarioFotoPerfil = this.validarUrlImagen(response.UsuarioFotoPerfil);
             this.perfilForm.patchValue({ avatar: this.usuario!.UsuarioFotoPerfil });
           },

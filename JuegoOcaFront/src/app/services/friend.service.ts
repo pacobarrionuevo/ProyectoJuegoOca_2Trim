@@ -14,21 +14,18 @@ export class FriendService {
   
   constructor(private http: HttpClient) { }
 
-  // Método para obtener la lista de amigos (el backend toma el usuario desde el token)
   getFriendsList(): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/friends`, {
       headers: this.getHeader()
     });
   }
 
-  // Método para obtener las solicitudes pendientes (el backend toma el usuario desde el token)
   getPendingRequests(): Observable<SolicitudAmistad[]> {
     return this.http.get<SolicitudAmistad[]>(`${this.apiUrl}/pending`, {
       headers: this.getHeader()
     });
   }
 
-  // Método para enviar solicitud de amistad
   sendFriendRequest(receiverId: number): Observable<SendFriendRequest> {
     const params = new HttpParams().set('receiverId', receiverId.toString());
     return this.http.post<SendFriendRequest>(`${this.apiUrl}/send`, {}, {
@@ -37,8 +34,6 @@ export class FriendService {
     });
   }
   
-
-  // Método para aceptar una solicitud de amistad
   aceptarSolicitud(amistadId: number | null): Observable<any> {
     if (amistadId == null) {
       console.error('Error: amistadId es null o undefined');
@@ -52,8 +47,6 @@ export class FriendService {
     });
   }
   
-
-  // Método para rechazar una solicitud de amistad
   rechazarSolicitud(amistadId: number): Observable<any> {
     const params = new HttpParams().set('amistadId', amistadId.toString());
     return this.http.post(`${this.apiUrl}/reject`, null, {
@@ -62,7 +55,6 @@ export class FriendService {
     });
   }
 
-  // Método auxiliar para configurar las cabeceras, incluyendo el token de autorización
   private getHeader(contentType: string | null = 'application/json'): HttpHeaders {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     let headers: any = {};
