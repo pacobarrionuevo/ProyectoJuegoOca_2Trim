@@ -16,6 +16,7 @@ using static JuegoOcaBack.WebSocketAdvanced.WebSocketNetwork;
 
 namespace JuegoOcaBack.WebSocketAdvanced
 {
+
     public class WebSocketNetwork
     {
         private int _idCounter;
@@ -105,12 +106,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
-        public async Task HandleAsync(WebSocket webSocket, int userId)
+        public async Task HandleAsync(WebSocket webSocket, int userId, string username)
         {
             Interlocked.Increment(ref _activeConnections);
             OnActiveConnectionsChanged?.Invoke(_activeConnections);
 
-            var handler = await CreateHandlerAsync(webSocket);
+            var handler = await CreateHandlerAsync( userId, webSocket, username);
             await AddUser(userId, handler);
 
             try
@@ -134,12 +135,18 @@ namespace JuegoOcaBack.WebSocketAdvanced
             Console.WriteLine($"Usuario {userId} conectado.");
         }
 
-        private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket)
+        private async Task<WebSocketHandler> CreateHandlerAsync(int userId, WebSocket webSocket, string username)
         {
             await _connectedSemaphore.WaitAsync();
+            using var scope = _serviceProvider.CreateScope();
+            var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
+
+            // Aquí sí podemos usar userId para buscar al usuario
+            var user = await wsMethods.GetUserById(userId);
             try
             {
-                var handler = new WebSocketHandler(Interlocked.Increment(ref _idCounter), webSocket);
+                var handler = new WebSocketHandler(userId, webSocket, username: user?.UsuarioApodo ?? "Usuario desconocido");
+
                 handler.Disconnected += OnDisconnectedHandler;
                 handler.MessageReceived += OnMessageReceivedHandler;
 

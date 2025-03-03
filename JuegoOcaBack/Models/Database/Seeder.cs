@@ -50,29 +50,7 @@ namespace JuegoOcaBack.Models.Database
 
             };
 
-            Usuario usuario3 = new Usuario()
-            {
-                UsuarioId = 3,
-                UsuarioApodo = "Laura",
-                UsuarioEmail = "laura@gmail.com",
-                UsuarioContrasena = PasswordHelper.Hash("laura33"),
-                UsuarioConfirmarContrasena = PasswordHelper.Hash("laura33"),
-                UsuarioFotoPerfil = "Perfil_Deffault.png",
-                UsuarioAmistad = new List<UsuarioTieneAmistad>(),
-                UsuarioEstado = "Desconectado"
-            };
-
-            Usuario usuario4 = new Usuario()
-            {
-                UsuarioId = 4,
-                UsuarioApodo = "Carlos",
-                UsuarioEmail = "carlos@gmail.com",
-                UsuarioContrasena = PasswordHelper.Hash("carlos33"),
-                UsuarioConfirmarContrasena = PasswordHelper.Hash("carlos33"),
-                UsuarioFotoPerfil = "Perfil_Deffault.png",
-                UsuarioAmistad = new List<UsuarioTieneAmistad>(),
-                UsuarioEstado = "Desconectado"
-            };
+            
 
             // Amistad entre usuario1 y usuario2
             Amistad amistad1 = new Amistad()
@@ -108,36 +86,17 @@ namespace JuegoOcaBack.Models.Database
                 AmistadUsuario = new List<UsuarioTieneAmistad>()
             };
 
-            UsuarioTieneAmistad uta3 = new UsuarioTieneAmistad()
-            {
-                UsuarioId = usuario3.UsuarioId,
-                AmistadId = amistad2.AmistadId,
-                usuario = usuario3,
-                amistad = amistad2,
-                esQuienMandaSolicitud = true
-            };
-
-            UsuarioTieneAmistad uta4 = new UsuarioTieneAmistad()
-            {
-                UsuarioId = usuario4.UsuarioId,
-                AmistadId = amistad2.AmistadId,
-                usuario = usuario4,
-                amistad = amistad2,
-                esQuienMandaSolicitud = false
-            };
 
             amistad1.AmistadUsuario.Add(uta1);
             amistad1.AmistadUsuario.Add(uta2);
-            amistad2.AmistadUsuario.Add(uta3);
-            amistad2.AmistadUsuario.Add(uta4);
+            
 
             usuario1.UsuarioAmistad.Add(uta1);
             usuario2.UsuarioAmistad.Add(uta2);
-            usuario3.UsuarioAmistad.Add(uta3);
-            usuario4.UsuarioAmistad.Add(uta4);
+           
 
             // Insertar usuarios y relaciones en la base de datos
-            await _dBContext.AddRangeAsync(usuario1, usuario2, usuario3, usuario4, amistad1, amistad2, uta1, uta2, uta3, uta4);
+            await _dBContext.AddRangeAsync(usuario1, usuario2, amistad1, uta1, uta2);
             await _dBContext.SaveChangesAsync();
         }
     }

@@ -48,7 +48,6 @@
 
     <div class="lista" *ngFor="let amigo of amigosFiltrados">
       <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
-      <img *ngIf="amigo.UsuarioFotoPerfil" [src]="amigo.UsuarioFotoPerfil" alt="Foto de perfil" width="100"> 
         <p><strong> {{ amigo.UsuarioApodo || 'Sin apodo' }} </strong></p>&nbsp;
         <p *ngIf="isUserOnline(amigo.UsuarioId)" class="estado-conectado">🟢 Conectado 🟢</p>
       <p *ngIf="!isUserOnline(amigo.UsuarioId)" class="estado-desconectado">🔴 Desconectado 🔴</p>
