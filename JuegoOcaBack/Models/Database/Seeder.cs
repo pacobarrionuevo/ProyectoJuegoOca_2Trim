@@ -47,7 +47,7 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
                 UsuarioEstado = "Desconectado",
                 Rol = "admin",
-                EstaBaneado = false
+                EstaBaneado = false,
             };
 
             Amistad amistad1 = new Amistad()
@@ -74,7 +74,6 @@ namespace JuegoOcaBack.Models.Database
                 amistad = amistad1,
                 esQuienMandaSolicitud = false
             };
-
 
             amistad1.AmistadUsuario.Add(uta1);
             amistad1.AmistadUsuario.Add(uta2);

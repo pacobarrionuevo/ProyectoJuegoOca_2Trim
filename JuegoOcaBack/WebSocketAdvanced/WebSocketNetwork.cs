@@ -16,13 +16,14 @@ using static JuegoOcaBack.WebSocketAdvanced.WebSocketNetwork;
 
 namespace JuegoOcaBack.WebSocketAdvanced
 {
+
     public class WebSocketNetwork
     {
         private int _idCounter;
         private readonly List<WebSocketHandler> _handlers = new List<WebSocketHandler>();
         private readonly List<WebSocketHandler> _connectedPlayers = new List<WebSocketHandler>();
         private readonly List<WebSocketHandler> _waitingPlayers = new List<WebSocketHandler>();
-
+        private readonly Dictionary<string, GameSession> _activeGames = new Dictionary<string, GameSession>();
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim _connectedSemaphore = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim _waitingSemaphore = new SemaphoreSlim(1, 1);
@@ -31,7 +32,13 @@ namespace JuegoOcaBack.WebSocketAdvanced
         private readonly IServiceProvider _serviceProvider;
         private static int _activeConnections = 0;
         public event Action<int> OnActiveConnectionsChanged;
-
+        private class GameSession
+        {
+            public string GameId { get; set; }
+            public GameService.GameType Type { get; set; }
+            public List<WebSocketHandler> Players { get; set; } = new List<WebSocketHandler>();
+            public List<string> RematchRequests { get; set; } = new List<string>();
+        }
         public WebSocketNetwork(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
@@ -99,12 +106,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
             }
         }
 
-        public async Task HandleAsync(WebSocket webSocket, int userId)
+        public async Task HandleAsync(WebSocket webSocket, int userId, string username)
         {
             Interlocked.Increment(ref _activeConnections);
             OnActiveConnectionsChanged?.Invoke(_activeConnections);
 
-            var handler = await CreateHandlerAsync(webSocket);
+            var handler = await CreateHandlerAsync( userId, webSocket, username);
             await AddUser(userId, handler);
 
             try
@@ -128,12 +135,18 @@ namespace JuegoOcaBack.WebSocketAdvanced
             Console.WriteLine($"Usuario {userId} conectado.");
         }
 
-        private async Task<WebSocketHandler> CreateHandlerAsync(WebSocket webSocket)
+        private async Task<WebSocketHandler> CreateHandlerAsync(int userId, WebSocket webSocket, string username)
         {
             await _connectedSemaphore.WaitAsync();
+            using var scope = _serviceProvider.CreateScope();
+            var wsMethods = scope.ServiceProvider.GetRequiredService<WebSocketMethods>();
+
+            // Aquí sí podemos usar userId para buscar al usuario
+            var user = await wsMethods.GetUserById(userId);
             try
             {
-                var handler = new WebSocketHandler(Interlocked.Increment(ref _idCounter), webSocket);
+                var handler = new WebSocketHandler(userId, webSocket, username: user?.UsuarioApodo ?? "Usuario desconocido");
+
                 handler.Disconnected += OnDisconnectedHandler;
                 handler.MessageReceived += OnMessageReceivedHandler;
 
@@ -285,6 +298,25 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         var gameService = GetGameService();
                         gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
                         break;
+                    case "turnTimeout":
+                        var timeoutMsg = JsonSerializer.Deserialize<TurnTimeoutMessage>(message);
+                        await HandleTurnTimeout(handler, timeoutMsg);
+                        break;
+
+                    case "abandongame":
+                        var abandonMsg = JsonSerializer.Deserialize<AbandonGameMessage>(message);
+                        await HandleAbandonGame(handler, abandonMsg);
+                        break;
+
+                    case "rematchrequest":
+                        var rematchReqMsg = JsonSerializer.Deserialize<RematchRequestMessage>(message);
+                        await HandleRematchRequest(handler, rematchReqMsg);
+                        break;
+
+                    case "rematchresponse":
+                        var rematchResMsg = JsonSerializer.Deserialize<RematchResponseMessage>(message);
+                        await HandleRematchResponse(handler, rematchResMsg);
+                        break;
 
                     case "rolldice":
                         var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);
@@ -319,6 +351,34 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 Console.WriteLine($"Error procesando mensaje: {ex.Message}");
                 await CleanupDisconnectedPlayer(handler);
             }
+        }
+        private async Task HandleRematchRequest(WebSocketHandler handler, RematchRequestMessage message)
+        {
+            if (_activeGames.TryGetValue(message.GameId, out var session))
+            {
+                session.RematchRequests.Add(handler.Id.ToString());
+
+                if (session.RematchRequests.Count == session.Players.Count)
+                {
+                    await StartRematch(session);
+                }
+            }
+        }
+        private async Task StartRematch(GameSession session)
+        {
+            var gameService = GetGameService();
+            gameService.RestartGame(session.GameId);
+
+            foreach (var player in session.Players)
+            {
+                await player.SendAsync(JsonSerializer.Serialize(new
+                {
+                    type = "rematchAccepted",
+                    gameId = session.GameId
+                }));
+            }
+
+            session.RematchRequests.Clear();
         }
 
         public class ChatMessage : WebSocketMessage
@@ -388,7 +448,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
 
         // Clases con propiedades opcionales para evitar problemas de herencia y constructores
-       
+
 
         public class GameReadyMessage
         {
@@ -447,17 +507,95 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         _waitingPlayers.RemoveRange(0, 2);
                     }
                 }
+                if (handler.MessageType == "playWithBot")
+                {
+                    var gameId = Guid.NewGuid().ToString();
+                    var gameService = GetGameService();
+
+                    gameService.StartGame(
+                        gameId: gameId,
+                        playerName: handler.Username,
+                        gameType: GameService.GameType.Bot
+                    );
+
+                    var session = new GameSession
+                    {
+                        GameId = gameId,
+                        Type = GameService.GameType.Bot,
+                        Players = { handler }
+                    };
+
+                    _activeGames.Add(gameId, session);
+
+                    await handler.SendAsync(JsonSerializer.Serialize(new
+                    {
+                        type = "gameReady",
+                        gameId = gameId,
+                        opponentId = -1
+                    }));
+                }
             }
             finally
             {
                 _waitingSemaphore.Release();
             }
         }
+        private async Task HandleAbandonGame(WebSocketHandler handler, AbandonGameMessage message)
+        {
+            if (_activeGames.TryGetValue(message.GameId, out var session))
+            {
+                var gameService = GetGameService();
 
+                // Eliminar jugador de la sesión
+                session.Players.Remove(handler);
+
+                // Notificar a otros jugadores
+                foreach (var player in session.Players)
+                {
+                    await player.SendAsync(JsonSerializer.Serialize(new
+                    {
+                        type = "playerAbandoned",
+                        gameId = message.GameId,
+                        playerId = handler.Id
+                    }));
+                }
+
+                // Manejar diferente según el tipo de juego
+                if (session.Type == GameService.GameType.Bot)
+                {
+                    gameService.DeclareWinner(-1);
+                }
+                else
+                {
+                    if (session.Players.Count == 1)
+                    {
+                        gameService.DeclareWinner(session.Players[0].Id);
+                    }
+                }
+
+                _activeGames.Remove(message.GameId);
+            }
+        }
         private async Task CreateMatch(WebSocketHandler p1, WebSocketHandler p2)
         {
             var roomId = Guid.NewGuid().ToString();
+            var gameService = GetGameService();
 
+            gameService.StartGame(
+               gameId: roomId,
+               playerName: p1.Username,
+               gameType: GameService.GameType.Multiplayer,
+               additionalPlayers: new List<string> { p2.Username }
+           );
+            
+            var session = new GameSession
+            {
+                GameId = roomId,
+                Type = GameService.GameType.Multiplayer,
+                Players = { p1, p2 }
+            };
+
+            _activeGames.Add(roomId, session);
             var msg1 = new GameReadyMessage
             {
                 Type = "gameReady",
@@ -540,7 +678,16 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 }
             }
         }
+        public class TurnTimeoutMessage : WebSocketMessage
+        {
+            [JsonPropertyName("gameId")]
+            public string GameId { get; set; }
 
+            [JsonPropertyName("playerId")]
+            public int PlayerId { get; set; }
+        }
+
+    
         private async Task ProcessAcceptFriendRequest(WebSocketHandler handler, int requestId)
         {
             using var scope = _serviceProvider.CreateScope();
@@ -597,7 +744,34 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 await wsMethods.UpdateUserAsync(user);
             }
         }
-        
+        private async Task HandleTurnTimeout(WebSocketHandler handler, TurnTimeoutMessage message)
+        {
+            var gameService = GetGameService();
+            gameService.HandleTurnTimeout(message.GameId, message.PlayerId);
+        }
+
+        private async Task HandleRematchResponse(WebSocketHandler handler, RematchResponseMessage message)
+        {
+            if (_activeGames.TryGetValue(message.GameId, out var session))
+            {
+                if (message.Accepted)
+                {
+                    session.RematchRequests.Add(handler.Id.ToString());
+                    if (session.RematchRequests.Count == session.Players.Count)
+                    {
+                        await StartRematch(session);
+                    }
+                }
+                else
+                {
+                    await handler.SendAsync(JsonSerializer.Serialize(new
+                    {
+                        type = "rematchDeclined",
+                        gameId = message.GameId
+                    }));
+                }
+            }
+        }
 
         private async Task NotifyFriendsAsync(WebSocketHandler handler, bool isConnected)
         {
@@ -646,5 +820,37 @@ namespace JuegoOcaBack.WebSocketAdvanced
         [JsonPropertyName("requestId")]
         public int? RequestId { get; set; }
     }
+    // Añadir estas clases dentro del namespace JuegoOcaBack.WebSocketAdvanced
+    public class AbandonGameMessage : WebSocketMessage
+    {
+        [JsonPropertyName("gameId")]
+        public string GameId { get; set; }
 
+        [JsonPropertyName("playerId")]
+        public int PlayerId { get; set; }
+    }
+
+    public class RematchRequestMessage : WebSocketMessage
+    {
+        [JsonPropertyName("gameId")]
+        public string GameId { get; set; }
+    }
+
+    public class RematchResponseMessage : WebSocketMessage
+    {
+        [JsonPropertyName("gameId")]
+        public string GameId { get; set; }
+
+        [JsonPropertyName("accepted")]
+        public bool Accepted { get; set; }
+    }
+
+    public class TurnTimeoutMessage : WebSocketMessage
+    {
+        [JsonPropertyName("gameId")]
+        public string GameId { get; set; }
+
+        [JsonPropertyName("playerId")]
+        public int PlayerId { get; set; }
+    }
 }

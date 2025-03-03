@@ -9,7 +9,7 @@ import { AuthResponse } from '../models/auth-response';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private baseURL = `${environment.apiUrl}/api/Usuario`;
+  private baseURL = `${environment.apiUrl}`;
   private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
   private isAdminSubject = new BehaviorSubject<boolean>(this.checkAdmin());
 
@@ -47,7 +47,7 @@ export class AuthService {
   }
 
   login(authData: AuthRequest, rememberMe: boolean): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseURL}/login`, authData).pipe(
+    return this.http.post<AuthResponse>(`${this.baseURL}/api/Usuario/login`, authData).pipe(
       tap((response: AuthResponse) => {
         localStorage.removeItem('accessToken');
         sessionStorage.removeItem('accessToken');
@@ -61,7 +61,10 @@ export class AuthService {
           sessionStorage.setItem('accessToken', response.stringToken);
           sessionStorage.setItem('isAdmin', JSON.stringify(response.isadmin));
         }
+        
+        // Actualizar estados
         this.loggedIn.next(true);
+        this.isAdminSubject.next(this.checkAdmin()); 
       })
     );
   }
@@ -74,7 +77,7 @@ export class AuthService {
   }
 
   register(formData: FormData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseURL}/Registro`, formData, { headers: {} });
+    return this.http.post<AuthResponse>(`${this.baseURL}/api/Usuario/Registro`, formData, { headers: {} });
   }
 
   updateAuthState(): void {
@@ -124,7 +127,7 @@ export class AuthService {
         apodo: payload.Apodo,
         email: payload.Email,
         fotoPerfil: payload.FotoPerfil,
-        esAdmin: payload.esAdmin
+        esAdmin: payload.Rol === 'admin'
       };
     } catch (e) {
       console.error('Error obteniendo datos del usuario:', e);

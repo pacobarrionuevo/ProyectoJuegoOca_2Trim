@@ -148,7 +148,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   private manejarGameReady(message: any): void {
-    this.router.navigate(['/game'], {
+    this.router.navigate(['/game-online'], {
       state: {
         gameId: message.gameId,
         opponentId: message.opponentId 
@@ -201,9 +201,10 @@ export class MenuComponent implements OnInit, OnDestroy {
     }));
   }
 
-  invitarAPartida(friendId: number): void {
+  invitarAPartida(friendId: number,idAmigo?: string): void {
+    console.log(`[INVITAR] Enviando invitación a ${idAmigo}`);
     if (!friendId || friendId === this.usuarioId) return;
-    
+   
     if (!this.webSocketService.isConnectedRxjs()) {
       const token = this.authService.getUserDataFromToken();
       if (token) this.webSocketService.connectRxjs(token);
@@ -228,15 +229,17 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   obtenerUsuarios(): void {
     this.apiService.getUsuarios().subscribe(usuarios => {
-      this.usuarios = usuarios.map(usuario => ({
-        UsuarioId: usuario.usuarioId, 
-        UsuarioApodo: usuario.usuarioApodo,
-        UsuarioFotoPerfil: this.validarUrlImagen(usuario.usuarioFotoPerfil)
-      }));
+      this.usuarios = usuarios
+        .map(usuario => ({
+          UsuarioId: usuario.usuarioId, 
+          UsuarioApodo: usuario.usuarioApodo,
+          UsuarioFotoPerfil: this.validarUrlImagen(usuario.usuarioFotoPerfil)
+        }))
+        .filter(usuario => usuario.UsuarioId !== this.usuarioId); // Excluir al usuario actual
       this.usuariosFiltrados = [...this.usuarios];
     });
   }
-
+  
   private cargarAmigos(): void {
     this.friendService.getFriendsList().subscribe({
       next: (amigos) => {
@@ -291,9 +294,11 @@ export class MenuComponent implements OnInit, OnDestroy {
   buscarUsuarios(): void {
     this.usuariosFiltrados = this.terminoBusqueda.trim()
       ? this.usuarios.filter(usuario =>
-          usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase()))
-      : [...this.usuarios];
+          usuario.UsuarioApodo?.toLowerCase().includes(this.terminoBusqueda.toLowerCase()) &&
+          usuario.UsuarioId !== this.usuarioId)
+      : [...this.usuarios].filter(usuario => usuario.UsuarioId !== this.usuarioId);
   }
+  
 
   isUserOnline(userId: number): boolean {
     return this.onlineUserIds.has(userId);

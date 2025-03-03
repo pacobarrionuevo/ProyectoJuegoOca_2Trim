@@ -18,15 +18,15 @@ namespace JuegoOcaBack.WebSocketAdvanced
 
         public event Func<WebSocketHandler, string, Task> MessageReceived;
         public event Func<WebSocketHandler, Task> Disconnected;
-        public WebSocketHandler(int userId, WebSocket webSocket)
+        public string MessageType { get; set; }
+        public WebSocketHandler(int userId, WebSocket webSocket, string username)
         {
             Id = userId;
             _webSocket = webSocket;
-
+            Username = username; // Asignamos el username recibido
             LastActivity = DateTime.UtcNow;
             _buffer = new byte[BufferSize];
         }
-
         public async Task HandleAsync()
         {
             while (_webSocket.State == WebSocketState.Open)

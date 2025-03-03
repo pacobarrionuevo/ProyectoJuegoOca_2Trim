@@ -22,10 +22,12 @@ namespace JuegoOcaBack.WebSocketAdvanced
                 {
                     context.Request.Headers["Authorization"] = $"Bearer {token}";
                 }
-
+                var username = context.User.FindFirst("apodo")?.Value
+                       ?? context.User.FindFirst("unique_name")?.Value
+                       ?? "Desconocido";
                 using WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 int userId = ObtenerUserId(context);
-                await _webSocketNetwork.HandleAsync(webSocket, userId);
+                await _webSocketNetwork.HandleAsync( webSocket, userId, username);
                 return;
             }
             else

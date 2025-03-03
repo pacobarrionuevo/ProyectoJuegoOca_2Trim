@@ -24,9 +24,12 @@ namespace JuegoOcaBack.Controllers
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var username = User.FindFirst("apodo")?.Value
+                      ?? User.FindFirst("unique_name")?.Value
+                      ?? "Desconocido";
 
                 WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await _websocketNetwork.HandleAsync(webSocket, userId);
+                await _websocketNetwork.HandleAsync(webSocket, userId, username); 
             }
             else
             {

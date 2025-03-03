@@ -27,6 +27,7 @@ export class WebsocketService {
   private rxjsSocket: WebSocketSubject<string>;
 
   private baseURL = environment.apiUrl;
+  public currentGameId: string | null = null;
 
   // Variables para listaJugadores, usuario actual, jugador actual(no son lo mismo) (turnos, tal), id de la partida y resultado del dado
   private players: any[] = [];
@@ -82,6 +83,7 @@ export class WebsocketService {
     this.rxjsSocket = webSocket({
       url: `wss://localhost:7077/ws/connect?token=${token}`,
       openObserver: { next: () => this.onConnected() },
+      closeObserver: { next: (event: CloseEvent) => this.onDisconnected() },
       serializer: (value: string) => value,
       deserializer: (event: MessageEvent) => event.data
     });
@@ -118,12 +120,14 @@ export class WebsocketService {
   private onDisconnected() {
     console.log('WebSocketService: Desconectado del WebSocket');
     this.disconnected.next();
+    alert('Te has desconectado del websocket');
+    this.router.navigate(['/']);
   }
 
   // Método que llama al endpoint del servidor para empezar el juego
-  startGame(gameId: string, playerName: string): Observable<any> {
+  startGame(gameId: string, playerName: string,gameType: string): Observable<any> {
     this.gameId = gameId;
-    const body = { GameId: gameId, PlayerName: playerName };
+    const body = { GameId: gameId, PlayerName: playerName, GameType: gameType, AdditionalPlayers: [] };
     return this.http.post<any>(`${environment.apiUrl}/api/Game/start-game`, body).pipe(
         catchError((error) => {
             console.error('Error al iniciar la partida:', error);
@@ -234,25 +238,34 @@ private handleMessage(message: string): void {
           this.handleOnlineUsers(normalizedMessage);
       } else if (normalizedMessage.type === 'friendRequest') {
           // Manejar solicitud de amistad
-          console.log('Solicitud de amistad recibida:', normalizedMessage);
-          this.messageReceived.next(normalizedMessage);
+          this.messageReceived.next({
+            type: 'friendRequest',
+            requestId: parsedMessage.requestId,
+            senderId: parsedMessage.senderId,
+            senderName: parsedMessage.senderName
+          });
       } else if (normalizedMessage.type === 'friendRequestAccepted') {
-          // Manejar aceptación de solicitud de amistad
-          console.log('Solicitud de amistad aceptada:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'friendRequestAccepted',
+          friendId: parsedMessage.friendId,
+          friendName: parsedMessage.friendName
+        });
           this.messageReceived.next(normalizedMessage);
       } else if (normalizedMessage.type === 'friendRequestRejected') {
-          // Manejar rechazo de solicitud de amistad
-          console.log('Solicitud de amistad rechazada:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'friendRequestRejected',
+          friendId: parsedMessage.friendId
+        });
           this.messageReceived.next(normalizedMessage);
       } else if (normalizedMessage.type === 'friendListUpdate') {
-          // Manejar actualización de la lista de amigos
+          
           console.log('Lista de amigos actualizada:', normalizedMessage);
           this.messageReceived.next(normalizedMessage);
-      } else if (normalizedMessage.type === 'friendNotAvailable') {
-          // Manejar amigo no disponible
-          console.log('Amigo no disponible:', normalizedMessage.message);
-          this.friendNotAvailable.next(normalizedMessage.message);
-      } else if (normalizedMessage.type === 'gameUpdate') {
+      }  else if (normalizedMessage.type === 'inviterNotAvailable') {
+
+        console.log('Invitador no disponible:', normalizedMessage.message);
+        this.friendNotAvailable.next(normalizedMessage.message);
+      }  else if (normalizedMessage.type === 'gameUpdate') {
           this.handleGameUpdate(normalizedMessage);
       } else if (normalizedMessage.type === 'playerJoined') {
           this.handlePlayerJoined(normalizedMessage);
@@ -264,7 +277,56 @@ private handleMessage(message: string): void {
           this.handleMoveResult(normalizedMessage);
       } else if (normalizedMessage.type === 'skipTurn') {
           this.handleSkipTurn(normalizedMessage);
-      } else {
+      }else if (normalizedMessage.type === 'gameReady') {
+        this.handleGameReady(normalizedMessage);
+    }
+       else if (normalizedMessage.type === 'turnTimeout') {
+        console.log('Tiempo de turno agotado:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'turnTimeout',
+          playerId: normalizedMessage.playerId,
+          gameId: normalizedMessage.gameId
+        });
+        if (this.currentPlayer?.id === normalizedMessage.playerId) {
+          this.handleSkipTurn({ playerId: normalizedMessage.playerId, turnsToSkip: 1 });
+        }
+      } 
+      else if (normalizedMessage.type === 'abandonGame') {
+        console.log('Jugador abandonó la partida:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'abandonGame',
+          playerId: normalizedMessage.playerId,
+          gameId: normalizedMessage.gameId
+        });
+        if (this.currentPlayer?.id === normalizedMessage.playerId) {
+          this.router.navigate(['/menu']);
+        } else {
+          this.handleGameOver({ winnerId: this.currentPlayer?.id });
+        }
+      } 
+      else if (normalizedMessage.type === 'rematchRequest') {
+        console.log('Solicitud de revancha recibida:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'rematchRequest',
+          gameId: normalizedMessage.gameId,
+          senderId: normalizedMessage.senderId
+        });
+      } 
+      else if (normalizedMessage.type === 'rematchResponse') {
+        console.log('Respuesta a revancha:', normalizedMessage);
+        this.messageReceived.next({
+          type: 'rematchResponse',
+          gameId: normalizedMessage.gameId,
+          accepted: normalizedMessage.accepted
+        });
+        if (normalizedMessage.accepted) {
+          this.currentGameId = normalizedMessage.gameId;
+          this.messageReceived.next({
+            type: 'gameRestart',
+            gameId: normalizedMessage.gameId
+          });
+        }
+      }else {
           console.log('WebSocketService: Mensaje recibido no manejado:', normalizedMessage);
       }
     } catch (error) {
@@ -274,14 +336,26 @@ private handleMessage(message: string): void {
 
   // Maneja una invitación de amigo
   private handleFriendInvitation(message: any): void {
-    console.log('Invitación recibida de:', message.fromUserNickname);
-    // Podrías poner un confirm(...) para aceptar o rechazar
-    // Por ahora, aceptamos de inmediato:
+    const accept = confirm(`${message.fromUserNickname} te ha invitado a jugar. ¿Aceptas?`);
+  if (accept) {
     const response = {
-        type: 'acceptInvitation',
-        inviterId: message.fromUserId
+      type: 'acceptInvitation',
+      inviterId: message.fromUserId
     };
     this.sendRxjs(JSON.stringify(response));
+  } else {
+    // Opcional: puedes enviar una respuesta de rechazo o simplemente no hacer nada
+    console.log("El usuario ha rechazado la invitación.");
+  }
+}
+  private handleGameReady(message: any): void {
+    this.ngZone.run(() => {
+      this.messageReceived.next({
+        type: 'gameReady',
+        gameId: message.gameId,
+        opponentId: message.opponentId
+      });
+    });
   }
 
   // Maneja el número de conexiones activas
@@ -298,6 +372,53 @@ private handleMessage(message: string): void {
         playerName: message.playerName,
         turnsToSkip: message.turnsToSkip
     });
+  }
+  private handleTurnTimeout(message: any): void {
+    this.messageReceived.next({
+      type: 'turnTimeout',
+      playerId: message.playerId
+    });
+  }
+
+  private handleAbandonGame(message: any): void {
+    this.messageReceived.next({
+      type: 'abandonGame',
+      playerId: message.playerId,
+      gameId: message.gameId
+    });
+  }
+
+  private handleRematchRequest(message: any): void {
+    this.messageReceived.next({
+      type: 'rematchRequest',
+      gameId: message.gameId,
+      senderId: message.senderId
+    });
+  }
+
+  private handleRematchResponse(message: any): void {
+    this.messageReceived.next({
+      type: 'rematchResponse',
+      gameId: message.gameId,
+      accepted: message.accepted
+    });
+  }
+
+  // Método para enviar solicitud de revancha
+  public sendRematchRequest(gameId: string): void {
+    this.sendRxjs(JSON.stringify({
+      type: 'rematchRequest',
+      gameId: gameId
+    }));
+  }
+
+  // Método para responder a revancha
+  public respondRematch(gameId: string, accepted: boolean): void {
+    this.sendRxjs(JSON.stringify({
+      type: 'rematchResponse',
+      gameId: gameId,
+      accepted: accepted
+    }));
   }
 
   // Manejar el mensaje que salta al hacer una tirada

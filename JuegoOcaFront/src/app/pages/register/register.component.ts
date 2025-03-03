@@ -86,7 +86,7 @@ export class RegisterComponent implements OnInit {
     formData.append('UsuarioFotoPerfil', file);
   
     try {
-      const result = await this.authService.register(formData).toPromise();
+      const result = await this.authService.register  (formData).toPromise();
       if (result) {
         localStorage.setItem('accessToken', result.stringToken);
         this.jwt = result.stringToken;
