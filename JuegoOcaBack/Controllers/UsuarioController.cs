@@ -75,6 +75,7 @@ namespace JuegoOcaBack.Controllers
         [HttpPatch("usuarios/{id}/rol")]
         public async Task<IActionResult> ActualizarRol(int id, [FromBody] ActualizarRolDTO dto)
         {
+            Console.WriteLine($"Actualizando rol del usuario {id} a {dto.NuevoRol}");
             var usuario = await _context.Usuarios.FindAsync(id);
             if (usuario == null) return NotFound();
 

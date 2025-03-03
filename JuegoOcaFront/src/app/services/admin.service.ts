@@ -6,16 +6,16 @@ import { User } from '../models/User';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  private baseURL = `${environment.apiUrl}/api`;
+  private baseURL = `${environment.apiUrl}/api/Usuario`;
 
   constructor(private http: HttpClient) { }
 
   getUsuarios(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.baseURL}/Usuario/usuarios`);
+    return this.http.get<User[]>(`${this.baseURL}/usuarios`);
   }
 
   actualizarRol(usuarioId: number, nuevoRol: string): Observable<User> {
-    return this.http.patch<User>(`${this.baseURL}/usuarios/${usuarioId}/rol`, { rol: nuevoRol });
+    return this.http.patch<User>(`${this.baseURL}/usuarios/${usuarioId}/rol`, { NuevoRol: nuevoRol });
   }
 
   toggleBaneo(usuarioId: number): Observable<User> {

@@ -37,23 +37,32 @@ export class AdminComponent implements OnInit {
   private cargarUsuarios(): void {
     this.adminService.getUsuarios().subscribe({
       next: (usuarios) => {
-        console.log('Usuarios recibidos:', usuarios); 
-        this.usuarios = usuarios;
+        console.log('Usuarios recibidos:', usuarios);
+        this.usuarios = usuarios.map(usuario => ({
+          UsuarioId: usuario.usuarioId,
+          UsuarioApodo: usuario.usuarioApodo,
+          UsuarioEmail: usuario.usuarioEmail,
+          UsuarioFotoPerfil: usuario.usuarioFotoPerfil,
+          Rol: usuario.rol,
+          EstaBaneado: usuario.estaBaneado,
+          EsAmigo: usuario.esAmigo
+        }));
       },
       error: (err) => console.error('Error cargando usuarios:', err)
     });
   }
 
   cambiarRol(usuario: User): void {
-    const nuevoRol = prompt('Ingrese el nuevo rol (admin/usuario):', usuario.Rol || 'usuario');
+    const nuevoRol = usuario.Rol === 'admin' ? 'usuario' : 'admin';
     
-    if (nuevoRol && nuevoRol !== usuario.Rol) {
-      if (confirm(`¿Cambiar rol de ${usuario.UsuarioApodo} a ${nuevoRol}?`)) {
-        this.adminService.actualizarRol(usuario.UsuarioId!, nuevoRol).subscribe({
-          next: (actualizado) => usuario.Rol = actualizado.Rol,
-          error: (err) => console.error('Error actualizando rol:', err)
-        });
-      }
+    if (confirm(`¿Cambiar rol de ${usuario.UsuarioApodo} a ${nuevoRol}?`)) {
+      this.adminService.actualizarRol(usuario.UsuarioId!, nuevoRol).subscribe({
+        
+        next: (actualizado) => {
+          usuario.Rol = actualizado.Rol;
+        },
+        error: (err) => console.error('Error actualizando rol:', err)
+      });
     }
   }
 
@@ -61,10 +70,17 @@ export class AdminComponent implements OnInit {
     const accion = usuario.EstaBaneado ? 'desbanear' : 'banear';
     
     if (confirm(`¿Estás seguro de querer ${accion} a ${usuario.UsuarioApodo}?`)) {
-      this.adminService.toggleBaneo(usuario.UsuarioId!).subscribe({
-        next: (actualizado) => usuario.EstaBaneado = actualizado.EstaBaneado,
+      if (!usuario.UsuarioId) {
+        console.error('El ID del usuario es undefined');
+        return;
+      }
+  
+      this.adminService.toggleBaneo(usuario.UsuarioId).subscribe({
+        next: (actualizado) => {
+          usuario.EstaBaneado = actualizado.EstaBaneado;
+        },
         error: (err) => console.error('Error cambiando estado de baneo:', err)
-      });
-    }
-  }
+      });
+    }
+  }
 }
