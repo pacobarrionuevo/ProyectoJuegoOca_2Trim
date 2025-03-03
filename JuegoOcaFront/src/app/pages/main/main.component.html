@@ -5,7 +5,7 @@
       <button *ngIf="!isLoggedIn" [routerLink]="'/login'">Inicia Sesión</button>
        <button *ngIf=" isLoggedIn" [routerLink]="'/menu'">Menú</button>
       <button *ngIf="isLoggedIn" (click)="logout()">Cerrar Sesión</button>
-      <button *ngIf="isAdmin"  [routerLink]="'/admin'">Jose guapo</button>
+      <button *ngIf="isAdmin"  [routerLink]="'/admin'">ADMIN MODE</button>
     </div>
   
     <div class="informacion">
