@@ -140,7 +140,10 @@ namespace JuegoOcaBack.Controllers
                     {"id", newUser.UsuarioId},
                     {"Nombre", newUser.UsuarioApodo},
                     {"Email", newUser.UsuarioEmail},
-                    {"FotoPerfil", newUser.UsuarioFotoPerfil}
+                    {"FotoPerfil", newUser.UsuarioFotoPerfil},
+                    {"Rol", newUser.Rol},
+                    {"EstaBaneado", newUser.EstaBaneado}
+
                 },
                 Expires = DateTime.UtcNow.AddDays(5),
                 SigningCredentials = new SigningCredentials(
@@ -185,13 +188,14 @@ namespace JuegoOcaBack.Controllers
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Claims = new Dictionary<string, object>
-        {
-            {"id", user.UsuarioId},
-            {"Apodo", user.UsuarioApodo},
-            {"Email", user.UsuarioEmail},
-            {"FotoPerfil",user.UsuarioFotoPerfil}
-
-        },
+                {
+                    {"id", user.UsuarioId},
+                    {"Apodo", user.UsuarioApodo},
+                    {"Email", user.UsuarioEmail},
+                    {"FotoPerfil",user.UsuarioFotoPerfil},
+                    {"Rol",user.Rol},
+                    {"EstaBaneado",user.EstaBaneado}
+                },
                 Expires = DateTime.UtcNow.AddDays(5),
                 SigningCredentials = new SigningCredentials(
                     _tokenParameters.IssuerSigningKey,

@@ -6,12 +6,12 @@ import { User } from '../models/User';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  private baseURL = `${environment.apiUrl}/api/Admin`;
+  private baseURL = `${environment.apiUrl}/api`;
 
   constructor(private http: HttpClient) { }
 
   getUsuarios(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.baseURL}/usuarios`);
+    return this.http.get<User[]>(`${this.baseURL}/Usuario/usuarios`);
   }
 
   actualizarRol(usuarioId: number, nuevoRol: string): Observable<User> {

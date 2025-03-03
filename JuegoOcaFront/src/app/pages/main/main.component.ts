@@ -16,6 +16,7 @@ export class MainComponent implements OnInit {
   tablero: string;
   fondo: string;
   isLoggedIn: boolean = false;
+  isAdmin: boolean = false;
 
   constructor(private imageService: ImageService, private authService: AuthService, private router: Router) {
     this.cubileteDados = this.imageService.getImageUrl('CubileteDados.png');
@@ -27,10 +28,13 @@ export class MainComponent implements OnInit {
     this.authService.isLoggedIn$.subscribe(loggedIn => {
       this.isLoggedIn = loggedIn;
     });
+    this.authService.isAdmin$.subscribe(admin => {
+      this.isAdmin = admin;
+    });
   }
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']); // Redirige al usuario a la página de login tras cerrar sesión
+    this.router.navigate(['/login']);
   }
 }

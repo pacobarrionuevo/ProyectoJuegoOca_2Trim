@@ -6,6 +6,7 @@ import { MenuComponent } from './pages/menu/menu.component';
 import { MatchmakingComponent } from './pages/matchmaking/matchmaking.component';
 import { PerfilComponent } from './pages/perfil/perfil.component';
 import { GameComponent } from './pages/game/game.component';
+import { AdminComponent } from './pages/admin/admin.component';
 
 export const routes: Routes = 
 [
@@ -36,6 +37,10 @@ export const routes: Routes =
     { 
         path: 'game', 
         component: GameComponent 
+    },
+    {
+        path: 'admin',
+        component: AdminComponent
     }
 ];
 

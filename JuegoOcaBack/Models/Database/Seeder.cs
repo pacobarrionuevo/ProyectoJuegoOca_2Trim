@@ -32,7 +32,9 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("paco33"),
                 UsuarioFotoPerfil = "ea4c41d7-cc22-4900-8a82-60567c24af6c_d452af9f-1c53-4612-b014-6dc091974613.jpg",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
-                UsuarioEstado = "Desconectado"
+                UsuarioEstado = "Desconectado",
+                Rol = "admin",
+                EstaBaneado = false
             };
 
             Usuario usuario2 = new Usuario()
@@ -44,7 +46,9 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("salguero33"),
                 UsuarioFotoPerfil = "Perfil_Deffault.png",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
-                UsuarioEstado = "Desconectado"
+                UsuarioEstado = "Desconectado",
+                Rol = "admin",
+                EstaBaneado = false
             };
 
             Usuario usuario3 = new Usuario()
@@ -56,19 +60,23 @@ namespace JuegoOcaBack.Models.Database
                 UsuarioConfirmarContrasena = PasswordHelper.Hash("laura33"),
                 UsuarioFotoPerfil = "Perfil_Deffault.png",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
-                UsuarioEstado = "Desconectado"
+                UsuarioEstado = "Desconectado",
+                Rol = "admin",
+                EstaBaneado = false
             };
 
             Usuario usuario4 = new Usuario()
             {
                 UsuarioId = 4,
-                UsuarioApodo = "Carlos",
-                UsuarioEmail = "carlos@gmail.com",
-                UsuarioContrasena = PasswordHelper.Hash("carlos33"),
-                UsuarioConfirmarContrasena = PasswordHelper.Hash("carlos33"),
+                UsuarioApodo = "Jose",
+                UsuarioEmail = "jose777@gmail.com",
+                UsuarioContrasena = PasswordHelper.Hash("jose777"),
+                UsuarioConfirmarContrasena = PasswordHelper.Hash("jose777"),
                 UsuarioFotoPerfil = "Perfil_Deffault.png",
                 UsuarioAmistad = new List<UsuarioTieneAmistad>(),
-                UsuarioEstado = "Desconectado"
+                UsuarioEstado = "Desconectado",
+                Rol = "admin",
+                EstaBaneado = false
             };
 
             // Amistad entre usuario1 y usuario2
