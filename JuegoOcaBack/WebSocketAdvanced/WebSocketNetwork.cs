@@ -112,7 +112,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             Interlocked.Increment(ref _activeConnections);
             OnActiveConnectionsChanged?.Invoke(_activeConnections);
 
-            var handler = await CreateHandlerAsync( userId, webSocket, username);
+            var handler = await CreateHandlerAsync(userId, webSocket, username);
             await AddUser(userId, handler);
 
             try
@@ -268,7 +268,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         _waitingPlayers.RemoveAll(p => p.Id == handler.Id);
                         _waitingSemaphore.Release();
                         break;
-                    
+
                     case "chatmessage":
                         var chatMessage = JsonSerializer.Deserialize<ChatMessage>(message);
                         await BroadcastMessage(JsonSerializer.Serialize(new
@@ -297,7 +297,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                     case "moveplayer":
                         var movePlayerMessage = JsonSerializer.Deserialize<MovePlayerMessage>(message);
                         Console.WriteLine($"Moviendo al jugador {movePlayerMessage.PlayerId} con dado {movePlayerMessage.DiceResult}");
-                        
+
                         gameService.HandleMovePlayer(movePlayerMessage.PlayerId, movePlayerMessage.DiceResult);
                         break;
                     case "botTurn":
@@ -323,7 +323,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                         var rematchResMsg = JsonSerializer.Deserialize<RematchResponseMessage>(message);
                         await HandleRematchResponse(handler, rematchResMsg);
                         break;
-                    
+
 
                     case "rolldice":
                         var rollDiceMessage = JsonSerializer.Deserialize<RollDiceMessage>(message);
@@ -594,7 +594,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
                gameType: GameService.GameType.Multiplayer,
                additionalPlayers: new List<string> { p2.Username }
            );
-            
+
             var session = new GameSession
             {
                 GameId = roomId,
@@ -694,7 +694,7 @@ namespace JuegoOcaBack.WebSocketAdvanced
             public int PlayerId { get; set; }
         }
 
-    
+
         private async Task ProcessAcceptFriendRequest(WebSocketHandler handler, int requestId)
         {
             using var scope = _serviceProvider.CreateScope();

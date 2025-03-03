@@ -41,6 +41,7 @@ public class GameService
         }
 
         _players.Clear();
+        _currentPlayerIndex = 0;
 
         // Agregar jugador principal
         AddPlayer(playerName);
@@ -371,7 +372,7 @@ public class GameService
         if (bot != null)
         {
             int diceResult = new Random().Next(1, 7);
-            int newPosition = MovePlayer(bot.Id, diceResult);
+            int newPosition = MovePlayer(bot.Id, diceResult); // <- Esto actualiza la posición del bot
 
             // Notificar a los clientes
             var moveMessage = new
