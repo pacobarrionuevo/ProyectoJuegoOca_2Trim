@@ -37,7 +37,6 @@ export class AdminComponent implements OnInit {
   private cargarUsuarios(): void {
     this.adminService.getUsuarios().subscribe({
       next: (usuarios) => {
-        console.log('Usuarios recibidos:', usuarios);
         this.usuarios = usuarios.map(usuario => ({
           UsuarioId: usuario.usuarioId,
           UsuarioApodo: usuario.usuarioApodo,
@@ -48,7 +47,6 @@ export class AdminComponent implements OnInit {
           EsAmigo: usuario.esAmigo
         }));
       },
-      error: (err) => console.error('Error cargando usuarios:', err)
     });
   }
 
@@ -59,10 +57,8 @@ export class AdminComponent implements OnInit {
     if (confirm(`¿Cambiar rol de ${usuario.UsuarioApodo} a ${nuevoRol}?`)) {
       this.adminService.actualizarRol(usuario.UsuarioId!, nuevoRol).subscribe({
         next: (actualizado) => {
-          console.log('Respuesta del servidor:', actualizado);
           usuario.Rol = actualizado.Rol || actualizado.rol;
         },
-        error: (err) => console.error('Error actualizando rol:', err)
       });
     }
   }
@@ -73,7 +69,6 @@ export class AdminComponent implements OnInit {
     
     if (confirm(`¿Estás seguro de querer ${accion} a ${usuario.UsuarioApodo}?`)) {
       if (!usuario.UsuarioId) {
-        console.error('El ID del usuario es undefined');
         return;
       }
   
@@ -81,7 +76,6 @@ export class AdminComponent implements OnInit {
         next: (actualizado) => {
           usuario.EstaBaneado = actualizado.EstaBaneado;
         },
-        error: (err) => console.error('Error cambiando estado de baneo:', err)
       });
     }
   }

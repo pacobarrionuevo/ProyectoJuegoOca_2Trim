@@ -71,8 +71,6 @@ export class GameComponent implements OnInit {
   } 
 
   ngOnInit(): void {
-    console.log('Inicializando GameComponent...');
-
     this.initializeBoard();
 
     this.cargarInfoUsuario();
@@ -80,38 +78,25 @@ export class GameComponent implements OnInit {
     const playerName = this.usuarioApodo;
     this.websocketService.startGame('12345', playerName,'Bot').subscribe((response) => {
         if (response && response.players) {
-            console.log('Partida iniciada correctamente:', response);
             this.players = response.players;
             const currentUser = this.players.find(player => player.name !== "Bot");
             if (currentUser) {
-                console.log('Usuario real detectado:', currentUser);
                 this.websocketService.setCurrentUser(currentUser);
             } else {
-                console.warn('No se encontró un usuario real en la lista de jugadores.');
             }
             this.currentPlayer = this.players[0];
             this.websocketService.setCurrentPlayer(this.currentPlayer);
-            console.log('Jugador actual asignado:', this.currentPlayer);
         } else {
-            console.error('No se pudo iniciar la partida o la lista de jugadores está vacía.');
         }
     });
 
     this.websocketService.gameStateUpdated.subscribe((state: any) => {
-      console.log('Actualización del estado del juego recibida en GameComponent:', state);
-
       const playersArray = Array.isArray(state.players) ? state.players : Object.values(state.players);
   
       this.players = [...playersArray];
       this.currentPlayer = { ...state.currentPlayer };
       this.diceResult = state.diceResult;
-  
-      console.log('Jugadores actualizados en GameComponent:', this.players);
-      console.log('Jugador actual actualizado en GameComponent:', this.currentPlayer);
-      console.log('Resultado del dado actualizado en GameComponent:', this.diceResult);
-
       if (this.currentPlayer && this.currentPlayer.name === "Bot") {
-          console.log('Es el turno del bot. Realizando tirada automática...');
           setTimeout(() => {
               this.websocketService.rollDice();
           }, 3000);
@@ -138,7 +123,6 @@ export class GameComponent implements OnInit {
     });
 
     this.websocketService.messageReceived.subscribe((message: any) => {
-      console.log("MENSAJE")
       if (message.type === 'chatMessage') {
           this.messages.push({ sender: message.sender, text: message.text });
           this.scrollChatToBottom();
@@ -204,15 +188,12 @@ validarUrlImagen(fotoPerfil: string | null): string {
       this.usuarioFotoPerfil = this.validarUrlImagen(userInfo.profilePicture);
       this.usuarioId = userInfo.id;
     } else {
-      console.error('No se pudo obtener la información del usuario. ¿El token está disponible?');
       this.router.navigate(['/login']); 
     }
   }
 
   getPlayersInCell(cellNumber: number): any[] {
     if (!this.players) {
-      console.warn('La lista de jugadores no está inicializada.');
-      console.log('Salguero hijoputa');
       return [];
     }
     return this.players.filter(player => player.position === cellNumber);
@@ -317,7 +298,6 @@ validarUrlImagen(fotoPerfil: string | null): string {
   }
 
   rollDice(): void {
-    console.log('Lanzando dado...');
     this.websocketService.rollDice();
   }
 }
