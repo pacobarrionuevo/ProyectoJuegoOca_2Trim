@@ -1,5 +1,5 @@
 export const environment = {
-    apiUrl: 'https://localhost:7077',
-    socketUrl: 'wss://localhost:7077/ws/connect'
+    apiUrl: 'https://juego-oca-paco-salguero.runasp.net',
+    socketUrl: 'wss://juego-oca-paco-salguero.runasp.net/ws/connect'
 };
   
