@@ -27,6 +27,7 @@ export class WebsocketService {
   private rxjsSocket: WebSocketSubject<string>;
 
   private baseURL = environment.apiUrl;
+  private socketURL = environment.socketUrl;
   public currentGameId: string | null = null;
 
   // Variables para listaJugadores, usuario actual, jugador actual(no son lo mismo) (turnos, tal), id de la partida y resultado del dado
@@ -81,7 +82,7 @@ export class WebsocketService {
 
     // Crear una nueva conexión websocket
     this.rxjsSocket = webSocket({
-      url: `wss://localhost:7077/ws/connect?token=${token}`,
+      url: `${this.socketURL}?token=${token}`,
       openObserver: { next: () => this.onConnected() },
       closeObserver: { next: (event: CloseEvent) => this.onDisconnected() },
       serializer: (value: string) => value,
