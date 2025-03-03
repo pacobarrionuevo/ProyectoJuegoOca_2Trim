@@ -2,7 +2,7 @@
 {
     public interface IRepositorio<TEntity> where TEntity : class
     {
-        //Calcadisimo de los ejemplos de Jose
+        // Calcadisimo de los ejemplos de Jose
         Task<ICollection<TEntity>> GetAllAsync();
         IQueryable<TEntity> GetQueryable(bool asNoTracking = true);
         Task<TEntity> GetByIdAsync(object id);

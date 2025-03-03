@@ -6,7 +6,7 @@ namespace JuegoOcaBack.Models.Database.Repositorios
     public class Repositorio<TEntity> : IRepositorio<TEntity> where TEntity : class
     {
 
-        //Calcado de Jose :D
+        // Calcado de Jose :D
         private readonly DBContext _context;
 
         public Repositorio(DBContext context)

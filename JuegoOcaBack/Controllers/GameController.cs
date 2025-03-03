@@ -57,7 +57,6 @@ namespace JuegoOcaBack.Controllers
                 return BadRequest("El nombre del jugador es obligatorio.");
             }
 
-            // Iniciar la partida
             _gameService.StartGame(request.GameId, request.PlayerName);
 
             return Ok(new { Message = "Partida iniciada correctamente.", Players = _gameService.ObtainPlayers() });

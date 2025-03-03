@@ -125,7 +125,6 @@ namespace JuegoOcaBack.Controllers
                 return BadRequest("No se ha elegido foto de perfil");
             }
 
-            //Eso guarda la ruta
             string rutaFotoPerfil = $"{Guid.NewGuid()}_{usuario.UsuarioFotoPerfil.FileName}"; 
             await StoreImageAsync("fotos/"+ rutaFotoPerfil, usuario.UsuarioFotoPerfil);
 
@@ -173,15 +172,12 @@ namespace JuegoOcaBack.Controllers
             string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
             Usuario user;
 
-            // Comprueba si el input del usuario es un email o un apodo
             if (Regex.IsMatch(usuarioLoginDto.UsuarioEmailOApodo, emailPattern))
             {
-                // Busca por email
                 user = _context.Usuarios.FirstOrDefault(u => u.UsuarioEmail == usuarioLoginDto.UsuarioEmailOApodo);
             }
             else
             {
-                // Busca por apodo
                 user = _context.Usuarios.FirstOrDefault(u => u.UsuarioApodo == usuarioLoginDto.UsuarioEmailOApodo);
             }
 
