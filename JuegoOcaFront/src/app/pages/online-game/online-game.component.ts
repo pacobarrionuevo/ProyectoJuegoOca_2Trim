@@ -127,7 +127,6 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
         position: p.position ?? p.Position,
         turnsToSkip: p.turnsToSkip ?? p.TurnsToSkip,
         isMoving: false,
-        
       }));
       
       console.log('Jugadores mapeados:', this.players);
