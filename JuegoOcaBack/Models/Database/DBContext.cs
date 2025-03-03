@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Hosting.Server;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace JuegoOcaBack.Models.Database
 {
@@ -35,6 +36,8 @@ namespace JuegoOcaBack.Models.Database
 #if DEBUG
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             optionsBuilder.UseSqlite($"DataSource={baseDir}{DATABASE_PATH}");
+
+
 #else
             string connection = "Server=db14832.databaseasp.net; Database=db14832; Uid=db14832; Pwd=c?3M7nZ%D6#z";
             optionsBuilder.UseMySql(connection, ServerVersion.AutoDetect(connection));

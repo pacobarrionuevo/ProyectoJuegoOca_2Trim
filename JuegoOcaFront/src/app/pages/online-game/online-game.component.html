@@ -1,88 +1,84 @@
 <div class="game-container">
-    <!-- Marcador y controles -->
-    <div class="marker">
-      <div class="player-info">
-        <h2>{{ usuarioApodo }}</h2>
-      </div>
-      <div class="foto">
-        <img [src]="versus" alt="foto_versus" class="foto_versus">
-      </div>
-      <div class="player-info">
-        <!-- Se asume que en el componente se asigna opponentName al nombre del oponente -->
-        <h2>{{ opponentName ? opponentName : 'Jugador 2' }}</h2>
-      </div>
-      <div class="controls">
-        <button (click)="rollDice()" [disabled]="!isCurrentPlayer"><b>Lanzar Dado</b></button>
-        <button (click)="abandonGame()"><b>Abandonar Partida</b></button>
-        <div class="turn-timer">
-          Tiempo restante: {{ timeRemaining }} segundos
-        </div>
-        <div *ngIf="diceResult !== null" class="dice-result">
-          <h2>Resultado del Dado</h2>
-          <p>{{ diceResult }}</p>
-        </div>
-        <div *ngIf="showMoveMessage" class="move-message">
-          {{ moveMessage }}
-        </div>
-        <div *ngIf="gameOver" class="game-over-modal">
-          <h2>El juego ha terminado</h2>
-          <p>El ganador es: {{ winnerName }}</p>
-          <div class="game-over-buttons">
-            <button (click)="requestRematch()">Revancha</button>
-            <button routerLink="/menu">Volver al Menú</button>
-          </div>
-        </div>
-      </div>
+  <!-- Marcador y controles -->
+  <div class="marker">
+    <div class="player-info">
+      <h2>{{ usuarioApodo }}</h2>
     </div>
-  
-    <!-- Tablero -->
-    <div class="board">
-      <div *ngFor="let cell of cells" class="cell"
-           [class.cell-oca]="cell.type === 'Oca'"
-           [class.cell-puente]="cell.type === 'Puente'"
-           [class.cell-posada]="cell.type === 'Posada'"
-           [class.cell-muerte]="cell.type === 'Muerte'"
-           [class.cell-muerte]="cell.type === 'Dados'"
-           [class.cell-muerte]="cell.type === 'Laberinto'"
-           [class.cell-muerte]="cell.type === 'Carcel'"
-           [style.left.px]="getCellPosition(cell.number).x"
-           [style.top.px]="getCellPosition(cell.number).y">
-        <div class="cell-number">{{ cell.number }}</div>
-        <img *ngIf="cell.type === 'Oca'" [src]="fotoOca" alt="Imagen de Oca" class="tablero-image">
-        <img *ngIf="cell.type === 'Posada'" [src]="fotoPosada" alt="Imagen de Posada" class="tablero-image">
-        <img *ngIf="cell.type === 'Puente'" [src]="fotoPuente" alt="Imagen de Puente" class="tablero-image">
-        <img *ngIf="cell.type === 'Muerte'" [src]="fotoMuerte" alt="Imagen de Muerte" class="tablero-image">
-        <img *ngIf="cell.type === 'Dados'" [src]="fotoDados" alt="Imagen de Dados" class="tablero-image">
-        <img *ngIf="cell.type === 'Laberinto'" [src]="fotoLaberinto" alt="Imagen de Laberinto" class="tablero-image">
-        <img *ngIf="cell.type === 'Pozo'" [src]="fotoPozo" alt="Imagen de Pozo" class="tablero-image">
-        <img *ngIf="cell.type === 'Carcel'" [src]="fotoCarcel" alt="Imagen de Carcel" class="tablero-image">
-        <img *ngIf="cell.type === 'FlechaAbajo'" [src]="fotoAbajo" alt="Imagen de Flecha Abajo" class="tablero-image">
-        <img *ngIf="cell.type === 'FlechaDerecha'" [src]="fotoDerecha" alt="Imagen de Flecha Derecha" class="tablero-image">
-        <img *ngIf="cell.type === 'FlechaIzquierda'" [src]="fotoIzquierda" alt="Imagen de Flecha Izquierda" class="tablero-image">
-        <img *ngIf="cell.type === 'FlechaArriba'" [src]="fotoArriba" alt="Imagen de Flecha Arriba" class="tablero-image">
-        <img *ngIf="cell.type === 'Inicio'" [src]="fotoBanderaInicio" alt="Imagen de Inicio" class="tablero-image">
-        <div class="players">
-          <span *ngFor="let player of getPlayersInCell(cell.number)"
-                class="player"
-                [style.background-color]="player.color"
-                [class.moving]="player.isMoving">
-            {{ player.name }}
-          </span>
-        </div>
-      </div>
+    <div class="foto">
+      <img [src]="versus" alt="foto_versus" class="foto_versus">
     </div>
-  
-    <!-- Chat -->
-    <div class="chat-container">
-      <div class="chat-messages" #chatMessages>
-        <div *ngFor="let message of messages" class="message">
-          <strong>{{ message.sender }}:</strong> {{ message.text }}
-        </div>
+    <div class="player-info">
+      <!-- Se asume que en el componente se asigna opponentName al nombre del oponente -->
+      <h2>{{ opponentName ? opponentName : 'Jugador 2' }}</h2>
+    </div>
+    <div class="controls">
+      <button (click)="rollDice()" [disabled]="!isCurrentPlayer"><b>Lanzar Dado</b></button>
+      <button (click)="abandonGame()"><b>Abandonar Partida</b></button>
+      <div class="turn-timer">
+        Tiempo restante: {{ timeRemaining }} segundos
       </div>
-      <div class="chat-input">
-        <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()" />
-        <button (click)="sendMessage()">Enviar</button>
+      <div *ngIf="diceResult !== null" class="dice-result">
+        <h2>Resultado del Dado</h2>
+        <p>{{ diceResult }}</p>
+      </div>
+      <div *ngIf="showMoveMessage" class="move-message">
+        {{ moveMessage }}
+      </div>
+      <div *ngIf="gameOver" class="game-over-modal">
+        <h2>El juego ha terminado</h2>
+        <p>El ganador es: {{ winnerName }}</p>
+        <div class="game-over-buttons">
+          <button (click)="requestRematch()">Revancha</button>
+          <button routerLink="/menu">Volver al Menú</button>
+        </div>
       </div>
     </div>
   </div>
-  
+
+  <!-- Tablero -->
+  <div class="board">
+    <div *ngFor="let cell of cells" class="cell"
+         [class.cell-oca]="cell.type === 'Oca'"
+         [class.cell-puente]="cell.type === 'Puente'"
+         [class.cell-posada]="cell.type === 'Posada'"
+         [class.cell-muerte]="cell.type === 'Muerte'"
+         [style.left.px]="getCellPosition(cell.number).x"
+         [style.top.px]="getCellPosition(cell.number).y">
+      <div class="cell-number">{{ cell.number }}</div>
+      <img *ngIf="cell.type === 'Oca'" [src]="fotoOca" alt="Imagen de Oca" class="tablero-image">
+      <img *ngIf="cell.type === 'Posada'" [src]="fotoPosada" alt="Imagen de Posada" class="tablero-image">
+      <img *ngIf="cell.type === 'Puente'" [src]="fotoPuente" alt="Imagen de Puente" class="tablero-image">
+      <img *ngIf="cell.type === 'Muerte'" [src]="fotoMuerte" alt="Imagen de Muerte" class="tablero-image">
+      <img *ngIf="cell.type === 'Dados'" [src]="fotoDados" alt="Imagen de Dados" class="tablero-image">
+      <img *ngIf="cell.type === 'Laberinto'" [src]="fotoLaberinto" alt="Imagen de Laberinto" class="tablero-image">
+      <img *ngIf="cell.type === 'Pozo'" [src]="fotoPozo" alt="Imagen de Pozo" class="tablero-image">
+      <img *ngIf="cell.type === 'Carcel'" [src]="fotoCarcel" alt="Imagen de Carcel" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaAbajo'" [src]="fotoAbajo" alt="Imagen de Flecha Abajo" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaDerecha'" [src]="fotoDerecha" alt="Imagen de Flecha Derecha" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaIzquierda'" [src]="fotoIzquierda" alt="Imagen de Flecha Izquierda" class="tablero-image">
+      <img *ngIf="cell.type === 'FlechaArriba'" [src]="fotoArriba" alt="Imagen de Flecha Arriba" class="tablero-image">
+      <img *ngIf="cell.type === 'Inicio'" [src]="fotoBanderaInicio" alt="Imagen de Inicio" class="tablero-image">
+      <div class="players">
+        <span *ngFor="let player of getPlayersInCell(cell.number)"
+              class="player"
+              [style.background-color]="player.color"
+              [class.moving]="player.isMoving">
+          {{ player.name }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-container">
+    <div class="chat-messages" #chatMessages>
+      <div *ngFor="let message of messages" class="message">
+        <strong>{{ message.sender }}:</strong> {{ message.text }}
+      </div>
+    </div>
+    <div class="chat-input">
+      <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()" />
+      <button (click)="sendMessage()">Enviar</button>
+    </div>
+  </div>
+  </div>

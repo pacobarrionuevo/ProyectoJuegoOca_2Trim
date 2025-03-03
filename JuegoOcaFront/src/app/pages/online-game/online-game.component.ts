@@ -70,10 +70,10 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     // Inicializar rutas de imágenes (modifica los nombres según tus assets)
     this.versus = this.imageService.getImageUrl('VersusOnline.png');
     this.fotoOca = this.imageService.getImageUrl('OcaFoto.jpg');
-    this.fotoPosada = this.imageService.getImageUrl('RockingBeatas.jpg');
+    this.fotoPosada = this.imageService.getImageUrl('Posada.jpg');
     this.fotoPuente = this.imageService.getImageUrl('Puente.jpeg');
-    this.fotoMuerte = this.imageService.getImageUrl('verdaderamuerte.png');
-    this.fotoDados = this.imageService.getImageUrl('balatrodice.png');
+    this.fotoMuerte = this.imageService.getImageUrl('Muerte.png');
+    this.fotoDados = this.imageService.getImageUrl('Dados.png');
     this.fotoCarcel = this.imageService.getImageUrl('Carcel.png');
     this.fotoLaberinto = this.imageService.getImageUrl('Laberinto.jpg');
     this.fotoPozo = this.imageService.getImageUrl('Pozo.jpg');
@@ -262,16 +262,19 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     
 
   onTurnTimeout(): void {
+    // Notificar al servidor que se ha agotado el tiempo del turno para el jugador actual
     this.websocketService.sendRxjs(JSON.stringify({
       type: 'turnTimeout',
       playerId: this.currentPlayer.id,
       gameId: this.websocketService.currentGameId
     }));
+    // Mostrar mensaje en la UI
     this.moveMessage = 'Tiempo agotado. Has perdido el turno.';
     this.showMoveMessage = true;
     setTimeout(() => { this.showMoveMessage = false; }, 5000);
   }
 
+  // Función para abandonar la partida online
   public abandonGame(): void {
     this.websocketService.sendRxjs(JSON.stringify({
       type: 'abandonGame',
@@ -284,7 +287,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     this.winnerName = this.usuarioApodo;
     alert('Tu oponente ha abandonado la partida!');
   }
-
+  // Función para lanzar el dado
   public rollDice(): void {
     if (this.isCurrentPlayer) {
       this.websocketService.rollDice();
@@ -292,7 +295,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     }
   }
 
-
+  // Métodos del chat
   sendMessage(): void {
     if (!this.newMessage.trim()) return;
     const sender = this.usuarioApodo;
@@ -310,6 +313,7 @@ export class GameOnlineComponent implements OnInit, OnDestroy {
     } catch (err) { }
   }
 
+  // Inicializa el tablero con 63 casillas y asigna su tipo
   initializeBoard(): void {
     this.cells = [];
     for (let i = 1; i <= 63; i++) {
